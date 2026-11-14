@@ -16,12 +16,12 @@
 #   public *;
 #}
 -keep public class org.microemu.** { public protected *; }
--keep class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter { *; }
+-keep class com.j2me.lixin.util.SparseIntArrayAdapter { *; }
 # Keep the BuildConfig
--keep class ru.playsoftware.j2meloader.BuildConfig { *; }
+-keep class com.j2me.lixin.BuildConfig { *; }
 
 -keep class com.arthenica.mobileffmpeg.** { *; }
--keep class ru.playsoftware.j2meloader.crashes.models.* { *; }
+-keep class com.j2me.lixin.crashes.models.* { *; }
 
 # Preserve all public midlets.
 

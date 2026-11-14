@@ -19,7 +19,7 @@
 
 package javax.microedition.shell;
 
-import static ru.playsoftware.j2meloader.util.Constants.*;
+import static com.j2me.lixin.util.Constants.*;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -90,12 +90,12 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.databinding.ActivityMicroBinding;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.LogUtils;
+import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.R;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.databinding.ActivityMicroBinding;
+import com.j2me.lixin.util.Constants;
+import com.j2me.lixin.util.LogUtils;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;

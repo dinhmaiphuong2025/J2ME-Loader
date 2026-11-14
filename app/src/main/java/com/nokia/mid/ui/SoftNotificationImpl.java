@@ -35,8 +35,8 @@ import java.util.Hashtable;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.util.PNGUtils;
+import com.j2me.lixin.R;
+import com.j2me.lixin.util.PNGUtils;
 
 public class SoftNotificationImpl extends SoftNotification {
 	final static int EVENT_ACCEPT = 1;

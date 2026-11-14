@@ -66,14 +66,14 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.config.ProfileModel;
-import ru.playsoftware.j2meloader.config.ProfilesManager;
-import ru.playsoftware.j2meloader.config.ShaderInfo;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.IOUtils;
+import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.config.ProfileModel;
+import com.j2me.lixin.config.ProfilesManager;
+import com.j2me.lixin.config.ShaderInfo;
+import com.j2me.lixin.util.Constants;
+import com.j2me.lixin.util.FileUtils;
+import com.j2me.lixin.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class MicroLoader {

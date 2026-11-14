@@ -31,7 +31,7 @@ import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
 
-import ru.playsoftware.j2meloader.config.Config;
+import com.j2me.lixin.config.Config;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();

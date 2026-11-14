@@ -45,11 +45,11 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.applist.AppListModel;
-import ru.playsoftware.j2meloader.appsdb.AppRepository;
-import ru.playsoftware.j2meloader.databinding.DialogInstallerBinding;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import com.j2me.lixin.R;
+import com.j2me.lixin.applist.AppListModel;
+import com.j2me.lixin.appsdb.AppRepository;
+import com.j2me.lixin.databinding.DialogInstallerBinding;
+import com.j2me.lixin.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class BatchInstallerDialog extends DialogFragment {

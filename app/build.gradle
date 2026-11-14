@@ -9,15 +9,15 @@ def midletArchivesBaseName
 android {
     compileSdk COMPILE_SDK
     ndkVersion NDK_VERSION
-    namespace 'ru.playsoftware.j2meloader'
+    namespace 'com.j2me.lixin'
 
     defaultConfig {
-        applicationId "ru.playsoftware.j2meloader"
+        applicationId "com.j2me.lixin"
         minSdk MIN_SDK
         targetSdk TARGET_SDK
         versionCode 101
         versionName "1.8.2"
-        resValue 'string', 'app_name', rootProject.name
+        resValue 'string', 'app_name', 'J2ME Loader Lixin'
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

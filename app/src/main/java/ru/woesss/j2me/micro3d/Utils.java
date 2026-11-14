@@ -27,8 +27,8 @@ import java.nio.FloatBuffer;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.R;
+import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.R;
 
 public class Utils {
 	static final String TAG = "micro3d";

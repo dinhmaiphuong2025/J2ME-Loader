@@ -45,9 +45,9 @@ import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.shell.AppClassLoader;
 import javax.microedition.shell.MicroActivity;
 
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.EmulatorApplication;
-import ru.playsoftware.j2meloader.config.Config;
+import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.EmulatorApplication;
+import com.j2me.lixin.config.Config;
 
 public class ContextHolder {
 	private static Display display;

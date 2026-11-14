@@ -21,7 +21,7 @@ package javax.microedition.lcdui.event;
 import javax.microedition.util.ArrayStack;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
+import com.j2me.lixin.R;
 
 public class RunnableEvent extends Event {
 	private static final ArrayStack<RunnableEvent> recycled = new ArrayStack<>();

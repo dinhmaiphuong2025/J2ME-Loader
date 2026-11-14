@@ -24,7 +24,7 @@ import android.view.KeyEvent;
 
 import androidx.collection.SparseArrayCompat;
 
-import ru.playsoftware.j2meloader.config.ProfileModel;
+import com.j2me.lixin.config.ProfileModel;
 
 import static javax.microedition.lcdui.Canvas.*;
 

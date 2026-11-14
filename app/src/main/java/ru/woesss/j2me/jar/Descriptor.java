@@ -29,8 +29,8 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import com.j2me.lixin.R;
+import com.j2me.lixin.util.FileUtils;
 
 public class Descriptor {
 	private static final char UNICODE_BOM = '\uFEFF';

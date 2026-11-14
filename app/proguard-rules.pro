@@ -31,11 +31,11 @@
 -keep class com.vodafone.** { *; }
 -keep class mmpp.media.** { *; }
 -keep class org.microemu.** { *; }
--keep class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter { *; }
+-keep class com.j2me.lixin.util.SparseIntArrayAdapter { *; }
 # Keep the BuildConfig
--keep class ru.playsoftware.j2meloader.BuildConfig { *; }
+-keep class com.j2me.lixin.BuildConfig { *; }
 
 -keep class androidx.appcompat.widget.SearchView { *; }
 -keep class com.arthenica.mobileffmpeg.** { *; }
 -keep class org.acra.attachment.DefaultAttachmentProvider { *; }
--keep class ru.playsoftware.j2meloader.crashes.models.* { *; }
+-keep class com.j2me.lixin.crashes.models.* { *; }

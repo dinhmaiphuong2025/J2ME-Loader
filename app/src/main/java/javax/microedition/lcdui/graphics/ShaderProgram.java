@@ -25,9 +25,9 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.ShaderInfo;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import com.j2me.lixin.R;
+import com.j2me.lixin.config.ShaderInfo;
+import com.j2me.lixin.util.FileUtils;
 
 public class ShaderProgram {
 	private static final String TAG = ShaderProgram.class.getName();

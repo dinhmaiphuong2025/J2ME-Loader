@@ -53,7 +53,7 @@ import javax.microedition.util.ContextHolder;
 
 import androidx.core.content.FileProvider;
 
-import ru.playsoftware.j2meloader.config.Config;
+import com.j2me.lixin.config.Config;
 
 public class FileSystemFileConnection implements FileConnection {
 	private static final String TAG = FileSystemFileConnection.class.getSimpleName();

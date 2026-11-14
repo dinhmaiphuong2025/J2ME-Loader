@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import javax.microedition.lcdui.Choice;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
+import com.j2me.lixin.R;
 
 public class CompoundListAdapter extends CompoundAdapter implements ListAdapter {
 	private static int highlightColor;

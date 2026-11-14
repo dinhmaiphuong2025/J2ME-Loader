@@ -44,9 +44,9 @@ import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.config.ProfileModel;
-import ru.playsoftware.j2meloader.config.ProfilesManager;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.config.ProfileModel;
+import com.j2me.lixin.config.ProfilesManager;
 
 public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String TAG = VirtualKeyboard.class.getSimpleName();

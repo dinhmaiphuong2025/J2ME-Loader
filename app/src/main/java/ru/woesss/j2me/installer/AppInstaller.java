@@ -42,12 +42,12 @@ import java.util.jar.JarFile;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.appsdb.AppRepository;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.IOUtils;
-import ru.playsoftware.j2meloader.util.ZipUtils;
+import com.j2me.lixin.applist.AppItem;
+import com.j2me.lixin.appsdb.AppRepository;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.util.FileUtils;
+import com.j2me.lixin.util.IOUtils;
+import com.j2me.lixin.util.ZipUtils;
 import ru.woesss.j2me.jar.Descriptor;
 import ru.woesss.util.zip.ZipFile;
 

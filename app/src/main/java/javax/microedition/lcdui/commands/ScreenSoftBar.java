@@ -25,8 +25,8 @@ import android.widget.PopupWindow;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Screen;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.databinding.SoftButtonBarBinding;
+import com.j2me.lixin.R;
+import com.j2me.lixin.databinding.SoftButtonBarBinding;
 
 public class ScreenSoftBar extends AbstractSoftKeysBar {
 	private final SoftButtonBarBinding binding;

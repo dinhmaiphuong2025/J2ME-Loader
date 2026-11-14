@@ -4,7 +4,7 @@ plugins {
 
 android {
     compileSdk = COMPILE_SDK
-    namespace 'ru.playsoftware.j2meloader.dexlib'
+    namespace 'com.j2me.lixin.dexlib'
 
     defaultConfig {
         minSdk MIN_SDK
