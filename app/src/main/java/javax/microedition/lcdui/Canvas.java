@@ -150,7 +150,7 @@ public abstract class Canvas extends Displayable {
 	private int displayWidth;
 	private int displayHeight;
 	private boolean fullscreen;
-	private boolean visible;
+	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private Image offscreen;
 	private Image offscreenCopy;
@@ -764,6 +764,10 @@ public abstract class Canvas extends Displayable {
 	}
 
 	protected void pointerReleased(int x, int y) {
+	}
+
+	public void setVisible() {
+		this.visible = true;
 	}
 
 	void setInvisible() {

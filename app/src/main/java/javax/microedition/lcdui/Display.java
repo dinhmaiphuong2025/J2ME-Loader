@@ -129,7 +129,9 @@ public class Display {
 		}
 		if (current instanceof Canvas) {
 			Canvas c = (Canvas) current;
-			c.setInvisible();
+			if (!(disp instanceof TextBox)) {
+				c.setInvisible();
+			}
 		}
 		if (disp instanceof Alert) {
 			Alert alert = (Alert) disp;

@@ -97,11 +97,13 @@ import java.util.Set;
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.TextBox;
 import javax.microedition.lcdui.TextField;
 import javax.microedition.lcdui.ViewHandler;
+import javax.microedition.lcdui.event.CanvasEvent;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.location.LocationProviderImpl;
@@ -1463,6 +1465,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		} else {
 			Log.e("DEBUG_INPUT", "commitFloatingInput: ERROR - okCommand is NULL!");
 		}
+
+		if (lastActiveCanvas != null) {
+			lastActiveCanvas.setVisible();
+			Display.postEvent(CanvasEvent.getInstance(lastActiveCanvas, CanvasEvent.SHOW_NOTIFY));
+			lastActiveCanvas.repaint();
+		}
 	}
 
 	private void cancelFloatingInput() {
@@ -1489,6 +1497,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		} else if (lastActiveCanvas != null && context != null && context.getDisplay() != null) {
 			context.getDisplay().setCurrent(lastActiveCanvas);
 		}
+
+		if (lastActiveCanvas != null) {
+			lastActiveCanvas.setVisible();
+			Display.postEvent(CanvasEvent.getInstance(lastActiveCanvas, CanvasEvent.SHOW_NOTIFY));
+			lastActiveCanvas.repaint();
+		}
 	}
 
 	private void finishFloatingInput() {
@@ -1499,9 +1513,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (binding.floatingInputBar != null) {
 			binding.floatingInputBar.setVisibility(View.GONE);
 		}
-		if (binding.floatingInputEdit != null && invisibleInputWatcher != null) {
-			binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
-			invisibleInputWatcher = null;
+		if (binding.floatingInputEdit != null) {
+			if (invisibleInputWatcher != null) {
+				binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
+				invisibleInputWatcher = null;
+			}
+			binding.floatingInputEdit.setText("");
 		}
 	}
 
@@ -1548,6 +1565,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 					binding.overlayView.setVisibility(true);
 					binding.overlayView.postInvalidate();
 				}
+				nextCanvas.setVisible();
+				Display.postEvent(CanvasEvent.getInstance(nextCanvas, CanvasEvent.SHOW_NOTIFY));
+				nextCanvas.repaint();
 				return;
 			}
 

@@ -40,6 +40,12 @@ public class ForegroundService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		createChannel();
+		try {
+			startForeground(NOTIFICATION_ID, buildNotification());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
 		if (pm != null) {
 			wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "J2ME:ForegroundServiceWakeLock");
@@ -51,7 +57,11 @@ public class ForegroundService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		createChannel();
-		startForeground(NOTIFICATION_ID, buildNotification());
+		try {
+			startForeground(NOTIFICATION_ID, buildNotification());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return START_NOT_STICKY;
 	}
 
