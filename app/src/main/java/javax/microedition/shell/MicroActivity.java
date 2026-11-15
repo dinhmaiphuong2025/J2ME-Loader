@@ -34,6 +34,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Process;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -931,6 +932,16 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		MidletThread.destroyApp();
 		stopService(new Intent(this, ForegroundService.class));
 		binding = null;
+		// Close the game process cleanly once the last tab is gone, so the
+		// game's network connections do not linger into the next session.
+		new Thread(() -> {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			Process.killProcess(Process.myPid());
+		}, "CleanupKill").start();
 		super.onDestroy();
 	}
 
