@@ -222,6 +222,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			finish();
 			return;
 		}
+		applyOrientation();
 		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 		showAccountPicker(appName, appPath, true);
 	}
@@ -296,6 +297,16 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (hasFocus && current instanceof Canvas) {
 			hideSystemUI();
 		}
+	}
+
+	private void applyOrientation() {
+		if (microLoader == null) return;
+		int orientation = microLoader.getOrientation();
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk != null && vk.isPhone() && orientation == ORIENTATION_DEFAULT) {
+			orientation = ORIENTATION_PORTRAIT;
+		}
+		setOrientation(orientation);
 	}
 
 	@SuppressLint("SourceLockedOrientationActivity")
@@ -820,9 +831,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			saveLog();
 		} else if (id == R.id.action_lock_orientation) {
 			if (item.isChecked()) {
-				VirtualKeyboard vk = ContextHolder.getVk();
-				int orientation = vk != null && vk.isPhone() ? ORIENTATION_PORTRAIT : microLoader.getOrientation();
-				setOrientation(orientation);
+				applyOrientation();
 				item.setChecked(false);
 			} else {
 				item.setChecked(true);
@@ -990,11 +999,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				.setSingleChoiceItems(R.array.PREF_VK_TYPE_ENTRIES, vk.getLayout(), null)
 				.setPositiveButton(android.R.string.ok, (d, w) -> {
 					vk.setLayout(((AlertDialog) d).getListView().getCheckedItemPosition());
-					if (vk.isPhone()) {
-						setOrientation(ORIENTATION_PORTRAIT);
-					} else {
-						setOrientation(microLoader.getOrientation());
-					}
+					applyOrientation();
 				});
 		builder.show();
 	}
@@ -1205,14 +1210,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				vk.setTarget((Canvas) cur);
 				((Canvas) cur).updateSize();
 			}
-			int orientation = microLoader.getOrientation();
-			if (vk.isPhone()) {
-				orientation = ORIENTATION_PORTRAIT;
-			}
-			setOrientation(orientation);
 			binding.overlayView.setVisibility(true);
 			binding.overlayView.postInvalidate();
+		} else {
+			binding.overlayView.setVisibility(false);
 		}
+		applyOrientation();
 	}
 
 	private void closeTab(J2meContext context) {
