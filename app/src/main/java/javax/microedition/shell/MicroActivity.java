@@ -42,6 +42,7 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -788,6 +789,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 			}
 		} else if (id == R.id.action_ime_keyboard) {
+			Log.e("DEBUG_INPUT", "action_ime_keyboard selected! current=" + current);
 			if (current instanceof Canvas) {
 				binding.floatingInputBar.setVisibility(View.VISIBLE);
 				InvisibleInputView edit = binding.floatingInputEdit;
@@ -805,6 +807,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 					binding.floatingInputBar.setVisibility(View.GONE);
 					hideSoftInput();
 					String text = edit.getText() != null ? edit.getText().toString() : "";
+					Log.e("DEBUG_INPUT", "btnFloatingOk in action_ime_keyboard clicked! text=[" + text + "]");
 					Canvas c = (Canvas) current;
 					for (int i = 0; i < text.length(); i++) {
 						int cp = text.charAt(i);
@@ -1211,6 +1214,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private Command activeCancelCommand;
 
 	private void startFloatingInput(TextBox textBox) {
+		Log.e("DEBUG_INPUT", "startFloatingInput CALLED: tb=" + textBox + ", title=" + (textBox != null ? textBox.getTitle() : "null")
+				+ ", cmds=" + (textBox != null && textBox.getCommands() != null ? Arrays.toString(textBox.getCommands()) : "null")
+				+ ", currentStr=" + (textBox != null ? textBox.getString() : "null"));
 		this.activeTextBox = textBox;
 		if (binding.floatingInputBar == null || binding.floatingInputEdit == null) return;
 
@@ -1411,6 +1417,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void commitFloatingInput() {
+		Log.e("DEBUG_INPUT", "commitFloatingInput CALLED: activeTextBox=" + activeTextBox);
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
 		activeTextBox = null;
@@ -1422,6 +1429,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				text = editable.toString();
 			}
 		}
+		Log.e("DEBUG_INPUT", "commitFloatingInput: read text=[" + text + "], tb=" + tb);
 
 		hideSoftInput();
 		if (binding.floatingInputBar != null) {
@@ -1435,20 +1443,25 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 		try {
 			int max = tb.getMaxSize();
+			Log.e("DEBUG_INPUT", "commitFloatingInput: tb.maxSize=" + max);
 			if (max > 0 && text.length() > max) {
 				text = text.substring(0, max);
 			}
 			tb.setString(text);
+			Log.e("DEBUG_INPUT", "commitFloatingInput: tb.setString succeeded, current tb.getString()=[" + tb.getString() + "]");
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e("DEBUG_INPUT", "commitFloatingInput: EXCEPTION during setString!", e);
 		}
 
 		Command okCommand = activeOkCommand != null ? activeOkCommand : findOkCommand(tb);
 		activeOkCommand = null;
 		activeCancelCommand = null;
 
+		Log.e("DEBUG_INPUT", "commitFloatingInput: firing okCommand=" + okCommand + ", label=" + (okCommand != null ? okCommand.getLabel() : "null"));
 		if (okCommand != null) {
 			tb.fireCommandAction(okCommand);
+		} else {
+			Log.e("DEBUG_INPUT", "commitFloatingInput: ERROR - okCommand is NULL!");
 		}
 	}
 
@@ -1503,6 +1516,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 		@Override
 		public void process() {
+			Log.e("DEBUG_INPUT", "SetCurrentEvent.process: current=" + current + ", next=" + next);
 			if (next instanceof Alert) {
 				return;
 			}

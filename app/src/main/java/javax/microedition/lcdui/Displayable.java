@@ -172,9 +172,16 @@ public abstract class Displayable {
 		this.listener = listener;
 	}
 
+	public CommandListener getCommandListener() {
+		return listener;
+	}
+
 	public void fireCommandAction(Command c) {
+		android.util.Log.e("DEBUG_INPUT", "Displayable.fireCommandAction: cmd=" + c + ", label=" + (c != null ? c.getLabel() : "null") + ", listener=" + listener);
 		if (listener != null) {
 			Display.postEvent(CommandActionEvent.getInstance(listener, c, this));
+		} else {
+			android.util.Log.e("DEBUG_INPUT", "Displayable.fireCommandAction: listener is NULL!");
 		}
 	}
 
