@@ -20,7 +20,6 @@ package javax.microedition.shell;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.os.Process;
 import android.util.Log;
 
 import javax.microedition.lcdui.Canvas;
@@ -84,8 +83,26 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	public static void notifyDestroyed() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		MidletThread thread = getInstance();
+		J2meContext context = null;
 		if (thread != null) {
 			thread.state = DESTROYED;
+			context = thread.context;
+		}
+		if (context == null) {
+			context = J2meContext.current();
+		}
+		if (context == null) {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				context = activity.getContext();
+			}
+		}
+		if (context != null) {
+			context.getEventQueue().stopProcessing();
+			context.unregister();
+		}
+		if (thread != null) {
+			thread.quit();
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
@@ -94,7 +111,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (startAfterDestroy != null) {
 			Config.startApp(ContextHolder.getActivity(), startAfterDestroy[0], startAfterDestroy[1], false, startAfterDestroy[2]);
 		}
-		Process.killProcess(Process.myPid());
 	}
 
 	public static void notifyPaused() {
@@ -119,14 +135,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	static void destroyApp() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-		new Thread(() -> {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			Process.killProcess(Process.myPid());
-		}, "ForceDestroyTimer").start();
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
 			Displayable current = activity.getCurrent();
