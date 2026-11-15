@@ -789,37 +789,42 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		} else if (id == R.id.action_ime_keyboard) {
 			if (current instanceof Canvas) {
-				InvisibleInputView input = binding.hiddenInputView;
-				input.setInputType(InputType.TYPE_CLASS_TEXT);
-				input.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-				input.setText("");
-				input.setOnEditorActionListener((v, actionId, event) -> {
-					if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO
-							|| actionId == EditorInfo.IME_ACTION_SEND
-							|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-						if (activeTextBox != null) {
-							commitInvisibleInput();
-						} else if (current instanceof Canvas) {
-							String text = input.getText() != null ? input.getText().toString() : "";
-							Canvas c = (Canvas) current;
-							for (int i = 0; i < text.length(); i++) {
-								int cp = text.charAt(i);
-								c.postKeyPressed(cp);
-								c.postKeyReleased(cp);
-							}
-							c.postKeyPressed(Canvas.KEY_FIRE);
-							c.postKeyReleased(Canvas.KEY_FIRE);
-							input.setText("");
-							hideSoftInput();
-						}
-						return true;
-					}
-					return false;
+				binding.floatingInputBar.setVisibility(View.VISIBLE);
+				InvisibleInputView edit = binding.floatingInputEdit;
+				edit.setInputType(InputType.TYPE_CLASS_TEXT);
+				edit.setSingleLine(true);
+				edit.setText("");
+				binding.btnFloatingOk.setText(android.R.string.ok);
+				binding.btnFloatingCancel.setText(R.string.cancel);
+				binding.btnFloatingCancel.setOnClickListener(v -> {
+					hideSoftInput();
+					binding.floatingInputBar.setVisibility(View.GONE);
 				});
-				input.requestFocus();
-				input.post(() -> {
+				binding.btnFloatingOk.setOnClickListener(v -> {
+					if (binding.floatingInputBar.getVisibility() != View.VISIBLE) return;
+					binding.floatingInputBar.setVisibility(View.GONE);
+					hideSoftInput();
+					String text = edit.getText() != null ? edit.getText().toString() : "";
+					Canvas c = (Canvas) current;
+					for (int i = 0; i < text.length(); i++) {
+						int cp = text.charAt(i);
+						c.postKeyPressed(cp);
+						c.postKeyReleased(cp);
+					}
+					c.postKeyPressed(Canvas.KEY_FIRE);
+					c.postKeyReleased(Canvas.KEY_FIRE);
+					edit.setText("");
+				});
+				edit.setOnEditorActionListener((v, actionId, event) -> {
+					binding.btnFloatingOk.performClick();
+					return true;
+				});
+				edit.setOnCommitListener(() -> binding.btnFloatingOk.performClick());
+				edit.setOnBackListener(() -> binding.btnFloatingCancel.performClick());
+				edit.requestFocus();
+				edit.post(() -> {
 					if (inputMethodManager != null) {
-						inputMethodManager.showSoftInput(input, InputMethodManager.SHOW_FORCED);
+						inputMethodManager.showSoftInput(edit, InputMethodManager.SHOW_FORCED);
 					}
 				});
 			} else {
@@ -1202,10 +1207,14 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 	}
 
-	private void startInvisibleInput(TextBox textBox) {
+	private Command activeOkCommand;
+	private Command activeCancelCommand;
+
+	private void startFloatingInput(TextBox textBox) {
 		this.activeTextBox = textBox;
-		InvisibleInputView input = binding.hiddenInputView;
-		if (input == null) return;
+		if (binding.floatingInputBar == null || binding.floatingInputEdit == null) return;
+
+		InvisibleInputView input = binding.floatingInputEdit;
 
 		if (invisibleInputWatcher != null) {
 			input.removeTextChangedListener(invisibleInputWatcher);
@@ -1235,7 +1244,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 
 		if ((constraints & TextField.PASSWORD) != 0) {
-			inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
+			if ((inputType & InputType.TYPE_MASK_CLASS) == InputType.TYPE_CLASS_NUMBER) {
+				inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
+			} else {
+				inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
+			}
 		}
 
 		input.setInputType(inputType);
@@ -1267,9 +1280,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				if (activeTextBox != null && s != null) {
 					try {
 						String text = s.toString();
-						int max = activeTextBox.getMaxSize();
-						if (max > 0 && text.length() > max) {
-							text = text.substring(0, max);
+						int m = activeTextBox.getMaxSize();
+						if (m > 0 && text.length() > m) {
+							text = text.substring(0, m);
 						}
 						activeTextBox.setString(text);
 					} catch (Exception ignored) {}
@@ -1278,13 +1291,33 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		};
 		input.addTextChangedListener(invisibleInputWatcher);
 
+		this.activeOkCommand = findOkCommand(textBox);
+		this.activeCancelCommand = findCancelCommand(textBox);
+
+		if (activeOkCommand != null) {
+			binding.btnFloatingOk.setText(sanitizeButtonLabel(activeOkCommand.getAndroidLabel(), android.R.string.ok));
+		} else {
+			binding.btnFloatingOk.setText(android.R.string.ok);
+		}
+
+		if (activeCancelCommand != null) {
+			binding.btnFloatingCancel.setText(sanitizeButtonLabel(activeCancelCommand.getAndroidLabel(), R.string.cancel));
+		} else {
+			binding.btnFloatingCancel.setText(R.string.cancel);
+		}
+
+		binding.btnFloatingOk.setOnClickListener(v -> commitFloatingInput());
+		binding.btnFloatingCancel.setOnClickListener(v -> cancelFloatingInput());
+
 		input.setOnEditorActionListener((v, actionId, event) -> {
-			commitInvisibleInput();
+			commitFloatingInput();
 			return true;
 		});
 
-		input.setOnCommitListener(this::commitInvisibleInput);
-		input.setOnBackListener(this::cancelInvisibleInput);
+		input.setOnCommitListener(this::commitFloatingInput);
+		input.setOnBackListener(this::cancelFloatingInput);
+
+		binding.floatingInputBar.setVisibility(View.VISIBLE);
 
 		input.requestFocus();
 		input.post(() -> {
@@ -1292,6 +1325,27 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				inputMethodManager.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
 			}
 		});
+	}
+
+	private String sanitizeButtonLabel(String label, int defaultResId) {
+		if (label == null || label.trim().isEmpty()) {
+			return getString(defaultResId);
+		}
+		label = label.trim();
+		if (label.length() > 10) {
+			return getString(defaultResId);
+		}
+		int weirdChars = 0;
+		for (int i = 0; i < label.length(); i++) {
+			char ch = label.charAt(i);
+			if (ch == 'I' || ch == 'l' || ch == '|' || ch == '1') {
+				weirdChars++;
+			}
+		}
+		if (weirdChars > label.length() / 2 && label.length() > 3) {
+			return getString(defaultResId);
+		}
+		return label;
 	}
 
 	private Command findOkCommand(TextBox tb) {
@@ -1330,23 +1384,52 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		return cmds[0];
 	}
 
-	private void commitInvisibleInput() {
+	private Command findCancelCommand(TextBox tb) {
+		Command[] cmds = tb.getCommands();
+		if (cmds == null || cmds.length <= 1) return null;
+
+		for (Command cmd : cmds) {
+			int type = cmd.getCommandType();
+			if (type == Command.CANCEL || type == Command.BACK || type == Command.STOP || type == Command.EXIT) {
+				return cmd;
+			}
+		}
+
+		for (Command cmd : cmds) {
+			String label = cmd.getLabel() != null ? cmd.getLabel().trim().toLowerCase() : "";
+			if (label.contains("hủy") || label.contains("huỷ") || label.contains("đóng")
+					|| label.contains("trở về") || label.contains("quay lại") || label.contains("bỏ qua")
+					|| label.contains("cancel") || label.contains("back") || label.contains("exit") || label.contains("close")) {
+				return cmd;
+			}
+		}
+
+		if (cmds.length >= 2) {
+			return cmds[1];
+		}
+		return null;
+	}
+
+	private void commitFloatingInput() {
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
 		activeTextBox = null;
 
 		String text = "";
-		if (binding.hiddenInputView != null) {
-			Editable editable = binding.hiddenInputView.getText();
+		if (binding.floatingInputEdit != null) {
+			Editable editable = binding.floatingInputEdit.getText();
 			if (editable != null) {
 				text = editable.toString();
 			}
 		}
 
 		hideSoftInput();
+		if (binding.floatingInputBar != null) {
+			binding.floatingInputBar.setVisibility(View.GONE);
+		}
 
-		if (binding.hiddenInputView != null && invisibleInputWatcher != null) {
-			binding.hiddenInputView.removeTextChangedListener(invisibleInputWatcher);
+		if (binding.floatingInputEdit != null && invisibleInputWatcher != null) {
+			binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
 			invisibleInputWatcher = null;
 		}
 
@@ -1360,32 +1443,34 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			e.printStackTrace();
 		}
 
-		Command okCommand = findOkCommand(tb);
+		Command okCommand = activeOkCommand != null ? activeOkCommand : findOkCommand(tb);
+		activeOkCommand = null;
+		activeCancelCommand = null;
+
 		if (okCommand != null) {
 			tb.fireCommandAction(okCommand);
 		}
 	}
 
-	private void cancelInvisibleInput() {
+	private void cancelFloatingInput() {
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
 		activeTextBox = null;
 
 		hideSoftInput();
+		if (binding.floatingInputBar != null) {
+			binding.floatingInputBar.setVisibility(View.GONE);
+		}
 
-		if (binding.hiddenInputView != null && invisibleInputWatcher != null) {
-			binding.hiddenInputView.removeTextChangedListener(invisibleInputWatcher);
+		if (binding.floatingInputEdit != null && invisibleInputWatcher != null) {
+			binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
 			invisibleInputWatcher = null;
 		}
 
-		Command cancelCommand = null;
-		for (Command cmd : tb.getCommands()) {
-			int type = cmd.getCommandType();
-			if (type == Command.CANCEL || type == Command.BACK || type == Command.STOP) {
-				cancelCommand = cmd;
-				break;
-			}
-		}
+		Command cancelCommand = activeCancelCommand != null ? activeCancelCommand : findCancelCommand(tb);
+		activeOkCommand = null;
+		activeCancelCommand = null;
+
 		if (cancelCommand != null) {
 			tb.fireCommandAction(cancelCommand);
 		} else if (lastActiveCanvas != null && context != null && context.getDisplay() != null) {
@@ -1393,11 +1478,16 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 	}
 
-	private void finishInvisibleInput() {
+	private void finishFloatingInput() {
 		activeTextBox = null;
+		activeOkCommand = null;
+		activeCancelCommand = null;
 		hideSoftInput();
-		if (binding.hiddenInputView != null && invisibleInputWatcher != null) {
-			binding.hiddenInputView.removeTextChangedListener(invisibleInputWatcher);
+		if (binding.floatingInputBar != null) {
+			binding.floatingInputBar.setVisibility(View.GONE);
+		}
+		if (binding.floatingInputEdit != null && invisibleInputWatcher != null) {
+			binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
 			invisibleInputWatcher = null;
 		}
 	}
@@ -1418,17 +1508,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 
 			if (next instanceof TextBox) {
-				// Pure Invisible IME Mode: Không gỡ bỏ CanvasView, chỉ bật IME
+				// Floating Input Mode: Không gỡ bỏ CanvasView, chỉ bật thanh nhập nổi + IME
 				if (current instanceof Canvas) {
 					lastActiveCanvas = (Canvas) current;
 				}
-				startInvisibleInput((TextBox) next);
+				startFloatingInput((TextBox) next);
 				return;
 			}
 
 			// Nếu từ TextBox quay về Canvas
 			if (current instanceof TextBox && next instanceof Canvas) {
-				finishInvisibleInput();
+				finishFloatingInput();
 				Canvas nextCanvas = (Canvas) next;
 				lastActiveCanvas = nextCanvas;
 				View canvasView = nextCanvas.getDisplayableView();
