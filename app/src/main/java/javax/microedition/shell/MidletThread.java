@@ -106,7 +106,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
-			activity.finish();
+			activity.onMidletExit(context);
 		}
 		if (startAfterDestroy != null) {
 			Config.startApp(ContextHolder.getActivity(), startAfterDestroy[0], startAfterDestroy[1], false, startAfterDestroy[2]);

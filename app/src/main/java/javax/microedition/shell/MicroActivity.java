@@ -536,13 +536,15 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void addNewGameTab(String name, String path) {
+		J2meContext newContext = new J2meContext(name);
+		newContext.setUiHandler(this);
+		newContext.register();
 		MicroLoader loader = new MicroLoader(this, path);
 		if (!loader.init()) {
+			newContext.unregister();
 			Config.startApp(this, name, path, true);
 			return;
 		}
-		J2meContext newContext = new J2meContext(name);
-		newContext.setUiHandler(this);
 		tabs.add(new Tab(newContext, loader, name, path));
 		int newIndex = tabs.size() - 1;
 		addTabPill(newIndex);
@@ -764,7 +766,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	@Override
 	public void onMidletExit(J2meContext context) {
-		MidletThread.notifyDestroyed();
+		runOnUiThread(() -> closeTab(context));
 	}
 
 	@Override
@@ -814,7 +816,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			MidletThread.pauseApp();
 		}
 		activeIndex = index;
-		Tab tab = tabs.get(index);
+		activateActiveTab();
+	}
+
+	private void activateActiveTab() {
+		Tab tab = tabs.get(activeIndex);
 		context = tab.context;
 		microLoader = tab.loader;
 		appName = tab.name;
@@ -829,6 +835,36 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			MidletThread.resumeApp();
 		}
 		updatePills();
+	}
+
+	private void closeTab(J2meContext context) {
+		if (context == null) {
+			finish();
+			return;
+		}
+		int index = -1;
+		for (int i = 0; i < tabs.size(); i++) {
+			if (tabs.get(i).context == context) {
+				index = i;
+				break;
+			}
+		}
+		if (index < 0) {
+			finish();
+			return;
+		}
+		tabs.remove(index);
+		binding.tabBar.removeViewAt(index);
+		if (tabs.isEmpty()) {
+			finish();
+			return;
+		}
+		if (index < activeIndex) {
+			activeIndex--;
+		} else if (index == activeIndex) {
+			activeIndex = Math.min(index, tabs.size() - 1);
+		}
+		activateActiveTab();
 	}
 
 	public void toast(@StringRes int message) {
