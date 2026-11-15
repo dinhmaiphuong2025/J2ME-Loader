@@ -211,21 +211,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		activeIndex = 0;
 		addTabPill(0);
 		microLoader.applyConfiguration();
-		VirtualKeyboard vk = ContextHolder.getVk();
-		int orientation = microLoader.getOrientation();
-		if (vk != null) {
-			vk.setView(binding.overlayView);
-			binding.overlayView.addLayer(vk);
-			if (vk.isPhone()) {
-				orientation = ORIENTATION_PORTRAIT;
-			}
-		}
-		setOrientation(orientation);
+		setupVirtualKeyboard();
 		pauseDisabled = microLoader.isPauseDisabled();
 		menuKey = microLoader.getMenuKeyCode();
 
 		try {
 			loadMIDlet();
+			MidletThread.resumeApp();
 		} catch (Exception e) {
 			e.printStackTrace();
 			showErrorDialog(e.toString());
@@ -961,6 +953,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		appPath = tab.appPath;
 		context.register();
 		microLoader.applyConfiguration();
+		setupVirtualKeyboard();
 		Displayable displayable = context.getDisplay() != null ? context.getDisplay().getCurrent() : null;
 		if (displayable != null) {
 			setCurrent(displayable);
@@ -969,6 +962,26 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			MidletThread.resumeApp();
 		}
 		updatePills();
+	}
+
+	private void setupVirtualKeyboard() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		binding.overlayView.removeLayers(VirtualKeyboard.class);
+		if (vk != null) {
+			vk.setView(binding.overlayView);
+			binding.overlayView.addLayer(vk);
+			if (current instanceof Canvas) {
+				vk.setTarget((Canvas) current);
+				((Canvas) current).updateSize();
+			}
+			int orientation = microLoader.getOrientation();
+			if (vk.isPhone()) {
+				orientation = ORIENTATION_PORTRAIT;
+			}
+			setOrientation(orientation);
+			binding.overlayView.setVisibility(true);
+			binding.overlayView.postInvalidate();
+		}
 	}
 
 	private void closeTab(J2meContext context) {
@@ -1048,6 +1061,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			binding.displayableContainer.removeAllViews();
 			if (next instanceof Canvas) {
 				hideSystemUI();
+				VirtualKeyboard vk = ContextHolder.getVk();
+				if (vk != null) {
+					vk.setTarget((Canvas) next);
+					((Canvas) next).updateSize();
+					binding.overlayView.setVisibility(true);
+					binding.overlayView.postInvalidate();
+				}
 			} else {
 				showSystemUI();
 			}

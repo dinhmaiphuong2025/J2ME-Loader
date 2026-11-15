@@ -43,6 +43,7 @@ import java.util.Objects;
 
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.shell.AppClassLoader;
+import javax.microedition.shell.J2meContext;
 import javax.microedition.shell.MicroActivity;
 
 import com.j2me.lixin.BuildConfig;
@@ -62,11 +63,19 @@ public class ContextHolder {
 	}
 
 	public static VirtualKeyboard getVk() {
+		J2meContext context = J2meContext.current();
+		if (context != null && context.getVk() != null) {
+			return context.getVk();
+		}
 		return vk;
 	}
 
 	public static void setVk(VirtualKeyboard vk) {
 		ContextHolder.vk = vk;
+		J2meContext context = J2meContext.current();
+		if (context != null) {
+			context.setVk(vk);
+		}
 	}
 
 	private static Display getDisplay() {

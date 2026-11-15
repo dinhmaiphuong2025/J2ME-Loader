@@ -28,6 +28,7 @@ public class OverlayView extends View {
 
 	private final CanvasWrapper graphics;
 	private final ArrayList<Layer> layers = new ArrayList<>();
+	private boolean requestedVisible = true;
 	private boolean visible;
 	private int x;
 	private int y;
@@ -63,6 +64,10 @@ public class OverlayView extends View {
 			return;
 		}
 		layers.add(layer);
+		if (requestedVisible) {
+			visible = true;
+			postInvalidate();
+		}
 	}
 
 	public void addLayer(Layer layer, int order) {
@@ -70,13 +75,38 @@ public class OverlayView extends View {
 			return;
 		}
 		layers.add(Math.max(0, Math.min(order, layers.size())), layer);
+		if (requestedVisible) {
+			visible = true;
+			postInvalidate();
+		}
 	}
 
 	public void removeLayer(Layer layer) {
 		layers.remove(layer);
+		if (layers.isEmpty()) {
+			visible = false;
+			postInvalidate();
+		}
+	}
+
+	public void removeLayers(Class<? extends Layer> layerClass) {
+		boolean changed = false;
+		for (int i = layers.size() - 1; i >= 0; i--) {
+			if (layerClass.isInstance(layers.get(i))) {
+				layers.remove(i);
+				changed = true;
+			}
+		}
+		if (changed) {
+			if (layers.isEmpty()) {
+				visible = false;
+			}
+			postInvalidate();
+		}
 	}
 
 	public void setVisibility(boolean visibility) {
+		requestedVisible = visibility;
 		visible = visibility && !layers.isEmpty();
 		postInvalidate();
 	}

@@ -1150,6 +1150,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	public void setView(View view) {
 		overlayView = view;
+		invalidateView();
 	}
 
 	private void invalidateView() {

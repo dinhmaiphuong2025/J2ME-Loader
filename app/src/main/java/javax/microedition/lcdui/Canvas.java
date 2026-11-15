@@ -1218,6 +1218,11 @@ public abstract class Canvas extends Displayable {
 			overlay = ContextHolder.getVk();
 			if (overlay != null) {
 				overlay.setTarget(Canvas.this);
+				if (overlay instanceof VirtualKeyboard) {
+					((VirtualKeyboard) overlay).setView(overlayView);
+				}
+				overlayView.addLayer(overlay);
+				updateSize();
 			}
 		}
 
@@ -1239,6 +1244,7 @@ public abstract class Canvas extends Displayable {
 			softBar.closeMenu();
 			overlayView.setVisibility(false);
 			if (overlay != null) {
+				overlayView.removeLayer(overlay);
 				overlay.setTarget(null);
 				overlay.cancel();
 				overlay = null;
