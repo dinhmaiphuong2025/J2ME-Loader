@@ -29,6 +29,25 @@
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             tools:title="MIDlet Title" />
 
+        <HorizontalScrollView
+            android:id="@+id/tab_bar_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/tab_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+        </HorizontalScrollView>
+
         <FrameLayout
             android:id="@+id/displayable_container"
             android:layout_width="match_parent"

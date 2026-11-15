@@ -50,6 +50,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -192,6 +193,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		context = new J2meContext(appName);
 		context.register();
+		addTabPill(appName);
 		microLoader.applyConfiguration();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
@@ -730,6 +732,25 @@ public class MicroActivity extends AppCompatActivity {
 
 	public J2meContext getContext() {
 		return context;
+	}
+
+	private void addTabPill(String name) {
+		TextView pill = new TextView(this);
+		pill.setText(name);
+		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+		pill.setSingleLine(true);
+		pill.setEllipsize(TextUtils.TruncateAt.END);
+		TypedValue color = new TypedValue();
+		getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, color, true);
+		pill.setTextColor(color.data);
+		pill.setBackgroundResource(R.drawable.bg_tab_pill);
+		float density = getResources().getDisplayMetrics().density;
+		pill.setPadding((int) (12 * density), (int) (6 * density), (int) (12 * density), (int) (6 * density));
+		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+		lp.setMarginEnd((int) (6 * density));
+		pill.setLayoutParams(lp);
+		binding.tabBar.addView(pill);
 	}
 
 	public void toast(@StringRes int message) {
