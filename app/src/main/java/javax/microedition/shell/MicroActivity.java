@@ -770,7 +770,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void addNewGameTab(String name, String path, AccountManager.Account account) {
-		finishFloatingInput();
+		cancelFloatingInput();
+		if (activeIndex >= 0 && activeIndex < tabs.size()) {
+			Tab currentTab = tabs.get(activeIndex);
+			if (current instanceof Canvas) {
+				currentTab.lastCanvas = (Canvas) current;
+			}
+		}
 		if (current != null) {
 			current.clearDisplayableView();
 			current = null;
@@ -1142,7 +1148,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (index < 0 || index >= tabs.size() || index == activeIndex) {
 			return;
 		}
-		finishFloatingInput();
+		cancelFloatingInput();
+		if (activeIndex >= 0 && activeIndex < tabs.size()) {
+			Tab currentTab = tabs.get(activeIndex);
+			if (current instanceof Canvas) {
+				currentTab.lastCanvas = (Canvas) current;
+			}
+		}
 		if (current != null) {
 			current.clearDisplayableView();
 			current = null;
@@ -1158,6 +1170,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		microLoader = tab.loader;
 		appName = tab.name;
 		appPath = tab.appPath;
+		lastActiveCanvas = tab.lastCanvas;
 		context.register();
 		microLoader.applyConfiguration();
 		Displayable displayable = context.getDisplay() != null ? context.getDisplay().getCurrent() : null;
@@ -1165,6 +1178,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			setCurrent(displayable);
 			if (displayable instanceof Canvas) {
 				Canvas c = (Canvas) displayable;
+				tab.lastCanvas = c;
+				lastActiveCanvas = c;
 				c.setVisible();
 				Display.postEvent(CanvasEvent.getInstance(c, CanvasEvent.SHOW_NOTIFY));
 				c.repaint();
@@ -1200,10 +1215,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private void closeTab(J2meContext context) {
 		if (context == null) {
-			finish();
 			return;
 		}
-		finishFloatingInput();
+		cancelFloatingInput();
 		int index = -1;
 		for (int i = 0; i < tabs.size(); i++) {
 			if (tabs.get(i).context == context) {
@@ -1212,7 +1226,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		}
 		if (index < 0) {
-			finish();
 			return;
 		}
 		if (index == activeIndex && current != null) {
@@ -1251,6 +1264,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		final String name;
 		final String appPath;
 		final String accountName;
+		Canvas lastCanvas;
 
 		Tab(J2meContext context, MicroLoader loader, String name, String appPath, String accountName) {
 			this.context = context;
@@ -1589,9 +1603,22 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 
 			if (next instanceof TextBox) {
-				// Floating Input Mode: Không gỡ bỏ CanvasView, chỉ bật thanh nhập nổi + IME
+				// Floating Input Mode: Đảm bảo Canvas luôn được hiển thị bên dưới
 				if (current instanceof Canvas) {
 					lastActiveCanvas = (Canvas) current;
+				}
+				Canvas canvasToDisplay = lastActiveCanvas;
+				if (canvasToDisplay == null && activeIndex >= 0 && activeIndex < tabs.size()) {
+					canvasToDisplay = tabs.get(activeIndex).lastCanvas;
+				}
+				if (canvasToDisplay != null) {
+					View canvasView = canvasToDisplay.getDisplayableView();
+					if (binding.displayableContainer.indexOfChild(canvasView) == -1) {
+						binding.displayableContainer.removeAllViews();
+						binding.displayableContainer.addView(canvasView);
+					}
+					canvasToDisplay.setVisible();
+					canvasToDisplay.repaint();
 				}
 				startFloatingInput((TextBox) next);
 				return;
