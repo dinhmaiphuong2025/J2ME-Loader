@@ -72,18 +72,8 @@ public abstract class Displayable {
 	};
 
 	public static void setVirtualSize(int virtualWidth, int virtualHeight) {
-		if (virtualWidth <= 0 && virtualHeight <= 0) {
-			Displayable.virtualWidth = 0;
-			Displayable.virtualHeight = 0;
-			return;
-		}
-		if (virtualWidth <= 0) {
-			virtualWidth = virtualHeight * ContextHolder.getDisplayWidth() / ContextHolder.getDisplayHeight();
-		} else if (virtualHeight <= 0) {
-			virtualHeight = virtualWidth * ContextHolder.getDisplayHeight() / ContextHolder.getDisplayWidth();
-		}
-		Displayable.virtualWidth = virtualWidth;
-		Displayable.virtualHeight = virtualHeight;
+		Displayable.virtualWidth = Math.max(0, virtualWidth);
+		Displayable.virtualHeight = Math.max(0, virtualHeight);
 	}
 
 	public static int getVirtualWidth() {

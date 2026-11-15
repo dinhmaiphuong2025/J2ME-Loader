@@ -388,18 +388,22 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 				binding.keepAspectRatioToggle.setChecked(false);
 			}
 			binding.screenWidth.setEnabled(false);
-			binding.screenHeight.setEnabled(false);
-			binding.swapScreenSides.setEnabled(false);
-			binding.addScreenSizeToPresets.setEnabled(false);
-			binding.keepAspectRatioToggle.setEnabled(false);
 			binding.screenWidth.setText("0");
-			binding.screenHeight.setText("0");
+			binding.swapScreenSides.setEnabled(false);
+			binding.keepAspectRatioToggle.setEnabled(false);
+			binding.screenHeight.setEnabled(true);
+			binding.screenHeight.setHint("0 (DPI)");
+			int h = parseInt(binding.screenHeight.getText().toString());
+			if (h < 0) {
+				binding.screenHeight.setText("0");
+			}
 		} else {
 			binding.screenWidth.setEnabled(true);
 			binding.screenHeight.setEnabled(true);
 			binding.swapScreenSides.setEnabled(true);
 			binding.addScreenSizeToPresets.setEnabled(true);
 			binding.keepAspectRatioToggle.setEnabled(true);
+			binding.screenHeight.setHint(R.string.PREF_HEIGHT);
 			int w = parseInt(binding.screenWidth.getText().toString());
 			int h = parseInt(binding.screenHeight.getText().toString());
 			if (w <= 0 && h <= 0) {
@@ -578,6 +582,9 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		customPresets.clear();
 
 		screenPresets.add("0 x 0");
+		screenPresets.add("0 x 240");
+		screenPresets.add("0 x 320");
+		screenPresets.add("0 x 360");
 		screenPresets.add("128 x 128");
 		screenPresets.add("128 x 160");
 		screenPresets.add("132 x 176");
@@ -651,15 +658,15 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		}
 		int screenWidth = params.screenWidth;
 		int screenHeight = params.screenHeight;
-		boolean isDynamic = (screenWidth <= 0 && screenHeight <= 0);
+		boolean isDynamic = (screenWidth <= 0);
 		binding.dynamicScreenSizeToggle.setChecked(isDynamic);
 		if (isDynamic) {
 			binding.screenWidth.setText("0");
-			binding.screenHeight.setText("0");
+			binding.screenHeight.setText(Integer.toString(Math.max(0, screenHeight)));
 			binding.screenWidth.setEnabled(false);
-			binding.screenHeight.setEnabled(false);
+			binding.screenHeight.setEnabled(true);
+			binding.screenHeight.setHint("0 (DPI)");
 			binding.swapScreenSides.setEnabled(false);
-			binding.addScreenSizeToPresets.setEnabled(false);
 			binding.keepAspectRatioToggle.setEnabled(false);
 		} else {
 			binding.screenWidth.setEnabled(true);
@@ -667,6 +674,7 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 			binding.swapScreenSides.setEnabled(true);
 			binding.addScreenSizeToPresets.setEnabled(true);
 			binding.keepAspectRatioToggle.setEnabled(true);
+			binding.screenHeight.setHint(R.string.PREF_HEIGHT);
 			if (screenWidth != 0) {
 				binding.screenWidth.setText(Integer.toString(screenWidth));
 			} else {
@@ -738,7 +746,8 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		try {
 			if (binding.dynamicScreenSizeToggle.isChecked()) {
 				params.screenWidth = 0;
-				params.screenHeight = 0;
+				int height = parseInt(binding.screenHeight.getText().toString());
+				params.screenHeight = Math.max(0, height);
 			} else {
 				int width = parseInt(binding.screenWidth.getText().toString());
 				params.screenWidth = width;
@@ -961,7 +970,7 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 					String hStr = string.substring(separator + 3);
 					binding.screenWidth.setText(wStr);
 					binding.screenHeight.setText(hStr);
-					if ("0".equals(wStr) && "0".equals(hStr)) {
+					if ("0".equals(wStr)) {
 						binding.dynamicScreenSizeToggle.setChecked(true);
 					} else {
 						binding.dynamicScreenSizeToggle.setChecked(false);
@@ -1136,6 +1145,12 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 			String item = getItem(position);
 			if ("0 x 0".equals(item)) {
 				((TextView) convertView.findViewById(R.id.resolution_text)).setText("0 x 0 (" + getString(R.string.pref_screen_fit_device) + ")");
+			} else if ("0 x 240".equals(item)) {
+				((TextView) convertView.findViewById(R.id.resolution_text)).setText("0 x 240 (" + getString(R.string.pref_screen_fullscreen_preset, "240") + ")");
+			} else if ("0 x 320".equals(item)) {
+				((TextView) convertView.findViewById(R.id.resolution_text)).setText("0 x 320 (" + getString(R.string.pref_screen_fullscreen_preset, "320") + ")");
+			} else if ("0 x 360".equals(item)) {
+				((TextView) convertView.findViewById(R.id.resolution_text)).setText("0 x 360 (" + getString(R.string.pref_screen_fullscreen_preset, "360") + ")");
 			} else {
 				((TextView) convertView.findViewById(R.id.resolution_text)).setText(item);
 			}

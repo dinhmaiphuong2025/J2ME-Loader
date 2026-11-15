@@ -375,7 +375,7 @@ public abstract class Canvas extends Displayable {
 				 * height is selected by the ratio of the real screen
 				 */
 				width = virtualWidth;
-				height = scaledDisplayHeight * virtualWidth / displayWidth;
+				height = Math.round((float) scaledDisplayHeight * virtualWidth / Math.max(1, displayWidth));
 			}
 		} else {
 			if (virtualHeight > 0) {
@@ -383,14 +383,16 @@ public abstract class Canvas extends Displayable {
 				 * only the canvas height is set
 				 * width is selected by the ratio of the real screen
 				 */
-				width = displayWidth * virtualHeight / scaledDisplayHeight;
+				width = Math.round((float) displayWidth * virtualHeight / Math.max(1, scaledDisplayHeight));
 				height = virtualHeight;
 			} else {
 				/*
-				 * nothing is set - screen-sized canvas
+				 * dynamic canvas - scaled by screen density (DPI)
 				 */
-				width = displayWidth;
-				height = scaledDisplayHeight;
+				float density = ContextHolder.getAppContext().getResources().getDisplayMetrics().density;
+				if (density < 1.0f) density = 1.0f;
+				width = Math.round(displayWidth / density);
+				height = Math.round(scaledDisplayHeight / density);
 			}
 		}
 
