@@ -95,7 +95,7 @@ import com.j2me.lixin.databinding.ActivityMicroBinding;
 import com.j2me.lixin.util.Constants;
 import com.j2me.lixin.util.LogUtils;
 
-public class MicroActivity extends AppCompatActivity {
+public class MicroActivity extends AppCompatActivity implements J2meContext.UiHandler {
 	private static final int ORIENTATION_DEFAULT = 0;
 	private static final int ORIENTATION_AUTO = 1;
 	private static final int ORIENTATION_PORTRAIT = 2;
@@ -187,6 +187,7 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		context = new J2meContext(appName);
+		context.setUiHandler(this);
 		context.register();
 		addTabPill(appName);
 		microLoader.applyConfiguration();
@@ -712,6 +713,21 @@ public class MicroActivity extends AppCompatActivity {
 
 	public J2meContext getContext() {
 		return context;
+	}
+
+	@Override
+	public void onDisplayableChanged(Displayable displayable) {
+		setCurrent(displayable);
+	}
+
+	@Override
+	public void onMidletExit(J2meContext context) {
+		MidletThread.notifyDestroyed();
+	}
+
+	@Override
+	public void showError(String message) {
+		showErrorDialog(message);
 	}
 
 	private void addTabPill(String name) {

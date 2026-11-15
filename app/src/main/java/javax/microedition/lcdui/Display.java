@@ -25,6 +25,7 @@ import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.J2meContext;
+import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import ru.woesss.j2me.jar.Descriptor;
@@ -151,7 +152,15 @@ public class Display {
 	}
 
 	private void showCurrent() {
-		ContextHolder.getActivity().setCurrent(current);
+		J2meContext context = J2meContext.current();
+		if (context != null && context.getUiHandler() != null) {
+			context.getUiHandler().onDisplayableChanged(current);
+			return;
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.setCurrent(current);
+		}
 	}
 
 	public Displayable getCurrent() {
