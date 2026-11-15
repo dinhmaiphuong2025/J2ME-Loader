@@ -24,20 +24,35 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
+
+import javax.microedition.shell.MicroActivity;
 
 /**
  * Keeps the game process alive while the app is in the background, so tabs do
- * not get killed when the user swipes home.
+ * not get killed when the user swipes home or turns off the screen.
  */
 public class ForegroundService extends Service {
 	private static final String CHANNEL_ID = "game_running";
 	private static final int NOTIFICATION_ID = 1;
+	private PowerManager.WakeLock wakeLock;
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+		if (pm != null) {
+			wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "J2ME:ForegroundServiceWakeLock");
+			wakeLock.setReferenceCounted(false);
+			wakeLock.acquire();
+		}
+	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		createChannel();
 		startForeground(NOTIFICATION_ID, buildNotification());
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 
 	private void createChannel() {
@@ -53,8 +68,8 @@ public class ForegroundService extends Service {
 	}
 
 	private Notification buildNotification() {
-		Intent intent = new Intent(this, MainActivity.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		Intent intent = new Intent(this, MicroActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		PendingIntent pi = PendingIntent.getActivity(this, 0, intent,
 				PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 		Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
@@ -67,6 +82,15 @@ public class ForegroundService extends Service {
 				.setOngoing(true)
 				.setContentIntent(pi)
 				.build();
+	}
+
+	@Override
+	public void onDestroy() {
+		if (wakeLock != null && wakeLock.isHeld()) {
+			wakeLock.release();
+			wakeLock = null;
+		}
+		super.onDestroy();
 	}
 
 	@Override

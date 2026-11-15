@@ -160,7 +160,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		cutoutsEnabled = sp.getBoolean(PREF_ADD_CUTOUT_AREA, false) &&
 				Build.VERSION.SDK_INT >= Build.VERSION_CODES.P;
 		setupInsets();
-		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
+		if (sp.getBoolean(PREF_KEEP_SCREEN, true)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
 		ContextHolder.setVibration(sp.getBoolean(PREF_VIBRATION, true));
@@ -246,10 +246,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 		visible = true;
-		if (!pauseSuppressed) {
+		if (context != null) {
+			context.register();
 			MidletThread.resumeApp();
 		}
 	}
@@ -257,10 +264,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	@Override
 	public void onPause() {
 		hideSoftInput();
-		if (!pauseSuppressed && !pauseDisabled) {
-			visible = false;
-			MidletThread.pauseApp();
-		}
+		visible = false;
 		super.onPause();
 	}
 
@@ -1052,13 +1056,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void switchTo(int index) {
 		if (index < 0 || index >= tabs.size() || index == activeIndex) {
 			return;
-		}
-		Tab oldTab = tabs.get(activeIndex);
-		if (oldTab.loader != null && !oldTab.loader.isPauseDisabled()) {
-			if (oldTab.context.getMidletThread() != null) {
-				oldTab.context.register();
-				MidletThread.pauseApp();
-			}
 		}
 		activeIndex = index;
 		activateActiveTab();
