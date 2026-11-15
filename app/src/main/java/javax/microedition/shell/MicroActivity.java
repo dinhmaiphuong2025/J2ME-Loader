@@ -22,11 +22,14 @@ package javax.microedition.shell;
 import static com.j2me.lixin.util.Constants.*;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -38,6 +41,7 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,9 +50,12 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,6 +70,8 @@ import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -202,12 +211,15 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		showAccountPicker(appName, appPath, true);
 	}
 
-	private void launchFirstTab(String accountName) {
+	private void launchFirstTab(AccountManager.Account account) {
+		String accName = account != null ? account.getName() : AccountManager.DEFAULT_ACCOUNT;
+		String accDir = account != null ? account.getDir() : "";
 		context = new J2meContext(appName);
-		context.setAccountName(accountName);
+		context.setAccountName(accName);
+		context.setAccountDir(accDir);
 		context.setUiHandler(this);
 		context.register();
-		tabs.add(new Tab(context, microLoader, appName, appPath, accountName));
+		tabs.add(new Tab(context, microLoader, appName, appPath, accName));
 		activeIndex = 0;
 		addTabPill(0);
 		microLoader.applyConfiguration();
@@ -546,7 +558,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void showAccountPicker(String name, String path, boolean isFirstTab) {
-		List<String> accounts = AccountManager.getAccounts(path);
+		List<AccountManager.Account> allAccounts = AccountManager.getAccountList(path);
 		Set<String> runningAccounts = new HashSet<>();
 		for (Tab t : tabs) {
 			if (path.equals(t.appPath)) {
@@ -554,37 +566,125 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		}
 
-		List<String> available = new ArrayList<>();
-		for (String acc : accounts) {
-			if (!runningAccounts.contains(acc)) {
+		List<AccountManager.Account> available = new ArrayList<>();
+		for (AccountManager.Account acc : allAccounts) {
+			if (!runningAccounts.contains(acc.getName())) {
 				available.add(acc);
 			}
 		}
 
-		String createNewText = getString(R.string.create_new_account);
-		List<String> dialogOptions = new ArrayList<>(available);
-		dialogOptions.add(createNewText);
-
-		String[] items = dialogOptions.toArray(new String[0]);
-
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.select_account_title) + " - " + name);
-		builder.setItems(items, (dialog, which) -> {
-			if (which < available.size()) {
-				String selectedAccount = available.get(which);
-				if (isFirstTab) {
-					launchFirstTab(selectedAccount);
-				} else {
-					addNewGameTab(name, path, selectedAccount);
+
+		ListView listView = new ListView(this);
+		listView.setDivider(null);
+		listView.setDividerHeight(0);
+
+		BaseAdapter adapter = new BaseAdapter() {
+			@Override
+			public int getCount() {
+				return available.size();
+			}
+
+			@Override
+			public Object getItem(int position) {
+				return available.get(position);
+			}
+
+			@Override
+			public long getItemId(int position) {
+				return position;
+			}
+
+			@Override
+			public View getView(int position, View convertView, ViewGroup parent) {
+				if (convertView == null) {
+					convertView = getLayoutInflater().inflate(R.layout.item_dialog_account, parent, false);
 				}
+				AccountManager.Account acc = available.get(position);
+				TextView tvName = convertView.findViewById(R.id.account_name);
+				ImageButton btnEdit = convertView.findViewById(R.id.btn_edit_account);
+
+				tvName.setText(acc.getName());
+
+				btnEdit.setFocusable(false);
+				btnEdit.setOnClickListener(v -> {
+					showRenameAccountDialog(path, acc.getName(), () -> {
+						available.clear();
+						List<AccountManager.Account> updated = AccountManager.getAccountList(path);
+						for (AccountManager.Account a : updated) {
+							if (!runningAccounts.contains(a.getName())) {
+								available.add(a);
+							}
+						}
+						notifyDataSetChanged();
+					});
+				});
+
+				return convertView;
+			}
+		};
+
+		listView.setAdapter(adapter);
+		builder.setView(listView);
+
+		AlertDialog dialog = builder.create();
+
+		listView.setOnItemClickListener((parent, view, position, id) -> {
+			AccountManager.Account chosen = available.get(position);
+			dialog.dismiss();
+			if (isFirstTab) {
+				launchFirstTab(chosen);
 			} else {
-				showCreateAccountDialog(name, path, isFirstTab);
+				addNewGameTab(name, path, chosen);
+			}
+		});
+
+		dialog.setButton(DialogInterface.BUTTON_NEUTRAL, getString(R.string.create_new_account), (d, which) -> {
+			showCreateAccountDialog(name, path, isFirstTab);
+		});
+
+		dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(android.R.string.cancel), (d, which) -> {
+			if (isFirstTab) {
+				finish();
 			}
 		});
 
 		if (isFirstTab) {
-			builder.setOnCancelListener(d -> finish());
+			dialog.setOnCancelListener(d -> finish());
 		}
+		dialog.show();
+	}
+
+	private void showRenameAccountDialog(String appPath, String currentName, Runnable onRenamed) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.edit);
+
+		final EditText input = new EditText(this);
+		input.setText(currentName);
+		input.setSelection(currentName.length());
+		input.setSingleLine(true);
+		float density = getResources().getDisplayMetrics().density;
+		int padding = (int) (16 * density);
+		FrameLayout container = new FrameLayout(this);
+		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+				FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+		params.leftMargin = padding;
+		params.rightMargin = padding;
+		input.setLayoutParams(params);
+		container.addView(input);
+		builder.setView(container);
+
+		builder.setPositiveButton(android.R.string.ok, (d, which) -> {
+			String newName = input.getText().toString().trim();
+			if (!newName.isEmpty() && !newName.equals(currentName)) {
+				AccountManager.renameAccount(appPath, currentName, newName);
+				if (onRenamed != null) {
+					onRenamed.run();
+				}
+			}
+		});
+		builder.setNegativeButton(android.R.string.cancel, null);
 		builder.show();
 	}
 
@@ -612,11 +712,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			if (accName.isEmpty()) {
 				accName = "acc_" + (System.currentTimeMillis() % 10000);
 			}
-			AccountManager.addAccount(path, accName);
+			AccountManager.Account created = AccountManager.addAccount(path, accName);
 			if (isFirstTab) {
-				launchFirstTab(accName);
+				launchFirstTab(created);
 			} else {
-				addNewGameTab(name, path, accName);
+				addNewGameTab(name, path, created);
 			}
 		});
 		builder.setNegativeButton(android.R.string.cancel, (d, which) -> {
@@ -630,9 +730,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		builder.show();
 	}
 
-	private void addNewGameTab(String name, String path, String accountName) {
+	private void addNewGameTab(String name, String path, AccountManager.Account account) {
+		String accName = account != null ? account.getName() : AccountManager.DEFAULT_ACCOUNT;
+		String accDir = account != null ? account.getDir() : "";
 		J2meContext newContext = new J2meContext(name);
-		newContext.setAccountName(accountName);
+		newContext.setAccountName(accName);
+		newContext.setAccountDir(accDir);
 		newContext.setUiHandler(this);
 		newContext.register();
 		MicroLoader loader = new MicroLoader(this, path);
@@ -641,7 +744,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			Config.startApp(this, name, path, true);
 			return;
 		}
-		tabs.add(new Tab(newContext, loader, name, path, accountName));
+		tabs.add(new Tab(newContext, loader, name, path, accName));
 		int newIndex = tabs.size() - 1;
 		addTabPill(newIndex);
 		switchTo(newIndex);
@@ -873,14 +976,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void addTabPill(int index) {
 		TextView pill = new TextView(this);
 		Tab tab = tabs.get(index);
-		String title = tab.name;
-		if (tab.accountName != null && !tab.accountName.isEmpty() && !AccountManager.DEFAULT_ACCOUNT.equals(tab.accountName)) {
-			title = tab.name + " (" + tab.accountName + ")";
-		}
+		String title = (tab.accountName != null && !tab.accountName.isEmpty()) ? tab.accountName : tab.name;
 		pill.setText(title);
 		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
 		pill.setSingleLine(true);
 		pill.setEllipsize(TextUtils.TruncateAt.END);
+		pill.setGravity(Gravity.CENTER_VERTICAL);
 		pill.setTag(index);
 		pill.setOnClickListener(v -> switchTo((Integer) v.getTag()));
 		pill.setOnLongClickListener(v -> {
@@ -891,7 +992,25 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			return true;
 		});
 		float density = getResources().getDisplayMetrics().density;
-		pill.setPadding((int) (12 * density), (int) (6 * density), (int) (12 * density), (int) (6 * density));
+
+		File iconFile = new File(tab.appPath, Config.MIDLET_ICON_FILE);
+		Bitmap bm = null;
+		if (iconFile.exists()) {
+			bm = BitmapFactory.decodeFile(iconFile.getAbsolutePath());
+		}
+		if (bm == null) {
+			bm = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+		}
+		if (bm != null) {
+			RoundedBitmapDrawable rbd = RoundedBitmapDrawableFactory.create(getResources(), bm);
+			rbd.setCornerRadius(4 * density);
+			int iconSize = (int) (18 * density);
+			rbd.setBounds(0, 0, iconSize, iconSize);
+			pill.setCompoundDrawablesRelative(rbd, null, null, null);
+			pill.setCompoundDrawablePadding((int) (6 * density));
+		}
+
+		pill.setPadding((int) (10 * density), (int) (6 * density), (int) (12 * density), (int) (6 * density));
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		lp.setMarginEnd((int) (6 * density));
@@ -902,7 +1021,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private void showCloseTabDialog(Tab tab) {
 		String title = tab.name;
-		if (tab.accountName != null && !tab.accountName.isEmpty() && !AccountManager.DEFAULT_ACCOUNT.equals(tab.accountName)) {
+		if (tab.accountName != null && !tab.accountName.isEmpty()) {
 			title = tab.name + " (" + tab.accountName + ")";
 		}
 		new AlertDialog.Builder(this)

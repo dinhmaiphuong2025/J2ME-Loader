@@ -18,10 +18,12 @@
 
 package com.j2me.lixin.applist;
 
+import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -122,6 +124,16 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 					  View.OnCreateContextMenuListener contextMenuListener) {
 			super(itemView);
 			icon = listImage;
+			if (icon != null) {
+				icon.setClipToOutline(true);
+				float density = itemView.getResources().getDisplayMetrics().density;
+				icon.setOutlineProvider(new ViewOutlineProvider() {
+					@Override
+					public void getOutline(View view, Outline outline) {
+						outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 8 * density);
+					}
+				});
+			}
 			name = listTitle;
 
 			itemView.setOnClickListener(v -> {

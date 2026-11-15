@@ -217,8 +217,11 @@ public class MicroLoader {
 		// FIXME: 21.10.2020 Config.getDataDir() may be in different storage
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
 		J2meContext context = J2meContext.current();
-		String account = context != null ? context.getAccountName() : null;
-		String accountSuffix = (account == null || account.isEmpty() || "Mặc định".equals(account)) ? "" : "/" + account;
+		String accountDir = context != null ? context.getAccountDir() : null;
+		if (accountDir == null && context != null && context.getAccountName() != null && !context.getAccountName().equals("Mặc định")) {
+			accountDir = context.getAccountName();
+		}
+		String accountSuffix = (accountDir == null || accountDir.isEmpty()) ? "" : "/" + accountDir;
 		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName + accountSuffix;
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());

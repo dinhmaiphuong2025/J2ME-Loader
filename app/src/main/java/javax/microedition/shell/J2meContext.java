@@ -44,6 +44,7 @@ public class J2meContext {
 	private VirtualKeyboard vk;
 	private UiHandler uiHandler;
 	private String accountName;
+	private String accountDir;
 	private String dataDir;
 
 	public interface UiHandler {
@@ -130,6 +131,14 @@ public class J2meContext {
 
 	public void setAccountName(String accountName) {
 		this.accountName = accountName;
+	}
+
+	public String getAccountDir() {
+		return accountDir;
+	}
+
+	public void setAccountDir(String accountDir) {
+		this.accountDir = accountDir;
 	}
 
 	public String getDataDir() {

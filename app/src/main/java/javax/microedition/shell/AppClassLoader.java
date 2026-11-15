@@ -67,8 +67,12 @@ public class AppClassLoader extends DexClassLoader {
 	public static void setDataDir(File appDir) {
 		String base = appDir.getParentFile().getParent() + Config.MIDLET_DATA_DIR + appDir.getName();
 		J2meContext context = J2meContext.current();
-		String account = context != null ? context.getAccountName() : null;
-		String dir = (account == null || account.isEmpty() || "Mặc định".equals(account)) ? base : base + File.separator + account;
+		String dir = base;
+		if (context != null && context.getAccountDir() != null && !context.getAccountDir().isEmpty()) {
+			dir = base + File.separator + context.getAccountDir();
+		} else if (context != null && context.getAccountName() != null && !context.getAccountName().isEmpty() && !context.getAccountName().equals("Mặc định")) {
+			dir = base + File.separator + context.getAccountName();
+		}
 		File dirFile = new File(dir);
 		if (!dirFile.exists()) {
 			dirFile.mkdirs();
