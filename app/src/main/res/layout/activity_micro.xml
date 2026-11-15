@@ -78,4 +78,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <javax.microedition.shell.InvisibleInputView
+        android:id="@+id/hidden_input_view"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:alpha="0.0"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:importantForAutofill="no"
+        android:background="@android:color/transparent"
+        android:imeOptions="actionDone|flagNoFullscreen|flagNoExtractUi"
+        tools:ignore="LabelFor,TextFields" />
+
 </FrameLayout>

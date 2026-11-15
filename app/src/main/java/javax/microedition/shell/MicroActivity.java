@@ -37,8 +37,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -49,6 +51,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -92,8 +95,11 @@ import java.util.Set;
 
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.TextBox;
+import javax.microedition.lcdui.TextField;
 import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
@@ -135,6 +141,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private String appPath;
 	private final List<Tab> tabs = new ArrayList<>();
 	private int activeIndex = -1;
+	private TextBox activeTextBox;
+	private Canvas lastActiveCanvas;
+	private TextWatcher invisibleInputWatcher;
 
 	public ActivityMicroBinding binding;
 
@@ -779,8 +788,44 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 			}
 		} else if (id == R.id.action_ime_keyboard) {
-			inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
-					InputMethodManager.SHOW_FORCED, 0);
+			if (current instanceof Canvas) {
+				InvisibleInputView input = binding.hiddenInputView;
+				input.setInputType(InputType.TYPE_CLASS_TEXT);
+				input.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+				input.setText("");
+				input.setOnEditorActionListener((v, actionId, event) -> {
+					if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO
+							|| actionId == EditorInfo.IME_ACTION_SEND
+							|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
+						if (activeTextBox != null) {
+							commitInvisibleInput();
+						} else if (current instanceof Canvas) {
+							String text = input.getText() != null ? input.getText().toString() : "";
+							Canvas c = (Canvas) current;
+							for (int i = 0; i < text.length(); i++) {
+								int cp = text.charAt(i);
+								c.postKeyPressed(cp);
+								c.postKeyReleased(cp);
+							}
+							c.postKeyPressed(Canvas.KEY_FIRE);
+							c.postKeyReleased(Canvas.KEY_FIRE);
+							input.setText("");
+							hideSoftInput();
+						}
+						return true;
+					}
+					return false;
+				});
+				input.requestFocus();
+				input.post(() -> {
+					if (inputMethodManager != null) {
+						inputMethodManager.showSoftInput(input, InputMethodManager.SHOW_FORCED);
+					}
+				});
+			} else {
+				inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
+						InputMethodManager.SHOW_FORCED, 0);
+			}
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
@@ -1157,6 +1202,163 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 	}
 
+	private void startInvisibleInput(TextBox textBox) {
+		this.activeTextBox = textBox;
+		InvisibleInputView input = binding.hiddenInputView;
+		if (input == null) return;
+
+		if (invisibleInputWatcher != null) {
+			input.removeTextChangedListener(invisibleInputWatcher);
+		}
+
+		int constraints = textBox.getConstraints();
+		int inputType = InputType.TYPE_CLASS_TEXT;
+		switch (constraints & TextField.CONSTRAINT_MASK) {
+			case TextField.NUMERIC:
+				inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED;
+				break;
+			case TextField.DECIMAL:
+				inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL;
+				break;
+			case TextField.PHONENUMBER:
+				inputType = InputType.TYPE_CLASS_PHONE;
+				break;
+			case TextField.EMAILADDR:
+				inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+				break;
+			case TextField.URL:
+				inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI;
+				break;
+			default:
+				inputType = InputType.TYPE_CLASS_TEXT;
+				break;
+		}
+
+		if ((constraints & TextField.PASSWORD) != 0) {
+			inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
+		}
+
+		input.setInputType(inputType);
+		input.setSingleLine(true);
+		input.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+
+		int max = textBox.getMaxSize();
+		if (max > 0) {
+			input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(max)});
+		} else {
+			input.setFilters(new InputFilter[0]);
+		}
+
+		String initial = textBox.getString();
+		input.setText(initial != null ? initial : "");
+		if (input.getText() != null) {
+			input.setSelection(input.getText().length());
+		}
+
+		invisibleInputWatcher = new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (activeTextBox != null) {
+					activeTextBox.setString(s != null ? s.toString() : "");
+				}
+			}
+		};
+		input.addTextChangedListener(invisibleInputWatcher);
+
+		input.setOnEditorActionListener((v, actionId, event) -> {
+			if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO
+					|| actionId == EditorInfo.IME_ACTION_SEND
+					|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
+				commitInvisibleInput();
+				return true;
+			}
+			return false;
+		});
+
+		input.setOnBackListener(this::cancelInvisibleInput);
+
+		input.requestFocus();
+		input.post(() -> {
+			if (inputMethodManager != null) {
+				inputMethodManager.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+			}
+		});
+	}
+
+	private void commitInvisibleInput() {
+		if (activeTextBox == null) return;
+		TextBox tb = activeTextBox;
+		activeTextBox = null;
+
+		hideSoftInput();
+
+		if (binding.hiddenInputView != null && invisibleInputWatcher != null) {
+			binding.hiddenInputView.removeTextChangedListener(invisibleInputWatcher);
+			invisibleInputWatcher = null;
+		}
+
+		Command okCommand = null;
+		Command[] cmds = tb.getCommands();
+		if (cmds != null) {
+			for (Command cmd : cmds) {
+				int type = cmd.getCommandType();
+				if (type == Command.OK || type == Command.SCREEN || type == Command.ITEM) {
+					okCommand = cmd;
+					break;
+				}
+			}
+			if (okCommand == null && cmds.length > 0) {
+				okCommand = cmds[0];
+			}
+		}
+
+		if (okCommand != null) {
+			tb.fireCommandAction(okCommand);
+		}
+	}
+
+	private void cancelInvisibleInput() {
+		if (activeTextBox == null) return;
+		TextBox tb = activeTextBox;
+		activeTextBox = null;
+
+		hideSoftInput();
+
+		if (binding.hiddenInputView != null && invisibleInputWatcher != null) {
+			binding.hiddenInputView.removeTextChangedListener(invisibleInputWatcher);
+			invisibleInputWatcher = null;
+		}
+
+		Command cancelCommand = null;
+		for (Command cmd : tb.getCommands()) {
+			int type = cmd.getCommandType();
+			if (type == Command.CANCEL || type == Command.BACK || type == Command.STOP) {
+				cancelCommand = cmd;
+				break;
+			}
+		}
+		if (cancelCommand != null) {
+			tb.fireCommandAction(cancelCommand);
+		} else if (lastActiveCanvas != null && context != null && context.getDisplay() != null) {
+			context.getDisplay().setCurrent(lastActiveCanvas);
+		}
+	}
+
+	private void finishInvisibleInput() {
+		activeTextBox = null;
+		hideSoftInput();
+		if (binding.hiddenInputView != null && invisibleInputWatcher != null) {
+			binding.hiddenInputView.removeTextChangedListener(invisibleInputWatcher);
+			invisibleInputWatcher = null;
+		}
+	}
+
 	private class SetCurrentEvent extends SimpleEvent {
 		private final Displayable current;
 		private final Displayable next;
@@ -1168,15 +1370,47 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 		@Override
 		public void process() {
-			if (current != null) {
-				current.clearDisplayableView();
-			}
 			if (next instanceof Alert) {
 				return;
+			}
+
+			if (next instanceof TextBox) {
+				// Pure Invisible IME Mode: Không gỡ bỏ CanvasView, chỉ bật IME
+				if (current instanceof Canvas) {
+					lastActiveCanvas = (Canvas) current;
+				}
+				startInvisibleInput((TextBox) next);
+				return;
+			}
+
+			// Nếu từ TextBox quay về Canvas
+			if (current instanceof TextBox && next instanceof Canvas) {
+				finishInvisibleInput();
+				Canvas nextCanvas = (Canvas) next;
+				lastActiveCanvas = nextCanvas;
+				View canvasView = nextCanvas.getDisplayableView();
+				if (binding.displayableContainer.indexOfChild(canvasView) == -1) {
+					binding.displayableContainer.removeAllViews();
+					binding.displayableContainer.addView(canvasView);
+				}
+				hideSystemUI();
+				VirtualKeyboard vk = ContextHolder.getVk();
+				if (vk != null) {
+					vk.setTarget(nextCanvas);
+					nextCanvas.updateSize();
+					binding.overlayView.setVisibility(true);
+					binding.overlayView.postInvalidate();
+				}
+				return;
+			}
+
+			if (current != null) {
+				current.clearDisplayableView();
 			}
 			binding.displayableContainer.removeAllViews();
 			if (next instanceof Canvas) {
 				hideSystemUI();
+				lastActiveCanvas = (Canvas) next;
 				VirtualKeyboard vk = ContextHolder.getVk();
 				if (vk != null) {
 					vk.setTarget((Canvas) next);
