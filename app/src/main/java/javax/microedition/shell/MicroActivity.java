@@ -73,8 +73,10 @@ import org.acra.ErrorReporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Canvas;
@@ -115,6 +117,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private int statusBarInset;
 	private int menuKey;
 	private String appPath;
+	private final List<Tab> tabs = new ArrayList<>();
+	private int activeIndex = -1;
 
 	public ActivityMicroBinding binding;
 
@@ -189,7 +193,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		context = new J2meContext(appName);
 		context.setUiHandler(this);
 		context.register();
-		addTabPill(appName);
+		tabs.add(new Tab(context, microLoader, appName, appPath));
+		activeIndex = 0;
+		addTabPill(0);
 		microLoader.applyConfiguration();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
@@ -730,16 +736,14 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		showErrorDialog(message);
 	}
 
-	private void addTabPill(String name) {
+	private void addTabPill(int index) {
 		TextView pill = new TextView(this);
-		pill.setText(name);
+		pill.setText(tabs.get(index).name);
 		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
 		pill.setSingleLine(true);
 		pill.setEllipsize(TextUtils.TruncateAt.END);
-		TypedValue color = new TypedValue();
-		getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, color, true);
-		pill.setTextColor(color.data);
-		pill.setBackgroundResource(R.drawable.bg_tab_pill);
+		pill.setTag(index);
+		pill.setOnClickListener(v -> switchTo(index));
 		float density = getResources().getDisplayMetrics().density;
 		pill.setPadding((int) (12 * density), (int) (6 * density), (int) (12 * density), (int) (6 * density));
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -747,10 +751,66 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		lp.setMarginEnd((int) (6 * density));
 		pill.setLayoutParams(lp);
 		binding.tabBar.addView(pill);
+		updatePills();
+	}
+
+	private void updatePills() {
+		TypedValue onSurface = new TypedValue();
+		TypedValue onPrimaryContainer = new TypedValue();
+		getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true);
+		getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnPrimaryContainer, onPrimaryContainer, true);
+		int count = binding.tabBar.getChildCount();
+		for (int i = 0; i < count; i++) {
+			TextView pill = (TextView) binding.tabBar.getChildAt(i);
+			boolean active = i == activeIndex;
+			pill.setBackgroundResource(active ? R.drawable.bg_tab_pill_active : R.drawable.bg_tab_pill);
+			pill.setTextColor(active ? onPrimaryContainer.data : onSurface.data);
+		}
+	}
+
+	private void switchTo(int index) {
+		if (index < 0 || index >= tabs.size() || index == activeIndex) {
+			return;
+		}
+		Tab oldTab = tabs.get(activeIndex);
+		if (oldTab.context.getMidletThread() != null) {
+			oldTab.context.register();
+			MidletThread.pauseApp();
+		}
+		activeIndex = index;
+		Tab tab = tabs.get(index);
+		context = tab.context;
+		microLoader = tab.loader;
+		appName = tab.name;
+		appPath = tab.appPath;
+		context.register();
+		microLoader.applyConfiguration();
+		Displayable displayable = context.getDisplay() != null ? context.getDisplay().getCurrent() : null;
+		if (displayable != null) {
+			setCurrent(displayable);
+		}
+		if (tab.context.getMidletThread() != null) {
+			MidletThread.resumeApp();
+		}
+		updatePills();
 	}
 
 	public void toast(@StringRes int message) {
 		runOnUiThread(() -> Toast.makeText(this, message, Toast.LENGTH_LONG).show());
+	}
+
+	private static class Tab {
+		final J2meContext context;
+		final MicroLoader loader;
+		final String name;
+		final String appPath;
+
+		Tab(J2meContext context, MicroLoader loader, String name, String appPath) {
+			this.context = context;
+			this.loader = loader;
+			this.name = name;
+			this.appPath = appPath;
+		}
 	}
 
 	private class SetCurrentEvent extends SimpleEvent {
