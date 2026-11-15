@@ -126,6 +126,7 @@
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:process=":midlet" />
         <activity android:name=".settings.SettingsActivity"

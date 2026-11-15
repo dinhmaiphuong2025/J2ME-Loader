@@ -91,6 +91,7 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.MainActivity;
 import com.j2me.lixin.R;
 import com.j2me.lixin.config.Config;
 import com.j2me.lixin.databinding.ActivityMicroBinding;
@@ -517,7 +518,42 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void addNewTab() {
-		Toast.makeText(this, R.string.action_new_tab, Toast.LENGTH_SHORT).show();
+		Intent intent = new Intent(this, MainActivity.class);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(intent);
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+		String name = intent.getStringExtra(KEY_MIDLET_NAME);
+		Uri data = intent.getData();
+		if (name == null || data == null) {
+			return;
+		}
+		addNewGameTab(name, data.toString());
+	}
+
+	private void addNewGameTab(String name, String path) {
+		MicroLoader loader = new MicroLoader(this, path);
+		if (!loader.init()) {
+			Config.startApp(this, name, path, true);
+			return;
+		}
+		J2meContext newContext = new J2meContext(name);
+		newContext.setUiHandler(this);
+		tabs.add(new Tab(newContext, loader, name, path));
+		int newIndex = tabs.size() - 1;
+		addTabPill(newIndex);
+		switchTo(newIndex);
+		try {
+			loadMIDlet();
+			MidletThread.resumeApp();
+		} catch (Exception e) {
+			e.printStackTrace();
+			showErrorDialog(e.toString());
+		}
 	}
 
 	@Override
