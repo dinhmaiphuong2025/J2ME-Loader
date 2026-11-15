@@ -17,13 +17,15 @@
 
 package javax.microedition.lcdui.event;
 
+import javax.microedition.shell.J2meContext;
 import javax.microedition.util.LinkedList;
 
 /**
  * The event queue. A really complicated thing.
  */
 public class EventQueue implements Runnable {
-	private static boolean immediate;
+	private J2meContext context;
+	private boolean immediate;
 
 	private final LinkedList<Event> queue = new LinkedList<>();
 	private final Object waiter = new Object();
@@ -47,11 +49,15 @@ public class EventQueue implements Runnable {
 	 * @param value true if the immediate processing mode shoud be enabled
 	 */
 	public static void setImmediate(boolean value) {
-		immediate = value;
+		J2meContext context = J2meContext.current();
+		if (context != null) {
+			context.getEventQueue().immediate = value;
+		}
 	}
 
 	public static boolean isImmediate() {
-		return immediate;
+		J2meContext context = J2meContext.current();
+		return context != null && context.getEventQueue().immediate;
 	}
 
 	/**
@@ -139,8 +145,9 @@ public class EventQueue implements Runnable {
 	 * Start the event loop.
 	 * Repeated calls to this method are ignored.
 	 */
-	public void startProcessing() {
+	public void startProcessing(J2meContext context) {
 		enabled = true;
+		this.context = context;
 
 		if (thread == null) {
 			thread = new Thread(this, "MIDletEventQueue");
@@ -169,6 +176,9 @@ public class EventQueue implements Runnable {
 	 */
 	@Override
 	public void run() {
+		if (context != null) {
+			context.register();
+		}
 		synchronized (interlock) {
 			running = true;
 

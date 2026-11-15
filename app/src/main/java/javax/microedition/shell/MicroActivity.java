@@ -190,8 +190,9 @@ public class MicroActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
-		microLoader.applyConfiguration();
 		context = new J2meContext(appName);
+		context.register();
+		microLoader.applyConfiguration();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {

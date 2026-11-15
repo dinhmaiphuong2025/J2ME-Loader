@@ -55,7 +55,7 @@ public class J2meContext {
 		this.name = name;
 		EventQueue queue = new EventQueue();
 		this.eventQueue = queue;
-		queue.startProcessing();
+		queue.startProcessing(this);
 		contexts.put(name, this);
 	}
 
