@@ -23,6 +23,7 @@ import androidx.appcompat.widget.AppCompatEditText;
 
 public class InvisibleInputView extends AppCompatEditText {
 	private Runnable onBackListener;
+	private Runnable onCommitListener;
 
 	public InvisibleInputView(Context context) {
 		super(context);
@@ -40,6 +41,10 @@ public class InvisibleInputView extends AppCompatEditText {
 		this.onBackListener = onBackListener;
 	}
 
+	public void setOnCommitListener(Runnable onCommitListener) {
+		this.onCommitListener = onCommitListener;
+	}
+
 	@Override
 	public boolean onKeyPreIme(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
@@ -49,5 +54,32 @@ public class InvisibleInputView extends AppCompatEditText {
 			}
 		}
 		return super.onKeyPreIme(keyCode, event);
+	}
+
+	@Override
+	public void onEditorAction(int actionCode) {
+		super.onEditorAction(actionCode);
+		if (onCommitListener != null) {
+			onCommitListener.run();
+		}
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_ENTER) {
+			if (onCommitListener != null) {
+				onCommitListener.run();
+				return true;
+			}
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_ENTER) {
+			return true;
+		}
+		return super.onKeyUp(keyCode, event);
 	}
 }

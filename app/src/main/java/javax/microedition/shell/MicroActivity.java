@@ -1264,23 +1264,26 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if (activeTextBox != null) {
-					activeTextBox.setString(s != null ? s.toString() : "");
+				if (activeTextBox != null && s != null) {
+					try {
+						String text = s.toString();
+						int max = activeTextBox.getMaxSize();
+						if (max > 0 && text.length() > max) {
+							text = text.substring(0, max);
+						}
+						activeTextBox.setString(text);
+					} catch (Exception ignored) {}
 				}
 			}
 		};
 		input.addTextChangedListener(invisibleInputWatcher);
 
 		input.setOnEditorActionListener((v, actionId, event) -> {
-			if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO
-					|| actionId == EditorInfo.IME_ACTION_SEND
-					|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-				commitInvisibleInput();
-				return true;
-			}
-			return false;
+			commitInvisibleInput();
+			return true;
 		});
 
+		input.setOnCommitListener(this::commitInvisibleInput);
 		input.setOnBackListener(this::cancelInvisibleInput);
 
 		input.requestFocus();
@@ -1291,10 +1294,54 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		});
 	}
 
+	private Command findOkCommand(TextBox tb) {
+		Command[] cmds = tb.getCommands();
+		if (cmds == null || cmds.length == 0) return null;
+		if (cmds.length == 1) return cmds[0];
+
+		// 1. Tìm Command có type == Command.OK
+		for (Command cmd : cmds) {
+			if (cmd.getCommandType() == Command.OK) {
+				return cmd;
+			}
+		}
+
+		// 2. Lọc bỏ các command là Cancel/Back/Close
+		List<Command> candidates = new ArrayList<>();
+		for (Command cmd : cmds) {
+			int type = cmd.getCommandType();
+			if (type == Command.CANCEL || type == Command.BACK || type == Command.STOP || type == Command.EXIT) {
+				continue;
+			}
+			String label = cmd.getLabel() != null ? cmd.getLabel().trim().toLowerCase() : "";
+			if (label.contains("hủy") || label.contains("huỷ") || label.contains("đóng")
+					|| label.contains("trở về") || label.contains("quay lại") || label.contains("bỏ qua")
+					|| label.contains("cancel") || label.contains("back") || label.contains("exit") || label.contains("close")) {
+				continue;
+			}
+			candidates.add(cmd);
+		}
+
+		if (!candidates.isEmpty()) {
+			return candidates.get(0);
+		}
+
+		// 3. Fallback: command đầu tiên
+		return cmds[0];
+	}
+
 	private void commitInvisibleInput() {
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
 		activeTextBox = null;
+
+		String text = "";
+		if (binding.hiddenInputView != null) {
+			Editable editable = binding.hiddenInputView.getText();
+			if (editable != null) {
+				text = editable.toString();
+			}
+		}
 
 		hideSoftInput();
 
@@ -1303,21 +1350,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			invisibleInputWatcher = null;
 		}
 
-		Command okCommand = null;
-		Command[] cmds = tb.getCommands();
-		if (cmds != null) {
-			for (Command cmd : cmds) {
-				int type = cmd.getCommandType();
-				if (type == Command.OK || type == Command.SCREEN || type == Command.ITEM) {
-					okCommand = cmd;
-					break;
-				}
+		try {
+			int max = tb.getMaxSize();
+			if (max > 0 && text.length() > max) {
+				text = text.substring(0, max);
 			}
-			if (okCommand == null && cmds.length > 0) {
-				okCommand = cmds[0];
-			}
+			tb.setString(text);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
+		Command okCommand = findOkCommand(tb);
 		if (okCommand != null) {
 			tb.fireCommandAction(okCommand);
 		}
