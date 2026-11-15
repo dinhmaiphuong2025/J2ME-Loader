@@ -47,30 +47,45 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final int PAUSED = 2;
 	private static final int DESTROYED = 3;
 	public static String[] startAfterDestroy;
-	private static MidletThread instance;
+	private final J2meContext context;
 	private final MicroLoader microLoader;
 	private final String mainClass;
 	private MIDlet midlet;
 	private final Handler handler;
 	private int state;
 
-	private MidletThread(MicroLoader microLoader, String mainClass) {
+	private MidletThread(MicroLoader microLoader, String mainClass, J2meContext context) {
 		super("MidletMain");
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
+		this.context = context;
+		context.setMidletThread(this);
 		start();
 		handler = new Handler(getLooper(), this);
 		handler.obtainMessage(INIT).sendToTarget();
 	}
 
-	static void create(MicroLoader microLoader, String mainClass) {
-		instance = new MidletThread(microLoader, mainClass);
+	static void create(MicroLoader microLoader, String mainClass, J2meContext context) {
+		new MidletThread(microLoader, mainClass, context);
+	}
+
+	public static MidletThread getInstance() {
+		J2meContext current = J2meContext.current();
+		if (current != null && current.getMidletThread() != null) {
+			return current.getMidletThread();
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null && activity.getContext() != null) {
+			return activity.getContext().getMidletThread();
+		}
+		return null;
 	}
 
 	public static void notifyDestroyed() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-		if (instance != null) {
-			instance.state = DESTROYED;
+		MidletThread thread = getInstance();
+		if (thread != null) {
+			thread.state = DESTROYED;
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
@@ -83,18 +98,23 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void notifyPaused() {
-		instance.state = PAUSED;
+		MidletThread thread = getInstance();
+		if (thread != null) {
+			thread.state = PAUSED;
+		}
 	}
 
 	static void pauseApp() {
-		if (instance != null)
-			instance.handler.obtainMessage(PAUSE).sendToTarget();
+		MidletThread thread = getInstance();
+		if (thread != null)
+			thread.handler.obtainMessage(PAUSE).sendToTarget();
 	}
 
 	public static void resumeApp() {
 		MicroActivity activity = ContextHolder.getActivity();
-		if (instance != null && activity != null && activity.isVisible())
-			instance.handler.obtainMessage(START).sendToTarget();
+		MidletThread thread = getInstance();
+		if (thread != null && activity != null && activity.isVisible())
+			thread.handler.obtainMessage(START).sendToTarget();
 	}
 
 	static void destroyApp() {
@@ -116,8 +136,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				canvas.postKeyReleased(Canvas.KEY_END);
 			}
 		}
-		if (instance != null) {
-			instance.handler.obtainMessage(DESTROY).sendToTarget();
+		MidletThread thread = getInstance();
+		if (thread != null) {
+			thread.handler.obtainMessage(DESTROY).sendToTarget();
 		}
 	}
 
@@ -128,6 +149,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != UNINITIALIZED) {
 					break;
 				}
+				context.register();
 				try {
 					midlet = microLoader.loadMIDlet(this.mainClass);
 					state = PAUSED;

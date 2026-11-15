@@ -111,6 +111,7 @@ public class MicroActivity extends AppCompatActivity {
 	private boolean statusBarEnabled;
 	private boolean cutoutsEnabled;
 	private MicroLoader microLoader;
+	private J2meContext context;
 	private String appName;
 	private InputMethodManager inputMethodManager;
 	private boolean imeVisible;
@@ -190,6 +191,7 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		microLoader.applyConfiguration();
+		context = new J2meContext(appName);
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {
@@ -282,7 +284,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (size == 0) {
 			throw new Exception("No MIDlets found");
 		} else if (size == 1) {
-			MidletThread.create(microLoader, midletsClassArray[0]);
+			MidletThread.create(microLoader, midletsClassArray[0], context);
 		} else {
 			showMidletDialog(midletsNameArray, midletsClassArray);
 		}
@@ -301,7 +303,7 @@ public class MicroActivity extends AppCompatActivity {
 					}
 					sb.append("Begin app: ").append(names[n]).append(", ").append(clazz);
 					errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
-					MidletThread.create(microLoader, clazz);
+					MidletThread.create(microLoader, clazz, context);
 					MidletThread.resumeApp();
 				})
 				.setOnCancelListener(d -> {
@@ -723,6 +725,10 @@ public class MicroActivity extends AppCompatActivity {
 
 	public String getAppName() {
 		return appName;
+	}
+
+	public J2meContext getContext() {
+		return context;
 	}
 
 	public void toast(@StringRes int message) {
