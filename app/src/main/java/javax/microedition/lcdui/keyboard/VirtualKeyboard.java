@@ -507,7 +507,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			resizeKeyGroup(group);
 		}
 		snapKeys();
-		overlayView.postInvalidate();
+		invalidateView();
 		if (target != null && target.isShown()) {
 			target.updateSize();
 		}
@@ -725,7 +725,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
 			keypad[i].visible = !states[i];
 		}
-		overlayView.postInvalidate();
+		invalidateView();
 	}
 
 	@Override
@@ -834,7 +834,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		highlightGroup(group);
 		handler.removeCallbacks(this);
 		visible = true;
-		overlayView.postInvalidate();
+		invalidateView();
 		hide();
 	}
 
@@ -870,7 +870,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			resizeKeyGroup(group);
 		}
 		snapKeys();
-		overlayView.postInvalidate();
+		invalidateView();
 		int delay = settings.vkHideDelay;
 		if (delay > 0 && obscuresVirtualScreen && layoutEditMode == LAYOUT_EOF) {
 			for (VirtualKey key : associatedKeys) {
@@ -927,7 +927,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						vibrate();
 						associatedKeys[pointer] = key;
 						key.onDown();
-						overlayView.postInvalidate();
+						invalidateView();
 						break;
 					}
 				}
@@ -956,7 +956,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				if (index >= 0) {
 					editedIndex = index;
 					highlightGroup(index);
-					overlayView.postInvalidate();
+					invalidateView();
 				}
 				offsetX = x;
 				offsetY = y;
@@ -980,7 +980,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				} else if (!aKey.contains(x, y)) {
 					associatedKeys[pointer] = null;
 					aKey.onUp();
-					overlayView.postInvalidate();
+					invalidateView();
 					pointerPressed(pointer, x, y);
 				}
 				break;
@@ -1006,7 +1006,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						}
 					}
 					snapKey(editedIndex, 0);
-					overlayView.postInvalidate();
+					invalidateView();
 				}
 				break;
 			case LAYOUT_SCALES:
@@ -1033,7 +1033,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				keyScales[index] = scale;
 				resizeKeyGroup(this.editedIndex);
 				snapKeys();
-				overlayView.postInvalidate();
+				invalidateView();
 				break;
 		}
 		return false;
@@ -1049,7 +1049,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (key != null) {
 				associatedKeys[pointer] = null;
 				key.onUp();
-				overlayView.postInvalidate();
+				invalidateView();
 			}
 		} else if (layoutEditMode == LAYOUT_KEYS) {
 			for (int key = 0; key < keypad.length; key++) {
@@ -1086,7 +1086,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			handler.removeCallbacks(this);
 			if (!visible) {
 				visible = true;
-				overlayView.postInvalidate();
+				invalidateView();
 			}
 		}
 	}
@@ -1110,7 +1110,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void run() {
 		visible = false;
-		overlayView.postInvalidate();
+		invalidateView();
 	}
 
 	@Override
@@ -1119,7 +1119,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (VirtualKey key : keypad) {
 			if (key.hashCode() == hashCode) {
 				key.selected = true;
-				overlayView.postInvalidate();
+				invalidateView();
 				break;
 			}
 		}
@@ -1137,7 +1137,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (VirtualKey key : keypad) {
 			if (key.hashCode() == hashCode) {
 				key.selected = false;
-				overlayView.postInvalidate();
+				invalidateView();
 				break;
 			}
 		}
@@ -1150,6 +1150,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	public void setView(View view) {
 		overlayView = view;
+	}
+
+	private void invalidateView() {
+		if (overlayView != null) {
+			overlayView.postInvalidate();
+		}
 	}
 
 	public int getKeyStatesVodafone() {

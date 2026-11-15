@@ -58,8 +58,17 @@ public class Display {
 
 	private Displayable current;
 
-	public static Display getDisplay(MIDlet midlet) {
+	private static J2meContext getContext() {
 		J2meContext context = J2meContext.current();
+		if (context != null) {
+			return context;
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		return activity != null ? activity.getContext() : null;
+	}
+
+	public static Display getDisplay(MIDlet midlet) {
+		J2meContext context = getContext();
 		if (context == null) {
 			return null;
 		}
@@ -80,21 +89,21 @@ public class Display {
 	}
 
 	public static void initDisplay() {
-		J2meContext context = J2meContext.current();
+		J2meContext context = getContext();
 		if (context != null) {
 			context.setDisplay(null);
 		}
 	}
 
 	public static void postEvent(Event event) {
-		J2meContext context = J2meContext.current();
+		J2meContext context = getContext();
 		if (context != null) {
 			context.getEventQueue().postEvent(event);
 		}
 	}
 
 	static EventQueue getEventQueue() {
-		J2meContext context = J2meContext.current();
+		J2meContext context = getContext();
 		return context != null ? context.getEventQueue() : null;
 	}
 
