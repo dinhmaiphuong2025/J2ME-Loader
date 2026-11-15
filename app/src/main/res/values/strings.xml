@@ -299,4 +299,6 @@
     <string name="msg_unsupported_soundbank">Unsupported soundbank, default bank is used!</string>
     <string name="action_new_tab">New tab</string>
     <string name="action_more">Menu</string>
+    <string name="notif_running_title">J2ME Loader</string>
+    <string name="notif_running_text">Game đang chạy</string>
 </resources>

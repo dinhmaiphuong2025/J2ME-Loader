@@ -91,6 +91,7 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.ForegroundService;
 import com.j2me.lixin.R;
 import com.j2me.lixin.applist.AppItem;
 import com.j2me.lixin.config.Config;
@@ -134,6 +135,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 		super.onCreate(savedInstanceState);
 		ContextHolder.setCurrentActivity(this);
+		ContextCompat.startForegroundService(this, new Intent(this, ForegroundService.class));
 
 		binding = ActivityMicroBinding.inflate(getLayoutInflater());
 		View view = binding.getRoot();
@@ -925,6 +927,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	protected void onDestroy() {
 		// Stop the MIDlet thread explicitly (fixes stuck audio)
 		MidletThread.destroyApp();
+		stopService(new Intent(this, ForegroundService.class));
 		binding = null;
 		super.onDestroy();
 	}
