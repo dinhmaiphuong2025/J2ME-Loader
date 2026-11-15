@@ -385,8 +385,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void setupInsets() {
 		EdgeToEdge.enable(
 				this,
-				SystemBarStyle.dark(ContextCompat.getColor(this, R.color.primary)),
-				SystemBarStyle.dark(Color.BLACK)
+				SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+				SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
 		);
 
 		ViewCompat.setOnApplyWindowInsetsListener(binding.midletFrame, (v, windowInsets) -> {
@@ -397,19 +397,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			Insets cutoutInsets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
 			int safeLeft = Math.max(cutoutInsets.left, sysInsets.left);
 			int safeRight = Math.max(cutoutInsets.right, sysInsets.right);
+			int safeTop = Math.max(cutoutInsets.top, sysInsets.top);
+
+			statusBarInset = safeTop;
+			ViewGroup.LayoutParams params = binding.statusbarView.getLayoutParams();
+			params.height = safeTop;
+			binding.statusbarView.setLayoutParams(params);
 
 			if (isLandscape) {
-				statusBarInset = 0;
-				ViewGroup.LayoutParams params = binding.statusbarView.getLayoutParams();
-				params.height = 0;
-				binding.statusbarView.setLayoutParams(params);
 				// Full màn hình 100% không letterbox
 				v.setPadding(0, 0, 0, 0);
 			} else {
-				statusBarInset = statusBarEnabled ? sysInsets.top : 0;
-				ViewGroup.LayoutParams params = binding.statusbarView.getLayoutParams();
-				params.height = statusBarInset;
-				binding.statusbarView.setLayoutParams(params);
 				v.setPadding(0, 0, 0, sysInsets.bottom);
 			}
 

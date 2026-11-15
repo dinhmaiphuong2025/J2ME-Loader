@@ -109,6 +109,17 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/dynamic_screen_size_toggle"
+                style="@style/SwitchStyle"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/height_config_row"
+                android:checked="false"
+                android:text="@string/pref_dynamic_screen_size"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/keep_aspect_ratio_toggle" />
+
             <Button
                 android:id="@+id/select_screen_background_color"
                 android:layout_width="0dp"
@@ -133,7 +144,7 @@
                 android:textDirection="ltr"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/barrier_screen_config"
-                app:layout_constraintTop_toBottomOf="@+id/keep_aspect_ratio_toggle"
+                app:layout_constraintTop_toBottomOf="@+id/dynamic_screen_size_toggle"
                 tools:ignore="UnusedAttribute" />
 
 

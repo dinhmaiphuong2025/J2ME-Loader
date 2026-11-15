@@ -207,4 +207,6 @@
     <string name="default_account_name">Mặc định</string>
     <string name="close_tab_title">Đóng tab</string>
     <string name="close_tab_confirm">Bạn có muốn đóng tab \"%s\" không?</string>
+    <string name="pref_dynamic_screen_size">Full màn hình tự thích ứng (Dynamic Canvas)</string>
+    <string name="pref_screen_fit_device">Màn hình thiết bị</string>
 </resources>

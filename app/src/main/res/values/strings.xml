@@ -308,4 +308,6 @@
     <string name="default_account_name">Default</string>
     <string name="close_tab_title">Close tab</string>
     <string name="close_tab_confirm">Do you want to close tab \"%s\"?</string>
+    <string name="pref_dynamic_screen_size">Adaptive Fullscreen (Dynamic Canvas)</string>
+    <string name="pref_screen_fit_device">Fit Device Screen</string>
 </resources>

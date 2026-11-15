@@ -201,6 +201,7 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		addFontSizePreset("360 x 640", 22, 26, 30);
 
 		binding.keepAspectRatioToggle.setOnCheckedChangeListener(this::onLockAspectChanged);
+		binding.dynamicScreenSizeToggle.setOnCheckedChangeListener((cb, isChecked) -> onDynamicScreenSizeChanged(isChecked));
 		binding.showScreenSizePresets.setOnClickListener(this::showScreenPresets);
 		binding.swapScreenSides.setOnClickListener(this);
 		binding.addScreenSizeToPresets.setOnClickListener(v -> addResolutionToPresets());
@@ -381,6 +382,33 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		}
 	}
 
+	private void onDynamicScreenSizeChanged(boolean isChecked) {
+		if (isChecked) {
+			if (binding.keepAspectRatioToggle.isChecked()) {
+				binding.keepAspectRatioToggle.setChecked(false);
+			}
+			binding.screenWidth.setEnabled(false);
+			binding.screenHeight.setEnabled(false);
+			binding.swapScreenSides.setEnabled(false);
+			binding.addScreenSizeToPresets.setEnabled(false);
+			binding.keepAspectRatioToggle.setEnabled(false);
+			binding.screenWidth.setText("0");
+			binding.screenHeight.setText("0");
+		} else {
+			binding.screenWidth.setEnabled(true);
+			binding.screenHeight.setEnabled(true);
+			binding.swapScreenSides.setEnabled(true);
+			binding.addScreenSizeToPresets.setEnabled(true);
+			binding.keepAspectRatioToggle.setEnabled(true);
+			int w = parseInt(binding.screenWidth.getText().toString());
+			int h = parseInt(binding.screenHeight.getText().toString());
+			if (w <= 0 && h <= 0) {
+				binding.screenWidth.setText("240");
+				binding.screenHeight.setText("320");
+			}
+		}
+	}
+
 	void loadConfig() {
 		params = ProfilesManager.loadConfig(configDir);
 		if (params == null && defProfile != null) {
@@ -549,6 +577,7 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		screenPresets.clear();
 		customPresets.clear();
 
+		screenPresets.add("0 x 0");
 		screenPresets.add("128 x 128");
 		screenPresets.add("128 x 160");
 		screenPresets.add("132 x 176");
@@ -621,12 +650,33 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 			loadConfig();
 		}
 		int screenWidth = params.screenWidth;
-		if (screenWidth != 0) {
-			binding.screenWidth.setText(Integer.toString(screenWidth));
-		}
 		int screenHeight = params.screenHeight;
-		if (screenHeight != 0) {
-			binding.screenHeight.setText(Integer.toString(screenHeight));
+		boolean isDynamic = (screenWidth <= 0 && screenHeight <= 0);
+		binding.dynamicScreenSizeToggle.setChecked(isDynamic);
+		if (isDynamic) {
+			binding.screenWidth.setText("0");
+			binding.screenHeight.setText("0");
+			binding.screenWidth.setEnabled(false);
+			binding.screenHeight.setEnabled(false);
+			binding.swapScreenSides.setEnabled(false);
+			binding.addScreenSizeToPresets.setEnabled(false);
+			binding.keepAspectRatioToggle.setEnabled(false);
+		} else {
+			binding.screenWidth.setEnabled(true);
+			binding.screenHeight.setEnabled(true);
+			binding.swapScreenSides.setEnabled(true);
+			binding.addScreenSizeToPresets.setEnabled(true);
+			binding.keepAspectRatioToggle.setEnabled(true);
+			if (screenWidth != 0) {
+				binding.screenWidth.setText(Integer.toString(screenWidth));
+			} else {
+				binding.screenWidth.setText("");
+			}
+			if (screenHeight != 0) {
+				binding.screenHeight.setText(Integer.toString(screenHeight));
+			} else {
+				binding.screenHeight.setText("");
+			}
 		}
 		binding.screenBackgroundHexColor.setText(String.format("%06X", params.screenBackgroundColor));
 		binding.scaleRatio.setText(Integer.toString(params.screenScaleRatio));
@@ -686,10 +736,15 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 
 	private void saveParams() {
 		try {
-			int width = parseInt(binding.screenWidth.getText().toString());
-			params.screenWidth = width;
-			int height = parseInt(binding.screenHeight.getText().toString());
-			params.screenHeight = height;
+			if (binding.dynamicScreenSizeToggle.isChecked()) {
+				params.screenWidth = 0;
+				params.screenHeight = 0;
+			} else {
+				int width = parseInt(binding.screenWidth.getText().toString());
+				params.screenWidth = width;
+				int height = parseInt(binding.screenHeight.getText().toString());
+				params.screenHeight = height;
+			}
 			try {
 				params.screenBackgroundColor = Integer.parseInt(
 						binding.screenBackgroundHexColor.getText().toString(), 16);
@@ -902,8 +957,15 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 				.setAdapter(presetsAdapter, (d, which) -> {
 					String string = screenPresets.get(which);
 					int separator = string.indexOf(RESOLUTION_TEMPLATE);
-					binding.screenWidth.setText(string.substring(0, separator));
-					binding.screenHeight.setText(string.substring(separator + 3));
+					String wStr = string.substring(0, separator);
+					String hStr = string.substring(separator + 3);
+					binding.screenWidth.setText(wStr);
+					binding.screenHeight.setText(hStr);
+					if ("0".equals(wStr) && "0".equals(hStr)) {
+						binding.dynamicScreenSizeToggle.setChecked(true);
+					} else {
+						binding.dynamicScreenSizeToggle.setChecked(false);
+					}
 				})
 				.setNegativeButton(android.R.string.cancel, null)
 				.create();
@@ -1072,7 +1134,11 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 				convertView = getLayoutInflater().inflate(R.layout.item_resolution_preset, parent, false);
 			}
 			String item = getItem(position);
-			((TextView) convertView.findViewById(R.id.resolution_text)).setText(item);
+			if ("0 x 0".equals(item)) {
+				((TextView) convertView.findViewById(R.id.resolution_text)).setText("0 x 0 (" + getString(R.string.pref_screen_fit_device) + ")");
+			} else {
+				((TextView) convertView.findViewById(R.id.resolution_text)).setText(item);
+			}
 			View icon = convertView.findViewById(R.id.custom_icon);
 			if (customPresets.contains(item)) {
 				icon.setVisibility(View.VISIBLE);
