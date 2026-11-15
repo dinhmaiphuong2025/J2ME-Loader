@@ -47,6 +47,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,8 +76,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Canvas;
@@ -96,6 +99,7 @@ import com.j2me.lixin.R;
 import com.j2me.lixin.applist.AppItem;
 import com.j2me.lixin.config.Config;
 import com.j2me.lixin.databinding.ActivityMicroBinding;
+import com.j2me.lixin.util.AccountManager;
 import com.j2me.lixin.util.AppUtils;
 import com.j2me.lixin.util.Constants;
 import com.j2me.lixin.util.LogUtils;
@@ -194,10 +198,16 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			finish();
 			return;
 		}
+		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+		showAccountPicker(appName, appPath, true);
+	}
+
+	private void launchFirstTab(String accountName) {
 		context = new J2meContext(appName);
+		context.setAccountName(accountName);
 		context.setUiHandler(this);
 		context.register();
-		tabs.add(new Tab(context, microLoader, appName, appPath));
+		tabs.add(new Tab(context, microLoader, appName, appPath, accountName));
 		activeIndex = 0;
 		addTabPill(0);
 		microLoader.applyConfiguration();
@@ -213,7 +223,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		setOrientation(orientation);
 		pauseDisabled = microLoader.isPauseDisabled();
 		menuKey = microLoader.getMenuKeyCode();
-		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 
 		try {
 			loadMIDlet();
@@ -539,13 +548,99 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				.setTitle(R.string.select_dialog_title)
 				.setItems(names, (d, which) -> {
 					AppItem item = apps.get(which);
-					addNewGameTab(item.getTitle(), item.getPathExt());
+					showAccountPicker(item.getTitle(), item.getPathExt(), false);
 				})
 				.show();
 	}
 
-	private void addNewGameTab(String name, String path) {
+	private void showAccountPicker(String name, String path, boolean isFirstTab) {
+		List<String> accounts = AccountManager.getAccounts(path);
+		Set<String> runningAccounts = new HashSet<>();
+		for (Tab t : tabs) {
+			if (path.equals(t.appPath)) {
+				runningAccounts.add(t.accountName != null ? t.accountName : AccountManager.DEFAULT_ACCOUNT);
+			}
+		}
+
+		List<String> available = new ArrayList<>();
+		for (String acc : accounts) {
+			if (!runningAccounts.contains(acc)) {
+				available.add(acc);
+			}
+		}
+
+		String createNewText = getString(R.string.create_new_account);
+		List<String> dialogOptions = new ArrayList<>(available);
+		dialogOptions.add(createNewText);
+
+		String[] items = dialogOptions.toArray(new String[0]);
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.select_account_title) + " - " + name);
+		builder.setItems(items, (dialog, which) -> {
+			if (which < available.size()) {
+				String selectedAccount = available.get(which);
+				if (isFirstTab) {
+					launchFirstTab(selectedAccount);
+				} else {
+					addNewGameTab(name, path, selectedAccount);
+				}
+			} else {
+				showCreateAccountDialog(name, path, isFirstTab);
+			}
+		});
+
+		if (isFirstTab) {
+			builder.setOnCancelListener(d -> finish());
+		}
+		builder.show();
+	}
+
+	private void showCreateAccountDialog(String name, String path, boolean isFirstTab) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.new_account_title);
+
+		final EditText input = new EditText(this);
+		input.setHint(R.string.account_name_hint);
+		input.setSingleLine(true);
+		float density = getResources().getDisplayMetrics().density;
+		int padding = (int) (16 * density);
+		FrameLayout container = new FrameLayout(this);
+		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+				FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+		params.leftMargin = padding;
+		params.rightMargin = padding;
+		input.setLayoutParams(params);
+		container.addView(input);
+		builder.setView(container);
+
+		builder.setPositiveButton(android.R.string.ok, (d, which) -> {
+			String accName = input.getText().toString().trim();
+			accName = AccountManager.sanitizeAccountName(accName);
+			if (accName.isEmpty()) {
+				accName = "acc_" + (System.currentTimeMillis() % 10000);
+			}
+			AccountManager.addAccount(path, accName);
+			if (isFirstTab) {
+				launchFirstTab(accName);
+			} else {
+				addNewGameTab(name, path, accName);
+			}
+		});
+		builder.setNegativeButton(android.R.string.cancel, (d, which) -> {
+			if (isFirstTab) {
+				finish();
+			}
+		});
+		if (isFirstTab) {
+			builder.setOnCancelListener(d -> finish());
+		}
+		builder.show();
+	}
+
+	private void addNewGameTab(String name, String path, String accountName) {
 		J2meContext newContext = new J2meContext(name);
+		newContext.setAccountName(accountName);
 		newContext.setUiHandler(this);
 		newContext.register();
 		MicroLoader loader = new MicroLoader(this, path);
@@ -554,7 +649,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			Config.startApp(this, name, path, true);
 			return;
 		}
-		tabs.add(new Tab(newContext, loader, name, path));
+		tabs.add(new Tab(newContext, loader, name, path, accountName));
 		int newIndex = tabs.size() - 1;
 		addTabPill(newIndex);
 		switchTo(newIndex);
@@ -785,12 +880,24 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private void addTabPill(int index) {
 		TextView pill = new TextView(this);
-		pill.setText(tabs.get(index).name);
+		Tab tab = tabs.get(index);
+		String title = tab.name;
+		if (tab.accountName != null && !tab.accountName.isEmpty() && !AccountManager.DEFAULT_ACCOUNT.equals(tab.accountName)) {
+			title = tab.name + " (" + tab.accountName + ")";
+		}
+		pill.setText(title);
 		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
 		pill.setSingleLine(true);
 		pill.setEllipsize(TextUtils.TruncateAt.END);
 		pill.setTag(index);
-		pill.setOnClickListener(v -> switchTo(index));
+		pill.setOnClickListener(v -> switchTo((Integer) v.getTag()));
+		pill.setOnLongClickListener(v -> {
+			int idx = (Integer) v.getTag();
+			if (idx >= 0 && idx < tabs.size()) {
+				showCloseTabDialog(tabs.get(idx));
+			}
+			return true;
+		});
 		float density = getResources().getDisplayMetrics().density;
 		pill.setPadding((int) (12 * density), (int) (6 * density), (int) (12 * density), (int) (6 * density));
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -801,6 +908,21 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		updatePills();
 	}
 
+	private void showCloseTabDialog(Tab tab) {
+		String title = tab.name;
+		if (tab.accountName != null && !tab.accountName.isEmpty() && !AccountManager.DEFAULT_ACCOUNT.equals(tab.accountName)) {
+			title = tab.name + " (" + tab.accountName + ")";
+		}
+		new AlertDialog.Builder(this)
+				.setTitle(R.string.close_tab_title)
+				.setMessage(getString(R.string.close_tab_confirm, title))
+				.setPositiveButton(android.R.string.ok, (d, w) -> {
+					closeTab(tab.context);
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
 	private void updatePills() {
 		TypedValue onSurface = new TypedValue();
 		TypedValue onPrimaryContainer = new TypedValue();
@@ -809,6 +931,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		int count = binding.tabBar.getChildCount();
 		for (int i = 0; i < count; i++) {
 			TextView pill = (TextView) binding.tabBar.getChildAt(i);
+			pill.setTag(i);
 			boolean active = i == activeIndex;
 			pill.setBackgroundResource(active ? R.drawable.bg_tab_pill_active : R.drawable.bg_tab_pill);
 			pill.setTextColor(active ? onPrimaryContainer.data : onSurface.data);
@@ -820,9 +943,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			return;
 		}
 		Tab oldTab = tabs.get(activeIndex);
-		if (oldTab.context.getMidletThread() != null) {
-			oldTab.context.register();
-			MidletThread.pauseApp();
+		if (oldTab.loader != null && !oldTab.loader.isPauseDisabled()) {
+			if (oldTab.context.getMidletThread() != null) {
+				oldTab.context.register();
+				MidletThread.pauseApp();
+			}
 		}
 		activeIndex = index;
 		activateActiveTab();
@@ -862,8 +987,15 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			finish();
 			return;
 		}
-		tabs.remove(index);
+		Tab closedTab = tabs.remove(index);
 		binding.tabBar.removeViewAt(index);
+		if (closedTab.context != null) {
+			if (closedTab.context.getMidletThread() != null) {
+				closedTab.context.register();
+				MidletThread.destroyApp();
+			}
+			closedTab.context.unregister();
+		}
 		if (tabs.isEmpty()) {
 			finish();
 			return;
@@ -885,12 +1017,14 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		final MicroLoader loader;
 		final String name;
 		final String appPath;
+		final String accountName;
 
-		Tab(J2meContext context, MicroLoader loader, String name, String appPath) {
+		Tab(J2meContext context, MicroLoader loader, String name, String appPath, String accountName) {
 			this.context = context;
 			this.loader = loader;
 			this.name = name;
 			this.appPath = appPath;
+			this.accountName = accountName;
 		}
 	}
 

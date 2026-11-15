@@ -55,32 +55,45 @@ public class AndroidRecordStoreManager implements RecordStoreManager {
 
 	private final static Object NULL_STORE = new Object();
 
-
-	private Map<String, Object> recordStores = null;
+	private final Map<String, Map<String, Object>> storesByDir = new ConcurrentHashMap<>();
 
 	@Override
 	public String getName() {
 		return "Android record store";
 	}
 
-	private synchronized void initializeIfNecessary() {
-		if (recordStores == null) {
-			recordStores = new ConcurrentHashMap<>();
-			String[] list = new File(AppClassLoader.getDataDir()).list();
-			if (list != null) {
-				for (String fileName : list) {
-					if (fileName.endsWith(RECORD_STORE_HEADER_SUFFIX)) {
-						recordStores.put(fileName.substring(0,
-								fileName.length() - RECORD_STORE_HEADER_SUFFIX.length()), NULL_STORE);
+	private Map<String, Object> getRecordStores() {
+		String dir = AppClassLoader.getDataDir();
+		if (dir == null) dir = "";
+		Map<String, Object> stores = storesByDir.get(dir);
+		if (stores == null) {
+			synchronized (this) {
+				stores = storesByDir.get(dir);
+				if (stores == null) {
+					stores = new ConcurrentHashMap<>();
+					File dataDir = new File(dir);
+					if (!dataDir.exists()) {
+						dataDir.mkdirs();
 					}
+					String[] list = dataDir.list();
+					if (list != null) {
+						for (String fileName : list) {
+							if (fileName.endsWith(RECORD_STORE_HEADER_SUFFIX)) {
+								stores.put(fileName.substring(0,
+										fileName.length() - RECORD_STORE_HEADER_SUFFIX.length()), NULL_STORE);
+							}
+						}
+					}
+					storesByDir.put(dir, stores);
 				}
 			}
 		}
+		return stores;
 	}
 
 	@Override
 	public void deleteRecordStore(String recordStoreName) throws RecordStoreException {
-		initializeIfNecessary();
+		Map<String, Object> recordStores = getRecordStores();
 
 		recordStoreName = recordStoreName.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "");
 		Object value = recordStores.get(recordStoreName);
@@ -111,7 +124,7 @@ public class AndroidRecordStoreManager implements RecordStoreManager {
 	@Override
 	public RecordStore openRecordStore(String recordStoreName, boolean createIfNecessary)
 			throws RecordStoreException {
-		initializeIfNecessary();
+		Map<String, Object> recordStores = getRecordStores();
 		recordStoreName = recordStoreName.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "");
 
 		Object value = recordStores.get(recordStoreName);
@@ -178,8 +191,7 @@ public class AndroidRecordStoreManager implements RecordStoreManager {
 
 	@Override
 	public String[] listRecordStores() {
-		initializeIfNecessary();
-
+		Map<String, Object> recordStores = getRecordStores();
 		String[] result = recordStores.keySet().toArray(new String[0]);
 
 		if (result.length > 0) {

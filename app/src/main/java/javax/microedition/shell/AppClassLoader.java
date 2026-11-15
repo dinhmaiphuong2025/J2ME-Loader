@@ -42,6 +42,7 @@ public class AppClassLoader extends DexClassLoader {
 	private static ZipFile zipFile;
 	private static String dataDir;
 	private static File oldResDir;
+	private ZipFile zipFileInstance;
 
 	AppClassLoader(String paths, String tmpDir, ClassLoader parent, File appDir) {
 		super(paths, tmpDir, null, parent);
@@ -49,13 +50,33 @@ public class AppClassLoader extends DexClassLoader {
 			throw new NullPointerException("App path is null");
 		oldResDir = new File(appDir, Config.MIDLET_RES_DIR);
 		instance = this;
-		setDataDir(appDir);
 		File jar = new File(appDir, Config.MIDLET_RES_FILE);
-		zipFile = jar.exists() ? new ZipFile(jar) : null;
+		this.zipFileInstance = jar.exists() ? new ZipFile(jar) : null;
+		zipFile = this.zipFileInstance;
+		J2meContext context = J2meContext.current();
+		if (context != null) {
+			context.setClassLoader(this);
+		}
+		setDataDir(appDir);
+	}
+
+	public ZipFile getZipFile() {
+		return zipFileInstance;
 	}
 
 	public static void setDataDir(File appDir) {
-		dataDir = appDir.getParentFile().getParent() + Config.MIDLET_DATA_DIR + appDir.getName();
+		String base = appDir.getParentFile().getParent() + Config.MIDLET_DATA_DIR + appDir.getName();
+		J2meContext context = J2meContext.current();
+		String account = context != null ? context.getAccountName() : null;
+		String dir = (account == null || account.isEmpty() || "Mặc định".equals(account)) ? base : base + File.separator + account;
+		File dirFile = new File(dir);
+		if (!dirFile.exists()) {
+			dirFile.mkdirs();
+		}
+		dataDir = dir;
+		if (context != null) {
+			context.setDataDir(dir);
+		}
 	}
 
 	public static InputStream getResourceAsStream(Class<?> resClass, String resName) {
@@ -85,6 +106,10 @@ public class AppClassLoader extends DexClassLoader {
 	}
 
 	public static String getDataDir() {
+		J2meContext context = J2meContext.current();
+		if (context != null && context.getDataDir() != null) {
+			return context.getDataDir();
+		}
 		return dataDir;
 	}
 
@@ -127,7 +152,12 @@ public class AppClassLoader extends DexClassLoader {
 				return null;
 			}
 		}
-		if (zipFile == null) {
+		ZipFile zf = zipFile;
+		J2meContext ctx = J2meContext.current();
+		if (ctx != null && ctx.getClassLoader() != null && ctx.getClassLoader().getZipFile() != null) {
+			zf = ctx.getClassLoader().getZipFile();
+		}
+		if (zf == null) {
 			final File file = new File(oldResDir, name);
 			try {
 				return FileUtils.getBytes(file);
@@ -138,11 +168,11 @@ public class AppClassLoader extends DexClassLoader {
 		}
 		DataInputStream dis = null;
 		try {
-			FileHeader header = zipFile.getFileHeader(name);
+			FileHeader header = zf.getFileHeader(name);
 			if (header == null) {
 				return null;
 			}
-			dis = new DataInputStream(zipFile.getInputStream(header));
+			dis = new DataInputStream(zf.getInputStream(header));
 			byte[] data = new byte[(int) header.getUncompressedSize()];
 			dis.readFully(data);
 			return data;

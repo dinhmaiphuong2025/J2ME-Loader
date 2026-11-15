@@ -35,6 +35,7 @@ public class J2meContext {
 	private static final InheritableThreadLocal<J2meContext> currentContext = new InheritableThreadLocal<>();
 	private static final Map<String, J2meContext> contexts = new ConcurrentHashMap<>();
 
+	private final String id;
 	private final String name;
 	private AppClassLoader classLoader;
 	private Display display;
@@ -42,6 +43,8 @@ public class J2meContext {
 	private MidletThread midletThread;
 	private VirtualKeyboard vk;
 	private UiHandler uiHandler;
+	private String accountName;
+	private String dataDir;
 
 	public interface UiHandler {
 		void onDisplayableChanged(Displayable displayable);
@@ -52,11 +55,12 @@ public class J2meContext {
 	}
 
 	public J2meContext(String name) {
+		this.id = name + "#" + System.identityHashCode(this);
 		this.name = name;
 		EventQueue queue = new EventQueue();
 		this.eventQueue = queue;
 		queue.startProcessing(this);
-		contexts.put(name, this);
+		contexts.put(id, this);
 	}
 
 	public static J2meContext current() {
@@ -119,12 +123,29 @@ public class J2meContext {
 		this.uiHandler = uiHandler;
 	}
 
+	/** Account name for this context; null or empty means the default (un-suffixed) data dir. */
+	public String getAccountName() {
+		return accountName;
+	}
+
+	public void setAccountName(String accountName) {
+		this.accountName = accountName;
+	}
+
+	public String getDataDir() {
+		return dataDir;
+	}
+
+	public void setDataDir(String dataDir) {
+		this.dataDir = dataDir;
+	}
+
 	public void register() {
 		currentContext.set(this);
 	}
 
 	public void unregister() {
 		currentContext.remove();
-		contexts.remove(name);
+		contexts.remove(id);
 	}
 }

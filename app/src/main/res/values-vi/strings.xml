@@ -196,4 +196,15 @@
     <string name="error_name_exists">Đã tồn tại, nhập tên khác</string>
     <string name="default_label">"%s (mặc định)"</string>
     <string name="not_saved_exists">Đã tồn tại</string>
+    <string name="action_new_tab">Tab mới</string>
+    <string name="action_more">Menu</string>
+    <string name="notif_running_title">J2ME Loader</string>
+    <string name="notif_running_text">Game đang chạy</string>
+    <string name="select_account_title">Chọn tài khoản</string>
+    <string name="create_new_account">+ Tạo tài khoản mới</string>
+    <string name="new_account_title">Tạo tài khoản mới</string>
+    <string name="account_name_hint">Nhập tên tài khoản</string>
+    <string name="default_account_name">Mặc định</string>
+    <string name="close_tab_title">Đóng tab</string>
+    <string name="close_tab_confirm">Bạn có muốn đóng tab \"%s\" không?</string>
 </resources>

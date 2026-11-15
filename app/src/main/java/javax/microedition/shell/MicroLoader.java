@@ -216,7 +216,10 @@ public class MicroLoader {
 				+ (country.length() == 2 ? "-" + country : ""));
 		// FIXME: 21.10.2020 Config.getDataDir() may be in different storage
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
-		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName;
+		J2meContext context = J2meContext.current();
+		String account = context != null ? context.getAccountName() : null;
+		String accountSuffix = (account == null || account.isEmpty() || "Mặc định".equals(account)) ? "" : "/" + account;
+		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName + accountSuffix;
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
 		System.setProperty("fileconn.dir.cache", dataUri + "/cache");

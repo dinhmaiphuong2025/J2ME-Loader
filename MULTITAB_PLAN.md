@@ -77,21 +77,30 @@ dễ phát sinh bug render nhất. Cần test game đơn kỹ sau mỗi bước.
 
 ---
 
-## Pha 3 — Data dir per-tab: tách profile
-Giải quyết (C). Chỉ quan trọng khi mở CÙNG 1 game nhiều tab.
+## Pha 3 — Hệ thống tài khoản (profile) [ĐÃ XONG - BUILD XANH]
+Giải quyết (C) + tính năng chọn tài khoản người dùng yêu cầu.
 
-Vấn đề: `AppClassLoader` có `instance / zipFile / dataDir` static → 2 tab cùng
-game dùng chung thư mục save → chung tài khoản → game chặn anti-DDOS.
+Hành vi đã triển khai:
+- Mỗi game có danh sách TÀI KHOẢN riêng, được LƯU LẠI (không mất khi tắt app).
+- Mỗi tài khoản = 1 bộ save riêng (nhân vật/tiến độ riêng, tách data dir).
+- Mở game (chơi đơn hoặc thêm tab) → cho CHỌN tài khoản, kèm nút "tạo tài khoản mới".
+- Tài khoản đang chạy ở tab khác → ẨN khỏi danh sách (không chọn được) → chặn
+  mở 2 phiên cùng 1 tài khoản (triệt tiêu nguyên nhân anti-DDOS).
+- Mỗi pill tab hiện "tên game + tài khoản". Đóng tab → tài khoản đó rảnh lại.
+- Long-press vào tab pill để đóng tab nhanh.
+- Tách cache in-memory của RecordStoreManager (RMS) theo từng thư mục tài khoản.
 
 Các bước:
-1. `AppClassLoader` bỏ static → mỗi context giữ 1 instance riêng.
-2. `J2meContext` thêm field classLoader + dataDir.
-3. Data dir: tab đầu giữ nguyên (`Config.getDataDir() + appDirName`) để không
-   mất save cũ; tab thứ 2 trở đi dùng hậu tố (`..._2`, `..._3`) → profile mới toanh.
-4. Verify: mở cùng game 2 tab → tab 2 tài khoản mới, tab 1 vẫn tài khoản cũ.
+1. Tách thư mục lưu data riêng cho từng tài khoản (mỗi tài khoản 1 thư mục
+   riêng trong data dir của game). Tài khoản đầu giữ nguyên save cũ để không
+   mất dữ liệu đang chơi.
+2. Lưu danh sách tài khoản (tên + thư mục) vào file, đọc lại khi cần.
+3. Giao diện chọn tài khoản (dialog): danh sách tài khoản + nút tạo mới.
+4. Logic ẩn tài khoản đang chạy (dựa trên các tab đang mở).
+5. Hiển thị tên game + tài khoản trên mỗi pill tab.
 
-Rủi ro: đụng `ContextHolder.openFileInput/openFileOutput` + `getFileByName` +
-`AppClassLoader.getDataDir` (nhiều chỗ gọi). Phải đổi hết về dataDir của context.
+Rủi ro: phần tách data đụng nhiều chỗ lưu/đọc file; phải đổi hết về thư mục
+của tài khoản đang chọn. Làm từng bước + test game đơn sau mỗi bước.
 
 ---
 
