@@ -40,10 +40,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:paddingStart="8dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="0dp"
                     android:paddingEnd="4dp"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp" />
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp" />
             </HorizontalScrollView>
 
             <ImageButton
@@ -59,6 +60,7 @@
                 android:id="@+id/btn_menu"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:layout_marginStart="2dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_more"
                 android:src="@drawable/ic_more_vert"

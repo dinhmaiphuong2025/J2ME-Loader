@@ -165,9 +165,16 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		ContextHolder.setCurrentActivity(this);
 		ContextCompat.startForegroundService(this, new Intent(this, ForegroundService.class));
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+			WindowManager.LayoutParams lp = getWindow().getAttributes();
+			lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+			getWindow().setAttributes(lp);
+		}
+
 		binding = ActivityMicroBinding.inflate(getLayoutInflater());
 		View view = binding.getRoot();
 		setContentView(view);
+		updateTopBarDimensions();
 		binding.btnMenu.setOnClickListener(v -> showMenu());
 		binding.btnAddTab.setOnClickListener(v -> addNewTab());
 
@@ -383,23 +390,45 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		);
 
 		ViewCompat.setOnApplyWindowInsetsListener(binding.midletFrame, (v, windowInsets) -> {
-			int typeMask = WindowInsetsCompat.Type.systemBars();
-			if (!cutoutsEnabled) {
-				typeMask |= WindowInsetsCompat.Type.displayCutout();
+			boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+			float density = getResources().getDisplayMetrics().density;
+
+			Insets sysInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			Insets cutoutInsets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
+			int safeLeft = Math.max(cutoutInsets.left, sysInsets.left);
+			int safeRight = Math.max(cutoutInsets.right, sysInsets.right);
+
+			if (isLandscape) {
+				statusBarInset = 0;
+				ViewGroup.LayoutParams params = binding.statusbarView.getLayoutParams();
+				params.height = 0;
+				binding.statusbarView.setLayoutParams(params);
+				// Full màn hình 100% không letterbox
+				v.setPadding(0, 0, 0, 0);
+			} else {
+				statusBarInset = statusBarEnabled ? sysInsets.top : 0;
+				ViewGroup.LayoutParams params = binding.statusbarView.getLayoutParams();
+				params.height = statusBarInset;
+				binding.statusbarView.setLayoutParams(params);
+				v.setPadding(0, 0, 0, sysInsets.bottom);
 			}
-			Insets insets = windowInsets.getInsets(typeMask);
-			statusBarInset = insets.top;
 
-			ViewGroup.LayoutParams params = binding.statusbarView.getLayoutParams();
-			params.height = insets.top;
-			binding.statusbarView.setLayoutParams(params);
+			// Áp dụng safe area padding chuẩn cho top_bar
+			int minSidePad = (int) (14 * density);
+			int padStart = Math.max(minSidePad, safeLeft);
+			int padEnd = Math.max(minSidePad, safeRight);
+			int padTop = isLandscape ? (int) (2 * density) : (int) (6 * density);
+			int padBottom = isLandscape ? (int) (2 * density) : (int) (6 * density);
+			binding.topBar.setPadding(padStart, padTop, padEnd, padBottom);
 
-			v.setPadding(insets.left, 0, insets.right, insets.bottom);
 			updateOverlayLocation();
 
 			int imeBottom = windowInsets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-			int imeOffset = Math.max(0, imeBottom - insets.bottom);
+			int imeOffset = Math.max(0, imeBottom - (isLandscape ? 0 : sysInsets.bottom));
 			if (binding.floatingInputBar != null) {
+				int flPadStart = Math.max((int) (12 * density), safeLeft);
+				int flPadEnd = Math.max((int) (12 * density), safeRight);
+				binding.floatingInputBar.setPadding(flPadStart, (int) (6 * density), flPadEnd, (int) (6 * density));
 				binding.floatingInputBar.setTranslationY(-imeOffset);
 			}
 
@@ -411,9 +440,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 					@NonNull
 					@Override
 					public WindowInsetsCompat onProgress(@NonNull WindowInsetsCompat insets, @NonNull List<WindowInsetsAnimationCompat> runningAnimations) {
+						boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 						int navBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
 						int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-						int imeOffset = Math.max(0, imeBottom - navBottom);
+						int imeOffset = Math.max(0, imeBottom - (isLandscape ? 0 : navBottom));
 						if (binding.floatingInputBar != null) {
 							binding.floatingInputBar.setTranslationY(-imeOffset);
 						}
@@ -443,7 +473,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void updateOverlayLocation() {
-		binding.overlayView.setLocation(0, statusBarInset + binding.topBar.getHeight());
+		binding.topBar.post(() -> {
+			binding.overlayView.setLocation(0, statusBarInset + binding.topBar.getHeight());
+		});
 	}
 
 	private WindowInsetsControllerCompat getWindowInsetsController() {
@@ -1080,7 +1112,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		Tab tab = tabs.get(index);
 		String title = (tab.accountName != null && !tab.accountName.isEmpty()) ? tab.accountName : tab.name;
 		pill.setText(title);
-		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+		boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, isLandscape ? 12 : 13);
 		pill.setSingleLine(true);
 		pill.setEllipsize(TextUtils.TruncateAt.END);
 		pill.setGravity(Gravity.CENTER_VERTICAL);
@@ -1106,19 +1139,72 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (bm != null) {
 			RoundedBitmapDrawable rbd = RoundedBitmapDrawableFactory.create(getResources(), bm);
 			rbd.setCornerRadius(4 * density);
-			int iconSize = (int) (18 * density);
+			int iconSize = isLandscape ? (int) (15 * density) : (int) (18 * density);
 			rbd.setBounds(0, 0, iconSize, iconSize);
 			pill.setCompoundDrawablesRelative(rbd, null, null, null);
-			pill.setCompoundDrawablePadding((int) (6 * density));
+			pill.setCompoundDrawablePadding((int) ((isLandscape ? 4 : 6) * density));
 		}
 
-		pill.setPadding((int) (10 * density), (int) (6 * density), (int) (12 * density), (int) (6 * density));
+		int vPad = isLandscape ? (int) (3 * density) : (int) (6 * density);
+		pill.setPadding((int) (10 * density), vPad, (int) (12 * density), vPad);
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		lp.setMarginEnd((int) (6 * density));
 		pill.setLayoutParams(lp);
 		binding.tabBar.addView(pill);
 		updatePills();
+	}
+
+	private void updateTopBarDimensions() {
+		if (binding == null) return;
+		boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+		float density = getResources().getDisplayMetrics().density;
+		int btnSize = isLandscape ? (int) (32 * density) : (int) (40 * density);
+		int btnPad = isLandscape ? (int) (6 * density) : (int) (8 * density);
+
+		ViewGroup.LayoutParams lpAdd = binding.btnAddTab.getLayoutParams();
+		if (lpAdd != null) {
+			lpAdd.width = btnSize;
+			lpAdd.height = btnSize;
+			binding.btnAddTab.setLayoutParams(lpAdd);
+			binding.btnAddTab.setPadding(btnPad, btnPad, btnPad, btnPad);
+		}
+
+		ViewGroup.LayoutParams lpMenu = binding.btnMenu.getLayoutParams();
+		if (lpMenu != null) {
+			lpMenu.width = btnSize;
+			lpMenu.height = btnSize;
+			binding.btnMenu.setLayoutParams(lpMenu);
+			binding.btnMenu.setPadding(btnPad, btnPad, btnPad, btnPad);
+		}
+
+		int count = binding.tabBar.getChildCount();
+		int iconSize = isLandscape ? (int) (15 * density) : (int) (18 * density);
+		int vPad = isLandscape ? (int) (3 * density) : (int) (6 * density);
+		for (int i = 0; i < count; i++) {
+			TextView pill = (TextView) binding.tabBar.getChildAt(i);
+			pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, isLandscape ? 12 : 13);
+			pill.setPadding((int) (10 * density), vPad, (int) (12 * density), vPad);
+			android.graphics.drawable.Drawable[] drawables = pill.getCompoundDrawablesRelative();
+			if (drawables != null && drawables.length > 0 && drawables[0] != null) {
+				drawables[0].setBounds(0, 0, iconSize, iconSize);
+				pill.setCompoundDrawablesRelative(drawables[0], null, null, null);
+				pill.setCompoundDrawablePadding((int) ((isLandscape ? 4 : 6) * density));
+			}
+		}
+		updatePills();
+	}
+
+	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		updateTopBarDimensions();
+		ViewCompat.requestApplyInsets(binding.midletFrame);
+		Displayable cur = current;
+		if (cur instanceof Canvas) {
+			((Canvas) cur).updateSize();
+			((Canvas) cur).repaint();
+		}
 	}
 
 	private void showCloseTabDialog(Tab tab) {
