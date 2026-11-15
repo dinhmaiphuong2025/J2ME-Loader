@@ -96,20 +96,37 @@
         android:focusable="true"
         android:visibility="gone">
 
-        <javax.microedition.shell.InvisibleInputView
-            android:id="@+id/floating_input_edit"
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="42dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_floating_input"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textSize="15sp"
-            android:textColor="?attr/colorOnSurface"
-            android:singleLine="true"
-            android:imeOptions="actionDone|flagNoFullscreen|flagNoExtractUi"
-            android:importantForAutofill="no"
-            tools:ignore="LabelFor,TextFields" />
+            android:layout_weight="1">
+
+            <javax.microedition.shell.InvisibleInputView
+                android:id="@+id/floating_input_edit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_floating_input"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textSize="15sp"
+                android:textColor="?attr/colorOnSurface"
+                android:singleLine="true"
+                android:imeOptions="actionDone|flagNoFullscreen|flagNoExtractUi"
+                android:importantForAutofill="no"
+                tools:ignore="LabelFor,TextFields" />
+
+            <ImageView
+                android:id="@+id/btn_floating_password_toggle"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="end|center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@null"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_visibility_off"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <Button
             android:id="@+id/btn_floating_cancel"

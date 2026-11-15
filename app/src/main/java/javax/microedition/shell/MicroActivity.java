@@ -31,6 +31,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -42,6 +43,7 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -1277,12 +1279,14 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private Command activeOkCommand;
 	private Command activeCancelCommand;
+	private boolean isPasswordVisible = false;
 
 	private void startFloatingInput(TextBox textBox) {
 		Log.e("DEBUG_INPUT", "startFloatingInput CALLED: tb=" + textBox + ", title=" + (textBox != null ? textBox.getTitle() : "null")
 				+ ", cmds=" + (textBox != null && textBox.getCommands() != null ? Arrays.toString(textBox.getCommands()) : "null")
 				+ ", currentStr=" + (textBox != null ? textBox.getString() : "null"));
 		this.activeTextBox = textBox;
+		this.isPasswordVisible = false;
 		if (binding.floatingInputBar == null || binding.floatingInputEdit == null) return;
 
 		InvisibleInputView input = binding.floatingInputEdit;
@@ -1292,6 +1296,15 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 
 		int constraints = textBox.getConstraints();
+		boolean isPassword = (constraints & TextField.PASSWORD) != 0;
+		if (!isPassword && textBox.getTitle() != null) {
+			String titleLower = textBox.getTitle().trim().toLowerCase();
+			if (titleLower.contains("mật khẩu") || titleLower.contains("mat khau")
+					|| titleLower.contains("password") || titleLower.equals("pass")) {
+				isPassword = true;
+			}
+		}
+
 		int inputType = InputType.TYPE_CLASS_TEXT;
 		switch (constraints & TextField.CONSTRAINT_MASK) {
 			case TextField.NUMERIC:
@@ -1314,17 +1327,61 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				break;
 		}
 
-		if ((constraints & TextField.PASSWORD) != 0) {
+		if (isPassword) {
 			if ((inputType & InputType.TYPE_MASK_CLASS) == InputType.TYPE_CLASS_NUMBER) {
 				inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
 			} else {
-				inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
+				inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD;
 			}
 		}
 
+		Typeface originalTypeface = input.getTypeface();
 		input.setInputType(inputType);
 		input.setSingleLine(true);
 		input.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+
+		if (isPassword) {
+			input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+		} else {
+			input.setTransformationMethod(null);
+		}
+		if (originalTypeface != null) {
+			input.setTypeface(originalTypeface);
+		}
+
+		float density = getResources().getDisplayMetrics().density;
+		if (binding.btnFloatingPasswordToggle != null) {
+			if (isPassword) {
+				binding.btnFloatingPasswordToggle.setVisibility(View.VISIBLE);
+				binding.btnFloatingPasswordToggle.setImageResource(R.drawable.ic_visibility_off);
+				input.setPaddingRelative((int) (12 * density), 0, (int) (40 * density), 0);
+
+				binding.btnFloatingPasswordToggle.setOnClickListener(v -> {
+					isPasswordVisible = !isPasswordVisible;
+					int selStart = input.getSelectionStart();
+					int selEnd = input.getSelectionEnd();
+					Typeface tf = input.getTypeface();
+
+					if (isPasswordVisible) {
+						input.setTransformationMethod(null);
+						binding.btnFloatingPasswordToggle.setImageResource(R.drawable.ic_visibility);
+					} else {
+						input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+						binding.btnFloatingPasswordToggle.setImageResource(R.drawable.ic_visibility_off);
+					}
+					if (tf != null) {
+						input.setTypeface(tf);
+					}
+					if (input.getText() != null) {
+						int len = input.getText().length();
+						input.setSelection(Math.max(0, Math.min(selStart, len)), Math.max(0, Math.min(selEnd, len)));
+					}
+				});
+			} else {
+				binding.btnFloatingPasswordToggle.setVisibility(View.GONE);
+				input.setPaddingRelative((int) (12 * density), 0, (int) (12 * density), 0);
+			}
+		}
 
 		int max = textBox.getMaxSize();
 		if (max > 0) {
@@ -1485,7 +1542,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		Log.e("DEBUG_INPUT", "commitFloatingInput CALLED: activeTextBox=" + activeTextBox);
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
-		activeTextBox = null;
 
 		String text = "";
 		if (binding.floatingInputEdit != null) {
@@ -1496,15 +1552,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 		Log.e("DEBUG_INPUT", "commitFloatingInput: read text=[" + text + "], tb=" + tb);
 
-		hideSoftInput();
-		if (binding.floatingInputBar != null) {
-			binding.floatingInputBar.setVisibility(View.GONE);
-		}
-
-		if (binding.floatingInputEdit != null && invisibleInputWatcher != null) {
-			binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
-			invisibleInputWatcher = null;
-		}
+		Command okCommand = activeOkCommand != null ? activeOkCommand : findOkCommand(tb);
+		finishFloatingInput();
 
 		try {
 			int max = tb.getMaxSize();
@@ -1517,10 +1566,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		} catch (Exception e) {
 			Log.e("DEBUG_INPUT", "commitFloatingInput: EXCEPTION during setString!", e);
 		}
-
-		Command okCommand = activeOkCommand != null ? activeOkCommand : findOkCommand(tb);
-		activeOkCommand = null;
-		activeCancelCommand = null;
 
 		Log.e("DEBUG_INPUT", "commitFloatingInput: firing okCommand=" + okCommand + ", label=" + (okCommand != null ? okCommand.getLabel() : "null"));
 		if (okCommand != null) {
@@ -1539,21 +1584,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void cancelFloatingInput() {
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
-		activeTextBox = null;
-
-		hideSoftInput();
-		if (binding.floatingInputBar != null) {
-			binding.floatingInputBar.setVisibility(View.GONE);
-		}
-
-		if (binding.floatingInputEdit != null && invisibleInputWatcher != null) {
-			binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
-			invisibleInputWatcher = null;
-		}
-
 		Command cancelCommand = activeCancelCommand != null ? activeCancelCommand : findCancelCommand(tb);
-		activeOkCommand = null;
-		activeCancelCommand = null;
+		finishFloatingInput();
 
 		if (cancelCommand != null) {
 			tb.fireCommandAction(cancelCommand);
@@ -1572,16 +1604,21 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		activeTextBox = null;
 		activeOkCommand = null;
 		activeCancelCommand = null;
+		isPasswordVisible = false;
 		hideSoftInput();
 		if (binding.floatingInputBar != null) {
 			binding.floatingInputBar.setVisibility(View.GONE);
 			binding.floatingInputBar.setTranslationY(0);
+		}
+		if (binding.btnFloatingPasswordToggle != null) {
+			binding.btnFloatingPasswordToggle.setVisibility(View.GONE);
 		}
 		if (binding.floatingInputEdit != null) {
 			if (invisibleInputWatcher != null) {
 				binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
 				invisibleInputWatcher = null;
 			}
+			binding.floatingInputEdit.setTransformationMethod(null);
 			binding.floatingInputEdit.setText("");
 		}
 	}
