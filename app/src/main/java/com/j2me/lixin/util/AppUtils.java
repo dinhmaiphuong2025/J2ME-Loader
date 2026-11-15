@@ -38,6 +38,15 @@ import ru.woesss.j2me.jar.Descriptor;
 public class AppUtils {
 	private static final String TAG = AppUtils.class.getSimpleName();
 
+	public static List<AppItem> getInstalledApps() {
+		File appsDir = new File(Config.getAppDir());
+		String[] appFolders = appsDir.list();
+		if (appFolders == null || appFolders.length == 0) {
+			return new ArrayList<>();
+		}
+		return getAppsList(Arrays.asList(appFolders));
+	}
+
 	private static ArrayList<AppItem> getAppsList(@NonNull List<String> appFolders) {
 		ArrayList<AppItem> apps = new ArrayList<>();
 		File appsDir = new File(Config.getAppDir());

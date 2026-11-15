@@ -91,10 +91,11 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import com.j2me.lixin.BuildConfig;
-import com.j2me.lixin.MainActivity;
 import com.j2me.lixin.R;
+import com.j2me.lixin.applist.AppItem;
 import com.j2me.lixin.config.Config;
 import com.j2me.lixin.databinding.ActivityMicroBinding;
+import com.j2me.lixin.util.AppUtils;
 import com.j2me.lixin.util.Constants;
 import com.j2me.lixin.util.LogUtils;
 
@@ -518,21 +519,27 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void addNewTab() {
-		Intent intent = new Intent(this, MainActivity.class);
-		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		startActivity(intent);
+		new Thread(() -> {
+			List<AppItem> apps = AppUtils.getInstalledApps();
+			runOnUiThread(() -> showGamePicker(apps));
+		}, "GamePicker").start();
 	}
 
-	@Override
-	protected void onNewIntent(Intent intent) {
-		super.onNewIntent(intent);
-		setIntent(intent);
-		String name = intent.getStringExtra(KEY_MIDLET_NAME);
-		Uri data = intent.getData();
-		if (name == null || data == null) {
+	private void showGamePicker(List<AppItem> apps) {
+		if (apps.isEmpty()) {
 			return;
 		}
-		addNewGameTab(name, data.toString());
+		String[] names = new String[apps.size()];
+		for (int i = 0; i < apps.size(); i++) {
+			names[i] = apps.get(i).getTitle();
+		}
+		new AlertDialog.Builder(this)
+				.setTitle(R.string.select_dialog_title)
+				.setItems(names, (d, which) -> {
+					AppItem item = apps.get(which);
+					addNewGameTab(item.getTitle(), item.getPathExt());
+				})
+				.show();
 	}
 
 	private void addNewGameTab(String name, String path) {
