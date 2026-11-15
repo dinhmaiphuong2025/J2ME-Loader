@@ -795,7 +795,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				edit.setSingleLine(true);
 				edit.setText("");
 				binding.btnFloatingOk.setText(android.R.string.ok);
-				binding.btnFloatingCancel.setText(R.string.cancel);
+				binding.btnFloatingCancel.setText(android.R.string.cancel);
 				binding.btnFloatingCancel.setOnClickListener(v -> {
 					hideSoftInput();
 					binding.floatingInputBar.setVisibility(View.GONE);
@@ -1301,9 +1301,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 
 		if (activeCancelCommand != null) {
-			binding.btnFloatingCancel.setText(sanitizeButtonLabel(activeCancelCommand.getAndroidLabel(), R.string.cancel));
+			binding.btnFloatingCancel.setText(sanitizeButtonLabel(activeCancelCommand.getAndroidLabel(), android.R.string.cancel));
 		} else {
-			binding.btnFloatingCancel.setText(R.string.cancel);
+			binding.btnFloatingCancel.setText(android.R.string.cancel);
 		}
 
 		binding.btnFloatingOk.setOnClickListener(v -> commitFloatingInput());
