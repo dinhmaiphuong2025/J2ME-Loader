@@ -21,6 +21,7 @@ package javax.microedition.shell;
 
 import static com.j2me.lixin.util.Constants.*;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -136,6 +137,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		super.onCreate(savedInstanceState);
 		ContextHolder.setCurrentActivity(this);
 		ContextCompat.startForegroundService(this, new Intent(this, ForegroundService.class));
+		ContextHolder.requestPermission(Manifest.permission.POST_NOTIFICATIONS);
 
 		binding = ActivityMicroBinding.inflate(getLayoutInflater());
 		View view = binding.getRoot();
