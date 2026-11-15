@@ -27,7 +27,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -41,7 +40,6 @@ import android.text.method.DigitsKeyListener;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,11 +55,11 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -77,7 +75,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
 import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Canvas;
@@ -108,7 +105,6 @@ public class MicroActivity extends AppCompatActivity {
 	private boolean visible;
 	private boolean pauseSuppressed;
 	private boolean pauseDisabled;
-	private boolean actionBarEnabled;
 	private boolean statusBarEnabled;
 	private boolean cutoutsEnabled;
 	private MicroLoader microLoader;
@@ -117,7 +113,6 @@ public class MicroActivity extends AppCompatActivity {
 	private InputMethodManager inputMethodManager;
 	private boolean imeVisible;
 	private int statusBarInset;
-	private int toolbarHeight;
 	private int menuKey;
 	private String appPath;
 
@@ -137,9 +132,9 @@ public class MicroActivity extends AppCompatActivity {
 		binding = ActivityMicroBinding.inflate(getLayoutInflater());
 		View view = binding.getRoot();
 		setContentView(view);
-		setSupportActionBar(binding.toolbar);
+		binding.btnMenu.setOnClickListener(v -> showMenu());
+		binding.btnAddTab.setOnClickListener(v -> addNewTab());
 
-		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
 		cutoutsEnabled = sp.getBoolean(PREF_ADD_CUTOUT_AREA, false) &&
 				Build.VERSION.SDK_INT >= Build.VERSION_CODES.P;
@@ -326,14 +321,6 @@ public class MicroActivity extends AppCompatActivity {
 		builder.show();
 	}
 
-	private int getToolBarHeight() {
-		int[] attrs = new int[]{androidx.appcompat.R.attr.actionBarSize};
-		TypedArray ta = obtainStyledAttributes(attrs);
-		int toolBarHeight = ta.getDimensionPixelSize(0, -1);
-		ta.recycle();
-		return toolBarHeight;
-	}
-
 	private void setupInsets() {
 		EdgeToEdge.enable(
 				this,
@@ -380,7 +367,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void updateOverlayLocation() {
-		binding.overlayView.setLocation(0, statusBarInset + toolbarHeight);
+		binding.overlayView.setLocation(0, statusBarInset + binding.topBar.getHeight());
 	}
 
 	private WindowInsetsControllerCompat getWindowInsetsController() {
@@ -462,10 +449,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void openOptionsMenu() {
-		if (!actionBarEnabled && current instanceof Canvas) {
-			showSystemUI();
-		}
-		super.openOptionsMenu();
+		showMenu();
 	}
 
 	@Override
@@ -500,26 +484,17 @@ public class MicroActivity extends AppCompatActivity {
 		// Intentionally overridden by empty due to support for back-key remapping.
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.midlet_displayable, menu);
+	private void showMenu() {
+		PopupMenu popup = new PopupMenu(this, binding.btnMenu);
+		popup.inflate(R.menu.midlet_displayable);
+		Menu menu = popup.getMenu();
 		menu.findItem(R.id.action_lock_orientation).setVisible(true);
-		if (actionBarEnabled) {
-			menu.findItem(R.id.action_ime_keyboard).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.findItem(R.id.action_take_screenshot).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		}
 		if (inputMethodManager == null) {
 			menu.findItem(R.id.action_ime_keyboard).setVisible(false);
 		}
 		if (ContextHolder.getVk() == null) {
 			menu.findItem(R.id.action_submenu_vk).setVisible(false);
 		}
-		return true;
-	}
-
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
 		if (current instanceof Canvas) {
 			menu.setGroupVisible(R.id.action_group_canvas, true);
 			VirtualKeyboard vk = ContextHolder.getVk();
@@ -530,7 +505,12 @@ public class MicroActivity extends AppCompatActivity {
 		} else {
 			menu.setGroupVisible(R.id.action_group_canvas, false);
 		}
-		return true;
+		popup.setOnMenuItemClickListener(this::onOptionsItemSelected);
+		popup.show();
+	}
+
+	private void addNewTab() {
+		Toast.makeText(this, R.string.action_new_tab, Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
@@ -768,7 +748,6 @@ public class MicroActivity extends AppCompatActivity {
 
 		@Override
 		public void process() {
-			closeOptionsMenu();
 			if (current != null) {
 				current.clearDisplayableView();
 			}
@@ -776,32 +755,11 @@ public class MicroActivity extends AppCompatActivity {
 				return;
 			}
 			binding.displayableContainer.removeAllViews();
-			ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
-			LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) binding.toolbar.getLayoutParams();
-			int toolbarPadding = binding.toolbar.getPaddingTop();
-			toolbarHeight = 0;
 			if (next instanceof Canvas) {
 				hideSystemUI();
-				if (!actionBarEnabled) {
-					actionBar.hide();
-				} else {
-					final String title = next.getTitle();
-					actionBar.setTitle(title == null ? appName : title);
-					toolbarHeight = (int) (getToolBarHeight() / 1.5);
-					layoutParams.height = toolbarHeight;
-				}
 			} else {
 				showSystemUI();
-				actionBar.show();
-				final String title = next != null ? next.getTitle() : null;
-				actionBar.setTitle(title == null ? appName : title);
-				toolbarHeight = getToolBarHeight();
-				layoutParams.height = toolbarHeight;
 			}
-			updateOverlayLocation();
-			binding.toolbar.setLayoutParams(layoutParams);
-			binding.toolbar.setPadding(0, toolbarPadding, 0, 0);
-			invalidateOptionsMenu();
 			if (next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}

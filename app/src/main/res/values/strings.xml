@@ -297,4 +297,6 @@
     <string name="alert_rewrite_profile">A profile named \"%1$s\" already exists.\nDo you want to overwrite it?</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
     <string name="msg_unsupported_soundbank">Unsupported soundbank, default bank is used!</string>
+    <string name="action_new_tab">New tab</string>
+    <string name="action_more">Menu</string>
 </resources>
