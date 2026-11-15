@@ -271,6 +271,49 @@ public class MicroLoader {
 
 			int screenWidth = params.screenWidth;
 			int screenHeight = params.screenHeight;
+			if (screenWidth <= 0) {
+				int dispW = ContextHolder.getDisplayWidth();
+				int dispH = ContextHolder.getDisplayHeight();
+				int maxSide = Math.max(dispW, dispH);
+				int minSide = Math.min(dispW, dispH);
+				int orientation = params.orientation;
+				VirtualKeyboard vk = ContextHolder.getVk();
+				if (vk != null && vk.isPhone() && orientation == 0) {
+					orientation = 2; // ORIENTATION_PORTRAIT
+				}
+				int realW, realH;
+				if (orientation == 3) { // ORIENTATION_LANDSCAPE
+					realW = maxSide;
+					realH = minSide;
+				} else if (orientation == 2) { // ORIENTATION_PORTRAIT
+					realW = minSide;
+					realH = maxSide;
+				} else { // DEFAULT or AUTO
+					if (dispW > dispH) {
+						realW = maxSide;
+						realH = minSide;
+					} else {
+						realW = minSide;
+						realH = maxSide;
+					}
+				}
+				if (screenHeight <= 0) {
+					float density = ContextHolder.getAppContext().getResources().getDisplayMetrics().density;
+					if (density < 1.0f) density = 1.0f;
+					screenHeight = Math.round(realH / density);
+					screenWidth = Math.round(realW / density);
+				} else {
+					screenWidth = Math.round((float) realW * screenHeight / Math.max(1, realH));
+				}
+			} else if (screenHeight <= 0) {
+				int dispW = ContextHolder.getDisplayWidth();
+				int dispH = ContextHolder.getDisplayHeight();
+				int maxSide = Math.max(dispW, dispH);
+				int minSide = Math.min(dispW, dispH);
+				int realW = (params.orientation == 3) ? maxSide : (params.orientation == 2 ? minSide : dispW);
+				int realH = (params.orientation == 3) ? minSide : (params.orientation == 2 ? maxSide : dispH);
+				screenHeight = Math.round((float) realH * screenWidth / Math.max(1, realW));
+			}
 			Displayable.setVirtualSize(screenWidth, screenHeight);
 			Canvas.setBackgroundColor(params.screenBackgroundColor);
 			Canvas.setScale(params.screenGravity, params.screenScaleType, params.screenScaleRatio);

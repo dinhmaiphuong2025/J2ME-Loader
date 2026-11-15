@@ -72,16 +72,26 @@ public abstract class Displayable {
 	};
 
 	public static void setVirtualSize(int virtualWidth, int virtualHeight) {
-		Displayable.virtualWidth = Math.max(0, virtualWidth);
-		Displayable.virtualHeight = Math.max(0, virtualHeight);
+		if (virtualWidth <= 0 && virtualHeight <= 0) {
+			int dw = ContextHolder.getDisplayWidth();
+			int dh = ContextHolder.getDisplayHeight();
+			virtualWidth = dw;
+			virtualHeight = dh;
+		} else if (virtualWidth <= 0) {
+			virtualWidth = Math.round((float) virtualHeight * ContextHolder.getDisplayWidth() / Math.max(1, ContextHolder.getDisplayHeight()));
+		} else if (virtualHeight <= 0) {
+			virtualHeight = Math.round((float) virtualWidth * ContextHolder.getDisplayHeight() / Math.max(1, ContextHolder.getDisplayWidth()));
+		}
+		Displayable.virtualWidth = virtualWidth;
+		Displayable.virtualHeight = virtualHeight;
 	}
 
 	public static int getVirtualWidth() {
-		return virtualWidth > 0 ? virtualWidth : ContextHolder.getDisplayWidth();
+		return virtualWidth;
 	}
 
 	public static int getVirtualHeight() {
-		return virtualHeight > 0 ? virtualHeight : ContextHolder.getDisplayHeight();
+		return virtualHeight;
 	}
 
 	public void setTitle(String title) {
@@ -176,11 +186,11 @@ public abstract class Displayable {
 	}
 
 	public int getWidth() {
-		return virtualWidth > 0 ? virtualWidth : ContextHolder.getDisplayWidth();
+		return virtualWidth;
 	}
 
 	public int getHeight() {
-		return virtualHeight > 0 ? virtualHeight : ContextHolder.getDisplayHeight();
+		return virtualHeight;
 	}
 
 	public void setTicker(Ticker newticker) {

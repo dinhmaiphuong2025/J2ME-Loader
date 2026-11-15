@@ -21,6 +21,7 @@ package javax.microedition.lcdui;
 import static android.opengl.GLES20.*;
 
 import android.annotation.SuppressLint;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -176,8 +177,19 @@ public abstract class Canvas extends Displayable {
 		if (parallelRedraw) {
 			uiHandler = new Handler(Looper.getMainLooper(), msg -> repaintScreen());
 		}
-		displayWidth = ContextHolder.getDisplayWidth();
-		displayHeight = ContextHolder.getDisplayHeight();
+		int dw = ContextHolder.getDisplayWidth();
+		int dh = ContextHolder.getDisplayHeight();
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null && activity.getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
+			displayWidth = Math.max(dw, dh);
+			displayHeight = Math.min(dw, dh);
+		} else if (activity != null && activity.getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
+			displayWidth = Math.min(dw, dh);
+			displayHeight = Math.max(dw, dh);
+		} else {
+			displayWidth = dw;
+			displayHeight = dh;
+		}
 		updateSize();
 	}
 
@@ -395,6 +407,8 @@ public abstract class Canvas extends Displayable {
 				height = Math.round(scaledDisplayHeight / density);
 			}
 		}
+		width = Math.max(1, width);
+		height = Math.max(1, height);
 
 		/*
 		 * We turn the size of the canvas into the size of the image
