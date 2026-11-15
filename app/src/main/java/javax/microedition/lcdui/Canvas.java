@@ -1195,6 +1195,7 @@ public abstract class Canvas extends Displayable {
 			}
 			displayWidth = newWidth;
 			displayHeight = newHeight;
+			visible = true;
 			if (checkSizeChanged() || !sizeChangedCalled) {
 				Display.postEvent(CanvasEvent.getInstance(Canvas.this,
 						CanvasEvent.SIZE_CHANGED,
@@ -1202,6 +1203,8 @@ public abstract class Canvas extends Displayable {
 						height));
 				repaintInternal();
 				sizeChangedCalled = true;
+			} else {
+				repaintInternal();
 			}
 		}
 
@@ -1211,6 +1214,7 @@ public abstract class Canvas extends Displayable {
 				renderer.start();
 			}
 			surface = holder.getSurface();
+			visible = true;
 			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
 			if (showFps) {
@@ -1246,7 +1250,10 @@ public abstract class Canvas extends Displayable {
 			}
 			overlayView.removeLayer(softBar);
 			softBar.closeMenu();
-			overlayView.setVisibility(false);
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity == null || activity.getCurrent() == Canvas.this) {
+				overlayView.setVisibility(false);
+			}
 			if (overlay != null) {
 				overlayView.removeLayer(overlay);
 				overlay.setTarget(null);

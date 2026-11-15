@@ -78,6 +78,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsAnimationCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.PreferenceManager;
@@ -369,7 +370,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		);
 
 		ViewCompat.setOnApplyWindowInsetsListener(binding.midletFrame, (v, windowInsets) -> {
-			int typeMask = WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime();
+			int typeMask = WindowInsetsCompat.Type.systemBars();
 			if (!cutoutsEnabled) {
 				typeMask |= WindowInsetsCompat.Type.displayCutout();
 			}
@@ -382,8 +383,30 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 			v.setPadding(insets.left, 0, insets.right, insets.bottom);
 			updateOverlayLocation();
+
+			int imeBottom = windowInsets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+			int imeOffset = Math.max(0, imeBottom - insets.bottom);
+			if (binding.floatingInputBar != null) {
+				binding.floatingInputBar.setTranslationY(-imeOffset);
+			}
+
 			return WindowInsetsCompat.CONSUMED;
 		});
+
+		ViewCompat.setWindowInsetsAnimationCallback(binding.floatingInputBar,
+				new WindowInsetsAnimationCompat.Callback(WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_STOP) {
+					@NonNull
+					@Override
+					public WindowInsetsCompat onProgress(@NonNull WindowInsetsCompat insets, @NonNull List<WindowInsetsAnimationCompat> runningAnimations) {
+						int navBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+						int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+						int imeOffset = Math.max(0, imeBottom - navBottom);
+						if (binding.floatingInputBar != null) {
+							binding.floatingInputBar.setTranslationY(-imeOffset);
+						}
+						return insets;
+					}
+				});
 
 		// On API < 30 the IME insets are not dispatched
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
@@ -747,6 +770,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void addNewGameTab(String name, String path, AccountManager.Account account) {
+		finishFloatingInput();
+		if (current != null) {
+			current.clearDisplayableView();
+			current = null;
+		}
+		binding.displayableContainer.removeAllViews();
+
 		String accName = account != null ? account.getName() : AccountManager.DEFAULT_ACCOUNT;
 		String accDir = account != null ? account.getDir() : "";
 		J2meContext newContext = new J2meContext(name);
@@ -1112,6 +1142,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (index < 0 || index >= tabs.size() || index == activeIndex) {
 			return;
 		}
+		finishFloatingInput();
+		if (current != null) {
+			current.clearDisplayableView();
+			current = null;
+		}
+		binding.displayableContainer.removeAllViews();
 		activeIndex = index;
 		activateActiveTab();
 	}
@@ -1124,11 +1160,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		appPath = tab.appPath;
 		context.register();
 		microLoader.applyConfiguration();
-		setupVirtualKeyboard();
 		Displayable displayable = context.getDisplay() != null ? context.getDisplay().getCurrent() : null;
 		if (displayable != null) {
 			setCurrent(displayable);
+			if (displayable instanceof Canvas) {
+				Canvas c = (Canvas) displayable;
+				c.setVisible();
+				Display.postEvent(CanvasEvent.getInstance(c, CanvasEvent.SHOW_NOTIFY));
+				c.repaint();
+			}
 		}
+		setupVirtualKeyboard();
 		if (tab.context.getMidletThread() != null) {
 			MidletThread.resumeApp();
 		}
@@ -1141,9 +1183,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (vk != null) {
 			vk.setView(binding.overlayView);
 			binding.overlayView.addLayer(vk);
-			if (current instanceof Canvas) {
-				vk.setTarget((Canvas) current);
-				((Canvas) current).updateSize();
+			Displayable cur = current;
+			if (cur instanceof Canvas) {
+				vk.setTarget((Canvas) cur);
+				((Canvas) cur).updateSize();
 			}
 			int orientation = microLoader.getOrientation();
 			if (vk.isPhone()) {
@@ -1160,6 +1203,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			finish();
 			return;
 		}
+		finishFloatingInput();
 		int index = -1;
 		for (int i = 0; i < tabs.size(); i++) {
 			if (tabs.get(i).context == context) {
@@ -1170,6 +1214,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (index < 0) {
 			finish();
 			return;
+		}
+		if (index == activeIndex && current != null) {
+			current.clearDisplayableView();
+			current = null;
+			binding.displayableContainer.removeAllViews();
 		}
 		Tab closedTab = tabs.remove(index);
 		binding.tabBar.removeViewAt(index);
@@ -1512,6 +1561,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		hideSoftInput();
 		if (binding.floatingInputBar != null) {
 			binding.floatingInputBar.setVisibility(View.GONE);
+			binding.floatingInputBar.setTranslationY(0);
 		}
 		if (binding.floatingInputEdit != null) {
 			if (invisibleInputWatcher != null) {
@@ -1547,8 +1597,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				return;
 			}
 
-			// Nếu từ TextBox quay về Canvas
-			if (current instanceof TextBox && next instanceof Canvas) {
+			// Nếu từ TextBox quay về Canvas trong cùng 1 phiên nhập
+			if (current instanceof TextBox && next instanceof Canvas && activeTextBox == current) {
 				finishFloatingInput();
 				Canvas nextCanvas = (Canvas) next;
 				lastActiveCanvas = nextCanvas;
@@ -1560,6 +1610,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				hideSystemUI();
 				VirtualKeyboard vk = ContextHolder.getVk();
 				if (vk != null) {
+					vk.setView(binding.overlayView);
+					binding.overlayView.removeLayers(VirtualKeyboard.class);
+					binding.overlayView.addLayer(vk);
 					vk.setTarget(nextCanvas);
 					nextCanvas.updateSize();
 					binding.overlayView.setVisibility(true);
@@ -1577,14 +1630,21 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			binding.displayableContainer.removeAllViews();
 			if (next instanceof Canvas) {
 				hideSystemUI();
-				lastActiveCanvas = (Canvas) next;
+				Canvas nextCanvas = (Canvas) next;
+				lastActiveCanvas = nextCanvas;
 				VirtualKeyboard vk = ContextHolder.getVk();
 				if (vk != null) {
-					vk.setTarget((Canvas) next);
-					((Canvas) next).updateSize();
+					vk.setView(binding.overlayView);
+					binding.overlayView.removeLayers(VirtualKeyboard.class);
+					binding.overlayView.addLayer(vk);
+					vk.setTarget(nextCanvas);
+					nextCanvas.updateSize();
 					binding.overlayView.setVisibility(true);
 					binding.overlayView.postInvalidate();
 				}
+				nextCanvas.setVisible();
+				Display.postEvent(CanvasEvent.getInstance(nextCanvas, CanvasEvent.SHOW_NOTIFY));
+				nextCanvas.repaint();
 			} else {
 				showSystemUI();
 			}
