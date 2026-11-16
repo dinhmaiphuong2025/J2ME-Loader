@@ -493,6 +493,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (hudView != null || appPath == null) {
 			return;
 		}
+		com.j2me.lixin.hud.HudTrace.reset(this);
 		SharedPreferences hudPrefs = getSharedPreferences(
 				"hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE);
 		// The port keeps a single layout per game: Anland's extra slots default to 2,
@@ -509,6 +510,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		hudView.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		binding.hudContainer.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		updateOverlayLocation();
+		com.j2me.lixin.hud.HudTrace.log(this, "setup runtime=" + hudRuntimeEnabled + " path=" + appPath);
 		Log.e("HUDSTATE", "setup runtime=" + hudRuntimeEnabled + " path=" + appPath
 				+ " containerVis=" + binding.hudContainer.getVisibility()
 				+ " hudVis=" + hudView.getVisibility());
@@ -561,6 +563,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			hudView = null;
 			hudKeyDebug = null;
 		}
+		com.j2me.lixin.hud.HudTrace.log(this, "toggle runtime=" + hudRuntimeEnabled);
 		Log.e("HUDSTATE", "toggle -> runtime=" + hudRuntimeEnabled
 				+ " containerVis=" + binding.hudContainer.getVisibility()
 				+ " hudVis=" + hudView.getVisibility());
@@ -625,6 +628,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		// instances when it opens a panel, and posting to the previous one made every
 		// HUD key after the first one disappear.
 		Canvas canvas = current instanceof Canvas ? (Canvas) current : lastActiveCanvas;
+		com.j2me.lixin.hud.HudTrace.log(this, "key " + (action == 0 ? "down" : "up")
+				+ " code=" + code + " resolved=" + key
+				+ " current=" + (current == null ? "null" : current.getClass().getSimpleName())
+				+ "@" + (current == null ? 0 : System.identityHashCode(current))
+				+ " last=" + (lastActiveCanvas == null ? "null" : System.identityHashCode(lastActiveCanvas))
+				+ " use=" + (canvas == null ? 0 : System.identityHashCode(canvas)));
 		if (canvas == null) {
 			Log.e("HUDKEY", "no canvas for key=" + key);
 			return;
