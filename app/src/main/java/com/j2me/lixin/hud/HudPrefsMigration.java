@@ -138,6 +138,104 @@ final class HudPrefsMigration {
         return false;
     }
 
+    /**
+     * Converts PC (evdev) key codes saved by Anland's picker into J2ME key codes.
+     * Without this, most buttons carry scancodes the emulator can never deliver.
+     */
+    static void normalizeKeyCodes(SharedPreferences prefs) {
+        String json = prefs.getString(PREF_PROFILE, null);
+        if (json == null || json.isEmpty()) {
+            return;
+        }
+        try {
+            JSONObject root = new JSONObject(json);
+            boolean changed = false;
+            for (String key : new String[]{"portrait_layout", "landscape_layout",
+                    "keyboard_portrait_layout", "keyboard_landscape_layout"}) {
+                changed |= walk(root.optJSONObject(key));
+            }
+            for (String key : new String[]{"layout_2", "layout_3", "layout_4"}) {
+                JSONObject extra = root.optJSONObject(key);
+                if (extra == null) continue;
+                changed |= walk(extra.optJSONObject("portrait"));
+                changed |= walk(extra.optJSONObject("landscape"));
+            }
+            if (changed) {
+                prefs.edit().putString(PREF_PROFILE, root.toString()).apply();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static boolean walk(JSONObject layout) {
+        if (layout == null) return false;
+        org.json.JSONArray arr = layout.optJSONArray("floating_buttons");
+        if (arr == null) return false;
+        boolean changed = false;
+        for (int i = 0; i < arr.length(); i++) {
+            changed |= walkButton(arr.optJSONObject(i));
+        }
+        return changed;
+    }
+
+    private static boolean walkButton(JSONObject b) {
+        if (b == null) return false;
+        boolean changed = false;
+        changed |= fixAction(b.optJSONObject("action"));
+        changed |= fixAction(b.optJSONObject("long_press_action"));
+        changed |= fixAction(b.optJSONObject("popup_action"));
+        for (String key : new String[]{"swipe_left", "swipe_right", "swipe_up", "swipe_down",
+                "dpad_up", "dpad_down", "dpad_left", "dpad_right"}) {
+            changed |= fixAction(b.optJSONObject(key));
+        }
+        org.json.JSONArray kids = b.optJSONArray("children");
+        if (kids != null) {
+            for (int j = 0; j < kids.length(); j++) {
+                changed |= walkButton(kids.optJSONObject(j));
+            }
+        }
+        return changed;
+    }
+
+    private static boolean fixAction(JSONObject a) {
+        if (a == null) return false;
+        String type = a.optString("type");
+        boolean changed = false;
+        if ("key".equals(type) || "modifier".equals(type)) {
+            int code = a.optInt("code", Integer.MIN_VALUE);
+            int mapped = remap(code);
+            if (mapped != code) {
+                try {
+                    a.put("code", mapped);
+                    changed = true;
+                } catch (Exception ignored) {
+                }
+            }
+        } else if ("combo".equals(type)) {
+            org.json.JSONArray keys = a.optJSONArray("combo_keys");
+            if (keys != null) {
+                for (int i = 0; i < keys.length(); i++) {
+                    int code = keys.optInt(i, Integer.MIN_VALUE);
+                    int mapped = remap(code);
+                    if (mapped != code) {
+                        try {
+                            keys.put(i, mapped);
+                            changed = true;
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
+    private static int remap(int code) {
+        if (HudKeyBridge.isJ2meKey(code) || code == 0) return code;
+        int mapped = HudKeyBridge.fromEvdev(code);
+        return mapped == HudKeyBridge.UNMAPPED ? code : mapped;
+    }
+
     private static boolean isLayoutEmpty(JSONObject layout) {
         if (layout == null) {
             return true;

@@ -151,6 +151,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private int activeIndex = -1;
 	private TextBox activeTextBox;
 	private HudOverlayView hudView;
+	private android.widget.TextView hudKeyDebug;
 	private boolean hudRuntimeEnabled;
 	private Canvas lastActiveCanvas;
 
@@ -504,6 +505,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		binding.hudContainer.addView(hudView, new FrameLayout.LayoutParams(
 				FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 		hudView.loadProfile();
+		createHudKeyDebug();
 		hudView.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		binding.hudContainer.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		updateOverlayLocation();
@@ -561,10 +563,46 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 	}
 
+	/** Small on-screen readout of the last HUD key, so delivery is visible without logcat. */
+	private void createHudKeyDebug() {
+		if (hudKeyDebug != null) {
+			return;
+		}
+		hudKeyDebug = new android.widget.TextView(this);
+		hudKeyDebug.setTextSize(11);
+		hudKeyDebug.setTextColor(0xFFFFFFFF);
+		hudKeyDebug.setBackgroundColor(0x99000000);
+		hudKeyDebug.setPadding(10, 6, 10, 6);
+		hudKeyDebug.setVisibility(View.GONE);
+		FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+				FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+		lp.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+		lp.topMargin = 8;
+		lp.rightMargin = 8;
+		binding.hudContainer.addView(hudKeyDebug, lp);
+	}
+
+	private void showHudKeyDebug(String text) {
+		if (hudKeyDebug == null) {
+			return;
+		}
+		hudKeyDebug.setText(text);
+		hudKeyDebug.setVisibility(View.VISIBLE);
+		hudKeyDebug.removeCallbacks(hideHudKeyDebug);
+		hudKeyDebug.postDelayed(hideHudKeyDebug, 2000);
+	}
+
+	private final Runnable hideHudKeyDebug = () -> {
+		if (hudKeyDebug != null) {
+			hudKeyDebug.setVisibility(View.GONE);
+		}
+	};
+
 	private void postHudKey(int action, int code) {
 		int key = HudKeyBridge.resolve(code);
 		if (key == HudKeyBridge.UNMAPPED) {
 			Log.w("HUDKEY", "unmapped code=" + code);
+			showHudKeyDebug("\u2715 không dịch được: " + code);
 			return;
 		}
 		Canvas canvas = lastActiveCanvas;
@@ -577,6 +615,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 		Log.d("HUDKEY", "action=" + (action == 0 ? "down" : "up")
 				+ " raw=" + code + " key=" + HudKeyBridge.label(key));
+		if (action == 0) {
+			showHudKeyDebug("\u25BC " + HudKeyBridge.label(key) + "  (" + key + ")");
+		}
 		if (action == 0) {
 			canvas.postKeyPressed(key);
 		} else {

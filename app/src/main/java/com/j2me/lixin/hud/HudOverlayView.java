@@ -350,6 +350,7 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
         // into the main slot so the game actually renders them.
         HudPrefsMigration.migrateExtraSlotToMain(mPrefs);
         HudPrefsMigration.repairOpacity(mPrefs);
+        HudPrefsMigration.normalizeKeyCodes(mPrefs);
         // First run for a game: seed a keypad-shaped HUD instead of Anland's desktop layout.
         J2meHudPreset.ensureDefaults(mPrefs);
         // A reload replaces every model instance; snapshots from the previous
