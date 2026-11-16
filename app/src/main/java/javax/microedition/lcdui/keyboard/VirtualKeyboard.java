@@ -900,14 +900,25 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 		snapStack[level] = key;
 		VirtualKey vKey = keypad[key];
-		if (vKey.snapOrigin == SCREEN) {
+		if (vKey == null || vKey.rect == null) {
+			return;
+		}
+		// Phone-style layouts have fewer keys than the full keypad, so a key can
+		// reference an origin index that this layout never created. Falling back to
+		// screen snapping keeps the layout switch from crashing.
+		VirtualKey origin = null;
+		if (vKey.snapOrigin != SCREEN && vKey.snapOrigin >= 0
+				&& vKey.snapOrigin < keypad.length) {
+			origin = keypad[vKey.snapOrigin];
+		}
+		if (origin == null || origin.rect == null || vKey.snapOrigin == SCREEN) {
+			vKey.snapOrigin = SCREEN;
 			RectSnap.snap(vKey.rect, screen, vKey.snapMode, vKey.snapOffset);
 		} else {
-			if (!keypad[vKey.snapOrigin].snapValid) {
+			if (!origin.snapValid) {
 				snapKey(vKey.snapOrigin, level + 1);
 			}
-			RectSnap.snap(vKey.rect, keypad[vKey.snapOrigin].rect,
-					vKey.snapMode, vKey.snapOffset);
+			RectSnap.snap(vKey.rect, origin.rect, vKey.snapMode, vKey.snapOffset);
 		}
 		vKey.snapValid = true;
 	}
@@ -918,6 +929,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (int i = 0; i < keypad.length; i++) {
 			snapKey(i, 0);
 			VirtualKey key = keypad[i];
+			if (key == null || key.rect == null) {
+				continue;
+			}
 			RectF rect = key.rect;
 			key.corners = (int) (Math.min(rect.width(), rect.height()) * 0.25F);
 			if (!isPhone && RectF.intersects(rect, virtualScreen)) {

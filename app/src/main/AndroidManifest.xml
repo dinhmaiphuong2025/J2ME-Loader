@@ -131,8 +131,7 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:windowSoftInputMode="adjustNothing"
-            android:launchMode="singleTask"
-            android:taskAffinity="com.j2me.lixin.midlet"
+            android:launchMode="standard"
             android:process=":midlet" />
         <service
             android:name=".ForegroundService"

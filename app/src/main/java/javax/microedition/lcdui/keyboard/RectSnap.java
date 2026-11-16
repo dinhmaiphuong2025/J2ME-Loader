@@ -327,6 +327,9 @@ public class RectSnap {
 	 * @param offset the point to which the offset from the binding will be written (or null)
 	 */
 	public static void snap(RectF target, RectF origin, int mode, PointF offset) {
+		if (target == null || origin == null) {
+			return;
+		}
 		float width = target.width();
 		float height = target.height();
 
