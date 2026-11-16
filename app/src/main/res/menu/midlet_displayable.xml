@@ -56,9 +56,6 @@
             android:id="@+id/action_game_config"
             android:title="@string/action_game_config" />
         <item
-            android:id="@+id/action_quick_preset"
-            android:title="@string/action_quick_preset" />
-        <item
             android:id="@+id/action_accounts"
             android:title="@string/action_accounts" />
     </group>
@@ -72,15 +69,9 @@
             android:id="@+id/action_take_screenshot"
             android:icon="@drawable/ic_action_screenshot"
             android:title="@string/take_screenshot" />
-        <item
-            android:id="@+id/action_limit_fps"
-            android:title="@string/PREF_LIMIT_FPS" />
     </group>
 
     <group android:id="@+id/action_group_exit">
-        <item
-            android:id="@+id/action_save_log"
-            android:title="@string/save_log" />
         <item
             android:id="@+id/action_exit_midlet"
             android:title="@string/exit" />

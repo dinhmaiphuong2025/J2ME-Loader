@@ -647,20 +647,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		binding.overlayView.postInvalidate();
 	}
 
-	/** Three one-tap profiles for players who do not want the full settings screen. */
-	private void showQuickPresets() {
-		String[] items = {"Mượt (60 FPS, làm mượt hình)",
-				"Đẹp (toàn màn hình, không giới hạn FPS)",
-				"Tiết kiệm pin (30 FPS, tắt làm mượt)"};
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.quick_preset_title)
-				.setItems(items, (d, which) -> {
-					microLoader.applyQuickPreset(which);
-					Toast.makeText(this, R.string.quick_preset_applied, Toast.LENGTH_SHORT).show();
-				})
-				.show();
-	}
-
 	private void hideHudLayer() {
 		if (hudView == null) {
 			return;
@@ -943,6 +929,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		menu.findItem(R.id.action_input_off).setChecked(mode == 0);
 		menu.findItem(R.id.action_input_keypad).setChecked(mode == 1);
 		menu.findItem(R.id.action_input_hud).setChecked(mode == 2);
+		// Show only what the current mode actually uses: nobody edits a layout they
+		// have not turned on.
+		menu.findItem(R.id.action_hud_editor).setVisible(mode == 2);
+		menu.findItem(R.id.action_hud_reset).setVisible(mode == 2);
+		menu.findItem(R.id.action_submenu_vk).setVisible(mode == 1);
+		menu.findItem(R.id.action_accounts).setVisible(
+				!com.j2me.lixin.util.AccountManager.getAccountList(appPath).isEmpty());
 		if (inputMethodManager == null) {
 			menu.findItem(R.id.action_ime_keyboard).setVisible(false);
 		}
@@ -1213,8 +1206,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		int id = item.getItemId();
 		if (id == R.id.action_exit_midlet) {
 			showExitConfirmation();
-		} else if (id == R.id.action_save_log) {
-			saveLog();
 		} else if (id == R.id.action_lock_orientation) {
 			if (item.isChecked()) {
 				applyOrientation();
@@ -1288,12 +1279,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			cfg.putExtra(Constants.KEY_MIDLET_NAME, appName);
 			cfg.putExtra("from_game", true);
 			startActivity(cfg);
-		} else if (id == R.id.action_quick_preset) {
-			showQuickPresets();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
-		} else if (id == R.id.action_limit_fps) {
-			showLimitFpsDialog();
 		} else if (ContextHolder.getVk() != null) {
 			// Handled only when virtual keyboard is enabled
 			handleVkOptions(id);
