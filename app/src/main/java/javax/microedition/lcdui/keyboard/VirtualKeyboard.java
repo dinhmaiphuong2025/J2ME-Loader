@@ -187,6 +187,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private float prevScaleX;
 	private float prevScaleY;
 	private RectF screen;
+	private final RectF toolbarRect = new RectF();
+	private final RectF btnMinusRect = new RectF();
+	private final RectF btnPlusRect = new RectF();
+	private final RectF btnVisRect = new RectF();
+	private final RectF btnResetRect = new RectF();
+	private final RectF btnDoneRect = new RectF();
 	private float keySize =
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
 	private float snapRadius;
@@ -486,65 +492,117 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				break;
 			case TYPE_ANLAND:
 				Arrays.fill(keyScales, 1);
-				keypad[KEY_FIRE].scale = 1.7f;
-				keypad[KEY_NUM7].scale = 1.05f;
-				keypad[KEY_NUM1].scale = 1.05f;
-				keypad[KEY_NUM3].scale = 1.05f;
-				keypad[KEY_NUM9].scale = 1.05f;
-				keypad[KEY_STAR].scale = 0.9f;
-				keypad[KEY_NUM0].scale = 0.9f;
-				keypad[KEY_UP].scale = 1.15f;
-				keypad[KEY_DOWN].scale = 1.15f;
-				keypad[KEY_LEFT].scale = 1.15f;
-				keypad[KEY_RIGHT].scale = 1.15f;
-				keypad[KEY_SOFT_LEFT].scale = 0.9f;
-				keypad[KEY_SOFT_RIGHT].scale = 0.9f;
-				keypad[KEY_POUND].scale = 0.85f;
-
-				setAnlandLayout();
+				if (screen != null) {
+					setAnlandRadialLayout();
+				}
 				break;
 		}
 	}
 
-	private void setAnlandLayout() {
-		float kSize = keySize;
+	private void placeKeyAtCenter(int key, float cx, float cy, boolean visible) {
+		VirtualKey vKey = keypad[key];
+		vKey.snapOrigin = SCREEN;
+		vKey.snapMode = RectSnap.INT_NORTHWEST;
+		float left = cx - vKey.rect.width() / 2f;
+		float top = cy - vKey.rect.height() / 2f;
+		vKey.snapOffset.set(left, top);
+		vKey.rect.offsetTo(left, top);
+		vKey.snapValid = true;
+		vKey.visible = visible;
+	}
 
-		// Right Cluster (Skill Arc around Fire):
-		setSnap(KEY_FIRE, SCREEN, RectSnap.INT_SOUTHEAST, -kSize * 1.3f, -kSize * 1.25f, true);
-		setSnap(KEY_NUM7, KEY_FIRE, RectSnap.EXT_NORTH, 0, -4, true);
-		setSnap(KEY_NUM1, KEY_FIRE, RectSnap.EXT_WEST, -4, 0, true);
-		setSnap(KEY_NUM3, KEY_FIRE, RectSnap.EXT_EAST, 4, 0, true);
-		setSnap(KEY_NUM9, KEY_FIRE, RectSnap.EXT_SOUTH, 0, 4, true);
-		setSnap(KEY_STAR, KEY_NUM3, RectSnap.EXT_NORTH, 0, -4, true);
-		setSnap(KEY_NUM0, KEY_NUM1, RectSnap.EXT_NORTH, 0, -4, true);
+	private void setAnlandRadialLayout() {
+		if (screen == null) {
+			return;
+		}
+		float w = screen.width();
+		float h = screen.height();
+		float baseSize = getKeySize(w, h);
 
-		// Left Cluster (D-Pad cross):
-		float dpadSize = kSize * 1.15f;
-		setSnap(KEY_LEFT, SCREEN, RectSnap.INT_SOUTHWEST, kSize * 0.4f, -kSize * 1.35f, true);
-		setSnap(KEY_DOWN, KEY_LEFT, RectSnap.EXT_EAST, 2, dpadSize + 2, true);
-		setSnap(KEY_UP, KEY_DOWN, RectSnap.EXT_NORTH, 0, -(dpadSize + 4), true);
-		setSnap(KEY_RIGHT, KEY_LEFT, RectSnap.EXT_EAST, dpadSize + 4, 0, true);
+		keypad[KEY_FIRE].scale = 1.6f;
+		keypad[KEY_NUM7].scale = 1.05f;
+		keypad[KEY_NUM1].scale = 1.05f;
+		keypad[KEY_NUM3].scale = 1.05f;
+		keypad[KEY_NUM9].scale = 1.05f;
+		keypad[KEY_STAR].scale = 0.9f;
+		keypad[KEY_NUM0].scale = 0.9f;
+		keypad[KEY_UP].scale = 1.15f;
+		keypad[KEY_DOWN].scale = 1.15f;
+		keypad[KEY_LEFT].scale = 1.15f;
+		keypad[KEY_RIGHT].scale = 1.15f;
+		keypad[KEY_SOFT_LEFT].scale = 0.9f;
+		keypad[KEY_SOFT_RIGHT].scale = 0.9f;
+		keypad[KEY_POUND].scale = 0.85f;
 
-		// Corners:
-		setSnap(KEY_SOFT_LEFT, SCREEN, RectSnap.INT_SOUTHWEST, kSize * 0.15f, -kSize * 0.15f, true);
-		setSnap(KEY_SOFT_RIGHT, SCREEN, RectSnap.INT_SOUTHEAST, -kSize * 0.15f, -kSize * 0.15f, true);
-		setSnap(KEY_POUND, SCREEN, RectSnap.INT_NORTHEAST, -kSize * 0.2f, kSize * 0.2f, true);
+		for (int group = 0; group < keyScaleGroups.length; group++) {
+			resizeKeyGroup(group);
+		}
+
+		// Right Cluster - Radial Arc around Fire:
+		float fireCx = w - baseSize * 2.3f;
+		float fireCy = h - baseSize * 2.0f;
+		float R = baseSize * 1.55f;
+
+		placeKeyAtCenter(KEY_FIRE, fireCx, fireCy, true);
+
+		// 7 (Dau than): Top (90 deg)
+		placeKeyAtCenter(KEY_NUM7, fireCx, fireCy - R, true);
+
+		// 1 (Chieu 1): Upper-Left (150 deg)
+		float cos150 = -0.866025f;
+		float sin150 = 0.5f;
+		placeKeyAtCenter(KEY_NUM1, fireCx + R * cos150, fireCy - R * sin150, true);
+
+		// 3 (Chieu 2): Upper-Right (30 deg)
+		float cos30 = 0.866025f;
+		float sin30 = 0.5f;
+		placeKeyAtCenter(KEY_NUM3, fireCx + R * cos30, fireCy - R * sin30, true);
+
+		// 9 (Chieu 3): Lower-Left (235 deg)
+		float cos235 = -0.573576f;
+		float sin235 = -0.819152f;
+		placeKeyAtCenter(KEY_NUM9, fireCx + R * cos235, fireCy - R * sin235, true);
+
+		// * (Target): Above 3 (45 deg)
+		float R2 = R * 1.55f;
+		float cos45 = 0.7071f;
+		float sin45 = 0.7071f;
+		placeKeyAtCenter(KEY_STAR, fireCx + R2 * cos45, fireCy - R2 * sin45, true);
+
+		// 0 (Near / Chat): Above 1 (135 deg)
+		float cos135 = -0.7071f;
+		float sin135 = 0.7071f;
+		placeKeyAtCenter(KEY_NUM0, fireCx + R2 * cos135, fireCy - R2 * sin135, true);
+
+		// Left Cluster - D-Pad Cross:
+		float dpadCx = baseSize * 2.1f;
+		float dpadCy = h - baseSize * 2.0f;
+		float dpadR = baseSize * 1.25f;
+
+		placeKeyAtCenter(KEY_UP, dpadCx, dpadCy - dpadR, true);
+		placeKeyAtCenter(KEY_DOWN, dpadCx, dpadCy + dpadR, true);
+		placeKeyAtCenter(KEY_LEFT, dpadCx - dpadR, dpadCy, true);
+		placeKeyAtCenter(KEY_RIGHT, dpadCx + dpadR, dpadCy, true);
+
+		// Corner Keys:
+		placeKeyAtCenter(KEY_SOFT_LEFT, baseSize * 0.7f, h - baseSize * 0.6f, true);
+		placeKeyAtCenter(KEY_SOFT_RIGHT, w - baseSize * 0.7f, h - baseSize * 0.6f, true);
+		placeKeyAtCenter(KEY_POUND, w - baseSize * 0.7f, baseSize * 0.7f, true);
 
 		// Hide all other unused keys:
-		setSnap(KEY_NUM2, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_NUM4, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_NUM5, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_NUM6, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_NUM8, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_UP_LEFT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_UP_RIGHT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_DOWN_LEFT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_DOWN_RIGHT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_A, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_B, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_C, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_D, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
-		setSnap(KEY_MENU, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		int[] unused = {
+			KEY_NUM2, KEY_NUM4, KEY_NUM5, KEY_NUM6, KEY_NUM8,
+			KEY_UP_LEFT, KEY_UP_RIGHT, KEY_DOWN_LEFT, KEY_DOWN_RIGHT,
+			KEY_A, KEY_B, KEY_C, KEY_D, KEY_MENU
+		};
+		for (int key : unused) {
+			keypad[key].visible = false;
+			keypad[key].snapOrigin = SCREEN;
+			keypad[key].snapMode = RectSnap.INT_NORTH;
+			keypad[key].snapOffset.set(0, 0);
+		}
+
+		snapKeys();
 	}
 
 	public int getLayout() {
@@ -919,6 +977,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (mode == LAYOUT_SCALES) {
 			editedIndex = 0;
 			group = 0;
+		} else if (mode == LAYOUT_KEYS) {
+			editedIndex = KEY_FIRE;
 		}
 		highlightGroup(group);
 		handler.removeCallbacks(this);
@@ -956,7 +1016,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		snapRadius = keySize * snapRadius / 4;
 		this.keySize = keySize;
 		if (layoutVariant == TYPE_ANLAND) {
-			setAnlandLayout();
+			setAnlandRadialLayout();
 		}
 		for (int group = 0; group < keyScaleGroups.length; group++) {
 			resizeKeyGroup(group);
@@ -999,12 +1059,114 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void paint(CanvasWrapper g) {
 		if (visible) {
-			for (VirtualKey key : keypad) {
+			for (int i = 0; i < keypad.length; i++) {
+				VirtualKey key = keypad[i];
 				if (key.visible) {
 					key.paint(g);
+				} else if (layoutEditMode == LAYOUT_KEYS) {
+					int alpha = 0x55000000;
+					g.setFillColor(alpha | 0x882222);
+					g.setTextColor(alpha | 0xFFFFFF);
+					g.setDrawColor(0x77FF4444);
+					g.fillRoundRect(key.rect, key.corners, key.corners);
+					g.drawRoundRect(key.rect, key.corners, key.corners);
+					g.drawString(key.label, key.rect.centerX(), key.rect.centerY());
+				}
+				if (layoutEditMode == LAYOUT_KEYS && i == editedIndex) {
+					g.setDrawColor(0xFF00E5FF);
+					RectF r = new RectF(key.rect.left - 4, key.rect.top - 4,
+							key.rect.right + 4, key.rect.bottom + 4);
+					g.drawRoundRect(r, key.corners + 4, key.corners + 4);
 				}
 			}
+
+			if (layoutEditMode == LAYOUT_KEYS) {
+				paintEditorToolbar(g);
+			}
 		}
+	}
+
+	private void paintEditorToolbar(CanvasWrapper g) {
+		if (screen == null) return;
+		float sw = screen.width();
+		float barW = Math.min(sw * 0.96f, 480f);
+		float barH = 50f;
+		float barL = (sw - barW) / 2f;
+		float barT = 12f;
+		toolbarRect.set(barL, barT, barL + barW, barT + barH);
+
+		// Toolbar Background
+		g.setFillColor(0xEE1E1E24);
+		g.setDrawColor(0xFF5A5A6E);
+		g.fillRoundRect(toolbarRect, 14, 14);
+		g.drawRoundRect(toolbarRect, 14, 14);
+
+		float pad = 5f;
+		float btnH = barH - pad * 2f;
+		float curX = barL + pad;
+
+		// 1. Info Chip
+		String info = editedIndex >= 0 ? "[" + keypad[editedIndex].label + "] " +
+				String.format(java.util.Locale.US, "%.1fx", keypad[editedIndex].scale) : "Chạm chọn";
+		float infoW = 95f;
+		g.setTextColor(0xFF00E5FF);
+		g.drawString(info, curX + infoW / 2f, barT + barH / 2f);
+		curX += infoW + pad;
+
+		// 2. Button [ - ]
+		float wMinus = 44f;
+		btnMinusRect.set(curX, barT + pad, curX + wMinus, barT + pad + btnH);
+		g.setFillColor(0xFF333344);
+		g.setDrawColor(0xFF666688);
+		g.fillRoundRect(btnMinusRect, 8, 8);
+		g.drawRoundRect(btnMinusRect, 8, 8);
+		g.setTextColor(0xFFFFFFFF);
+		g.drawString("-", btnMinusRect.centerX(), btnMinusRect.centerY());
+		curX += wMinus + pad;
+
+		// 3. Button [ + ]
+		float wPlus = 44f;
+		btnPlusRect.set(curX, barT + pad, curX + wPlus, barT + pad + btnH);
+		g.setFillColor(0xFF333344);
+		g.setDrawColor(0xFF666688);
+		g.fillRoundRect(btnPlusRect, 8, 8);
+		g.drawRoundRect(btnPlusRect, 8, 8);
+		g.setTextColor(0xFFFFFFFF);
+		g.drawString("+", btnPlusRect.centerX(), btnPlusRect.centerY());
+		curX += wPlus + pad;
+
+		// 4. Button [ Ẩn / Hiện ]
+		float wVis = 68f;
+		btnVisRect.set(curX, barT + pad, curX + wVis, barT + pad + btnH);
+		boolean isVis = editedIndex >= 0 && keypad[editedIndex].visible;
+		g.setFillColor(isVis ? 0xFF882222 : 0xFF227733);
+		g.setDrawColor(isVis ? 0xFFFF4444 : 0xFF44CC66);
+		g.fillRoundRect(btnVisRect, 8, 8);
+		g.drawRoundRect(btnVisRect, 8, 8);
+		g.setTextColor(0xFFFFFFFF);
+		g.drawString(isVis ? "Ẩn" : "Hiện", btnVisRect.centerX(), btnVisRect.centerY());
+		curX += wVis + pad;
+
+		// 5. Button [ Đặt lại ]
+		float wReset = 84f;
+		btnResetRect.set(curX, barT + pad, curX + wReset, barT + pad + btnH);
+		g.setFillColor(0xFF444455);
+		g.setDrawColor(0xFF777799);
+		g.fillRoundRect(btnResetRect, 8, 8);
+		g.drawRoundRect(btnResetRect, 8, 8);
+		g.setTextColor(0xFFEEEEEE);
+		g.drawString("Đặt lại", btnResetRect.centerX(), btnResetRect.centerY());
+		curX += wReset + pad;
+
+		// 6. Button [ Xong ]
+		float wDone = barL + barW - pad - curX;
+		btnDoneRect.set(curX, barT + pad, curX + wDone, barT + pad + btnH);
+		g.setFillColor(0xFF2E7D32);
+		g.setDrawColor(0xFF4CAF50);
+		g.fillRoundRect(btnDoneRect, 8, 8);
+		g.drawRoundRect(btnDoneRect, 8, 8);
+		g.setTextColor(0xFFFFFFFF);
+		g.drawString("Xong", btnDoneRect.centerX(), btnDoneRect.centerY());
 	}
 
 	@Override
@@ -1025,16 +1187,50 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				}
 				break;
 			case LAYOUT_KEYS:
+				if (toolbarRect.contains(x, y)) {
+					if (btnMinusRect.contains(x, y)) {
+						if (editedIndex >= 0) {
+							VirtualKey key = keypad[editedIndex];
+							key.scale = Math.max(0.4f, Math.round((key.scale - 0.1f) * 10f) / 10f);
+							key.resize(keySize * key.scale, keySize * key.scale);
+							key.corners = (int) (Math.min(key.rect.width(), key.rect.height()) * 0.25F);
+							invalidateView();
+						}
+					} else if (btnPlusRect.contains(x, y)) {
+						if (editedIndex >= 0) {
+							VirtualKey key = keypad[editedIndex];
+							key.scale = Math.min(2.5f, Math.round((key.scale + 0.1f) * 10f) / 10f);
+							key.resize(keySize * key.scale, keySize * key.scale);
+							key.corners = (int) (Math.min(key.rect.width(), key.rect.height()) * 0.25F);
+							invalidateView();
+						}
+					} else if (btnVisRect.contains(x, y)) {
+						if (editedIndex >= 0) {
+							keypad[editedIndex].visible = !keypad[editedIndex].visible;
+							invalidateView();
+						}
+					} else if (btnResetRect.contains(x, y)) {
+						setAnlandRadialLayout();
+						invalidateView();
+					} else if (btnDoneRect.contains(x, y)) {
+						setLayoutEditMode(LAYOUT_EOF);
+						onLayoutChanged(TYPE_CUSTOM);
+						saveLayout();
+						invalidateView();
+					}
+					return true;
+				}
+
 				editedIndex = -1;
-				for (int i = 0; i < keypad.length; i++) {
-					if (keypad[i].contains(x, y)) {
+				for (int i = keypad.length - 1; i >= 0; i--) {
+					if (keypad[i].rect.contains(x, y)) {
 						editedIndex = i;
-						RectF rect = keypad[i].rect;
-						offsetX = x - rect.left;
-						offsetY = y - rect.top;
+						offsetX = x - keypad[i].rect.left;
+						offsetY = y - keypad[i].rect.top;
 						break;
 					}
 				}
+				invalidateView();
 				break;
 			case LAYOUT_SCALES:
 				int index = -1;
@@ -1077,28 +1273,19 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				}
 				break;
 			case LAYOUT_KEYS:
-				if (editedIndex >= 0) {
+				if (editedIndex >= 0 && screen != null) {
 					VirtualKey key = keypad[editedIndex];
-					RectF rect = key.rect;
-					rect.offsetTo(x - offsetX, y - offsetY);
-					key.snapMode = RectSnap.NO_SNAP;
-					for (int i = 0; i < keypad.length; i++) {
-						if (i != editedIndex && findSnap(editedIndex, i)) {
-							break;
-						}
-					}
-					if (key.snapMode == RectSnap.NO_SNAP) {
-						key.snapMode = RectSnap.getSnap(rect, screen, key.snapOffset);
-						key.snapOrigin = SCREEN;
-						if (Math.abs(key.snapOffset.x) <= snapRadius) {
-							key.snapOffset.x = 0;
-						}
-						if (Math.abs(key.snapOffset.y) <= snapRadius) {
-							key.snapOffset.y = 0;
-						}
-					}
-					snapKey(editedIndex, 0);
+					float newLeft = x - offsetX;
+					float newTop = y - offsetY;
+					newLeft = Math.max(0, Math.min(screen.width() - key.rect.width(), newLeft));
+					newTop = Math.max(0, Math.min(screen.height() - key.rect.height(), newTop));
+					key.snapOrigin = SCREEN;
+					key.snapMode = RectSnap.INT_NORTHWEST;
+					key.snapOffset.set(newLeft, newTop);
+					key.rect.offsetTo(newLeft, newTop);
+					key.snapValid = true;
 					invalidateView();
+					return true;
 				}
 				break;
 			case LAYOUT_SCALES:
@@ -1144,30 +1331,14 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				invalidateView();
 			}
 		} else if (layoutEditMode == LAYOUT_KEYS) {
-			for (int key = 0; key < keypad.length; key++) {
-				VirtualKey vKey = keypad[key];
-				if (vKey.snapOrigin == editedIndex) {
-					vKey.snapMode = RectSnap.NO_SNAP;
-					for (int i = 0; i < KEYBOARD_SIZE; i++) {
-						if (i != key && findSnap(key, i)) {
-							break;
-						}
-					}
-					if (vKey.snapMode == RectSnap.NO_SNAP) {
-						vKey.snapMode = RectSnap.getSnap(vKey.rect, screen, vKey.snapOffset);
-						vKey.snapOrigin = SCREEN;
-						if (Math.abs(vKey.snapOffset.x) <= snapRadius) {
-							vKey.snapOffset.x = 0;
-						}
-						if (Math.abs(vKey.snapOffset.y) <= snapRadius) {
-							vKey.snapOffset.y = 0;
-						}
-					}
-					snapKey(key, 0);
-				}
+			if (editedIndex >= 0 && screen != null) {
+				VirtualKey key = keypad[editedIndex];
+				key.snapOrigin = SCREEN;
+				key.snapMode = RectSnap.INT_NORTHWEST;
+				key.snapOffset.set(key.rect.left, key.rect.top);
+				key.snapValid = true;
+				invalidateView();
 			}
-			snapKeys();
-			editedIndex = -1;
 		}
 		return false;
 	}
