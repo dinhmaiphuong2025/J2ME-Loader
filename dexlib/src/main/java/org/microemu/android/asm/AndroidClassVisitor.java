@@ -32,21 +32,38 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 public class AndroidClassVisitor extends ClassVisitor {
+	private final MethodRenamer renamer;
+	private String className;
 
 	AndroidClassVisitor(ClassVisitor cv) {
+		this(cv, null);
+	}
+
+	AndroidClassVisitor(ClassVisitor cv, MethodRenamer renamer) {
 		super(Opcodes.ASM9, cv);
+		this.renamer = renamer;
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		if (renamer != null) {
+			String renamed = renamer.getRenamedMethod(className, name, desc);
+			if (renamed != null) {
+				name = renamed;
+			}
+		}
 		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		return new AndroidMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+		boolean returnsBoolean = Type.getReturnType(desc).getSort() == Type.BOOLEAN;
+		return new AndroidMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions),
+				returnsBoolean, renamer);
 	}
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		className = name;
 		superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visit(version, access, name, signature, superName, interfaces);
 	}

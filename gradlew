@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Disable tagged pointers: the on-device GKI kernel re-enables them after
+# reboot, which aborts the Gradle JVM at startup (exit 134).
+echo 1 > /proc/sys/abi/tagged_addr_disabled 2>/dev/null || true
+
 ##############################################################################
 ##
 ##  Gradle start up script for UN*X
@@ -59,6 +63,19 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/" >/dev/null
 APP_HOME="`pwd -P`"
 cd "$SAVED" >/dev/null
+
+# DSC on-device build: Gradle runs under su with an unwritable HOME (/).
+# Point Gradle at writable, project-local caches.
+GRADLE_USER_HOME="${GRADLE_USER_HOME:-$APP_HOME/.gradle_user}"
+export GRADLE_USER_HOME
+export ANDROID_USER_HOME="$APP_HOME/.android"
+export ANDROID_PREFS_ROOT="$APP_HOME"
+if [ ! -w "$HOME" ]; then
+    export HOME="$APP_HOME"
+fi
+# The aarch64 NDK's make is built for Termux and hardcodes its shell path;
+# point it at the device's system shell instead.
+export SHELL=/system/bin/sh
 
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
@@ -156,5 +173,7 @@ function splitJvmOpts() {
 }
 eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS
 JVM_OPTS[${#JVM_OPTS[*]}]="-Dorg.gradle.appname=$APP_BASE_NAME"
+JVM_OPTS[${#JVM_OPTS[*]}]="-Duser.home=$APP_HOME"
+JVM_OPTS[${#JVM_OPTS[*]}]="-Dandroid.prefs.root=$APP_HOME"
 
 exec "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"

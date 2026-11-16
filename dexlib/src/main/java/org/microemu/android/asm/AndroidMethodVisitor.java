@@ -38,9 +38,21 @@ import java.util.ArrayList;
 public class AndroidMethodVisitor extends MethodVisitor {
 	static boolean USE_PANIC_LOGGING = false;
 	private final ArrayList<Label> exceptionHandlers = new ArrayList<>();
+	private final boolean returnsBoolean;
+	private final MethodRenamer renamer;
 
 	public AndroidMethodVisitor(MethodVisitor methodVisitor) {
+		this(methodVisitor, false, null);
+	}
+
+	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean) {
+		this(methodVisitor, returnsBoolean, null);
+	}
+
+	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean, MethodRenamer renamer) {
 		super(ASM9, methodVisitor);
+		this.returnsBoolean = returnsBoolean;
+		this.renamer = renamer;
 	}
 
 	@Override
@@ -53,7 +65,25 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	}
 
 	@Override
+	public void visitInsn(int opcode) {
+		if (opcode == IRETURN && returnsBoolean) {
+			// JVMS 6.5: ireturn narrows boolean results with value & 1. The DEX
+			// verifier doesn't apply that conversion implicitly and rejects, for
+			// example, a short value returned from a boolean method.
+			super.visitInsn(ICONST_1);
+			super.visitInsn(IAND);
+		}
+		super.visitInsn(opcode);
+	}
+
+	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+		if (renamer != null) {
+			String renamed = renamer.getRenamedMethod(owner, name, desc);
+			if (renamed != null) {
+				name = renamed;
+			}
+		}
 		switch (owner) {
 			case "java/lang/Class":
 				if (name.equals("getResourceAsStream")) {
