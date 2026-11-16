@@ -45,7 +45,7 @@ import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.hud.HudAssetManager;
+import com.j2me.lixin.hud.HudAssetManager;
 import com.j2me.lixin.config.Config;
 import com.j2me.lixin.config.ProfileModel;
 import com.j2me.lixin.config.ProfilesManager;

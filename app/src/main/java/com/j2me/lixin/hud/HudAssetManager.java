@@ -1,4 +1,4 @@
-package ru.playsoftware.j2meloader.hud;
+package com.j2me.lixin.hud;
 
 import android.content.Context;
 import android.graphics.Bitmap;
