@@ -477,7 +477,7 @@ public final class HudKeyPickerDialog {
         // is gone: assigning "A" or "F5" to a HUD button never reached the game.
         List<KeyEntry> list = new ArrayList<>();
         for (int code : HudKeyBridge.ALL_KEYS) {
-            list.add(new KeyEntry(HudKeyBridge.label(code), HudAction.key(code)));
+            list.add(new KeyEntry(HudKeyBridge.label(code), HudAction.j2meKey(code)));
         }
         return list;
     }

@@ -211,7 +211,10 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
             if (HudAction.TYPE_MODIFIER.equals(btn.action.type)) {
                 if (isDown) toggleModifier(btn.action.code);
             } else if (HudAction.TYPE_KEY.equals(btn.action.type)) {
-                if (mHost != null) mHost.sendKey(isDown ? 0 : 1, btn.action.code);
+                if (mHost != null) {
+                    int key = HudKeyBridge.resolve(btn.action);
+                    if (key != HudKeyBridge.UNMAPPED) mHost.sendKey(isDown ? 0 : 1, key);
+                }
             } else if (HudAction.TYPE_MOUSE.equals(btn.action.type)) {
                 // Edge-driven like a real button: down holds it, up releases it. A quick tap is
                 // still a click, and holding it while the pad moves the cursor is a drag.
@@ -3485,8 +3488,10 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
             if (action.code <= 0) return;
             sendWithModifiers(() -> {
                 if (mHost != null) {
-                    mHost.sendKey(0, action.code);
-                    mHost.sendKey(1, action.code);
+                    int key = HudKeyBridge.resolve(action);
+                    if (key != HudKeyBridge.UNMAPPED) mHost.sendKey(0, key);
+                    if (HudKeyBridge.resolve(action) != HudKeyBridge.UNMAPPED)
+                        mHost.sendKey(1, HudKeyBridge.resolve(action));
                 }
             });
         } else if (HudAction.TYPE_MODIFIER.equals(action.type)) {

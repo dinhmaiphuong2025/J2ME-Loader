@@ -89,10 +89,10 @@ final class J2meHudPreset {
     private static HudButton pad() {
         HudButton b = base(HudButton.WIDGET_DPAD, "PAD", 0.17f, 0.68f, 150, 150);
         b.cornerRadiusDp = 75;
-        b.dpadUpAction = HudAction.key(Canvas.KEY_UP);
-        b.dpadDownAction = HudAction.key(Canvas.KEY_DOWN);
-        b.dpadLeftAction = HudAction.key(Canvas.KEY_LEFT);
-        b.dpadRightAction = HudAction.key(Canvas.KEY_RIGHT);
+        b.dpadUpAction = HudAction.j2meKey(Canvas.KEY_UP);
+        b.dpadDownAction = HudAction.j2meKey(Canvas.KEY_DOWN);
+        b.dpadLeftAction = HudAction.j2meKey(Canvas.KEY_LEFT);
+        b.dpadRightAction = HudAction.j2meKey(Canvas.KEY_RIGHT);
         return b;
     }
 
@@ -100,7 +100,7 @@ final class J2meHudPreset {
         HudButton b = base(HudButton.WIDGET_STANDARD, "OK", 0.86f, 0.66f, 78, 78);
         b.cornerRadiusDp = 39;
         b.cornerShape = HudCornerShape.ALL;
-        b.action = HudAction.key(Canvas.KEY_FIRE);
+        b.action = HudAction.j2meKey(Canvas.KEY_FIRE);
         return b;
     }
 
@@ -112,7 +112,7 @@ final class J2meHudPreset {
         for (int i = 1; i <= 9; i++) {
             HudButton child = base(HudButton.WIDGET_STANDARD, Integer.toString(i), 0.5f, 0.9f, 40, 38);
             child.cornerRadiusDp = 8;
-            child.action = HudAction.key(Canvas.KEY_NUM0 + i);
+            child.action = HudAction.j2meKey(Canvas.KEY_NUM0 + i);
             child.gridSlot = i - 1;
             group.children.add(child);
         }
@@ -122,7 +122,7 @@ final class J2meHudPreset {
     private static HudButton soft(String label, int keyCode, float x, float y) {
         HudButton b = base(HudButton.WIDGET_STANDARD, label, x, y, 58, 36);
         b.cornerRadiusDp = 10;
-        b.action = HudAction.key(keyCode);
+        b.action = HudAction.j2meKey(keyCode);
         return b;
     }
 }

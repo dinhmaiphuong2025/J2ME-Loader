@@ -32,9 +32,10 @@ public final class HudDpadInput {
             LinkedHashSet<Integer> keys = new LinkedHashSet<>();
             if (action != null) {
                 if (HudAction.TYPE_COMBO.equals(action.type)) keys.addAll(action.comboKeys);
-                else if (isHeldAction(action)) keys.add(action.code);
+                else if (isHeldAction(action)) keys.add(HudKeyBridge.resolve(action));
             }
-            keys.removeIf(code -> code <= 0);
+            // MIDP arrow/fire/soft keys are negative; only UNMAPPED/0 means "unassigned".
+            keys.removeIf(code -> code == 0 || code == HudKeyBridge.UNMAPPED);
             List<Integer> held = new ArrayList<>(keys);
             directions.put(direction, held);
             for (int code : held) {

@@ -55,6 +55,21 @@ public final class HudKeyBridge {
         }
     }
 
+    /**
+     * Resolves an action. Codes explicitly marked "midp" are never run through the
+     * evdev table: scancode 48 is the letter B while J2ME 48 is the digit 0, and
+     * mixing the two spaces is what made number keys type letters.
+     */
+    public static int resolve(HudAction action) {
+        if (action == null || action.code == 0) {
+            return UNMAPPED;
+        }
+        if ("midp".equals(action.space)) {
+            return isJ2meKey(action.code) ? action.code : UNMAPPED;
+        }
+        return resolve(action.code);
+    }
+
     /** Resolves a stored HUD action code to a MIDP key code. */
     public static int resolve(int code) {
         if (isJ2meKey(code)) {

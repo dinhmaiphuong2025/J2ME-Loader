@@ -21,6 +21,8 @@ public final class HudAction {
      *  key holds the button - that is what makes a two-thumb drag possible. */
     public static final String TYPE_MOUSE = "mouse";
 
+    /** "midp" when the code is a J2ME key code; null for layouts imported from Anland (evdev). */
+    public String space = null;
     public String type = TYPE_KEY;
     public int code = 0; // evdev scancode for key / modifier
     public boolean repeat = false;
@@ -34,6 +36,15 @@ public final class HudAction {
         HudAction a = new HudAction();
         a.type = TYPE_KEY;
         a.code = evdevCode;
+        return a;
+    }
+
+    /** A key already expressed as a J2ME (MIDP) key code. */
+    public static HudAction j2meKey(int midpCode) {
+        HudAction a = new HudAction();
+        a.type = TYPE_KEY;
+        a.code = midpCode;
+        a.space = "midp";
         return a;
     }
 
@@ -84,6 +95,7 @@ public final class HudAction {
         if (TYPE_KEY.equals(type) || TYPE_MODIFIER.equals(type) || TYPE_MOUSE.equals(type)) {
             obj.put("code", code);
             obj.put("repeat", repeat);
+            if (space != null) obj.put("space", space);
         } else if (TYPE_COMBO.equals(type)) {
             JSONArray arr = new JSONArray();
             for (int k : comboKeys) arr.put(k);
@@ -104,6 +116,7 @@ public final class HudAction {
         a.type = obj.optString("type", TYPE_KEY);
         if ("gamepad".equals(a.type)) return key(0);
         a.code = obj.optInt("code", 0);
+        a.space = obj.has("space") ? obj.optString("space") : null;
         a.repeat = obj.optBoolean("repeat", false);
         a.text = obj.optString("text", "");
         a.systemCommand = obj.optString("command", "");
@@ -127,6 +140,7 @@ public final class HudAction {
         HudAction c = new HudAction();
         c.type = this.type;
         c.code = this.code;
+        c.space = this.space;
         c.repeat = this.repeat;
         c.text = this.text;
         c.systemCommand = this.systemCommand;

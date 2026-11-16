@@ -143,6 +143,10 @@ final class HudPrefsMigration {
      * Without this, most buttons carry scancodes the emulator can never deliver.
      */
     static void normalizeKeyCodes(SharedPreferences prefs) {
+        if (prefs.getBoolean("code_space_midp_v1", false)) {
+            return;
+        }
+        prefs.edit().putBoolean("code_space_midp_v1", true).apply();
         String json = prefs.getString(PREF_PROFILE, null);
         if (json == null || json.isEmpty()) {
             return;
@@ -201,13 +205,22 @@ final class HudPrefsMigration {
         if (a == null) return false;
         String type = a.optString("type");
         boolean changed = false;
-        if ("key".equals(type) || "modifier".equals(type)) {
-            int code = a.optInt("code", Integer.MIN_VALUE);
-            int mapped = remap(code);
-            if (mapped != code) {
+        if ("key".equals(type)) {
+            if (!a.has("space")) {
+                int code = a.optInt("code", 0);
+                int mapped = HudKeyBridge.fromEvdev(code);
                 try {
-                    a.put("code", mapped);
-                    changed = true;
+                    if (mapped != HudKeyBridge.UNMAPPED) {
+                        a.put("code", mapped);
+                        a.put("space", "midp");
+                        changed = true;
+                    } else if (code >= 48 && code <= 57) {
+                        // 48..57 is B/N/M/,/./\/RSHIFT/KP*/LALT/SPACE on a PC but
+                        // digits 0..9 in J2ME. Guessing wrong types numbers as letters,
+                        // so leave the button unassigned instead.
+                        a.put("code", 0);
+                        changed = true;
+                    }
                 } catch (Exception ignored) {
                 }
             }
@@ -216,8 +229,8 @@ final class HudPrefsMigration {
             if (keys != null) {
                 for (int i = 0; i < keys.length(); i++) {
                     int code = keys.optInt(i, Integer.MIN_VALUE);
-                    int mapped = remap(code);
-                    if (mapped != code) {
+                    int mapped = HudKeyBridge.fromEvdev(code);
+                    if (mapped != HudKeyBridge.UNMAPPED) {
                         try {
                             keys.put(i, mapped);
                             changed = true;
