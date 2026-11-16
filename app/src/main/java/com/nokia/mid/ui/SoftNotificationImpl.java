@@ -35,8 +35,8 @@ import java.util.Hashtable;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.util.PNGUtils;
+import com.j2me.lixin.R;
+import com.j2me.lixin.util.PNGUtils;
 
 public class SoftNotificationImpl extends SoftNotification {
 	final static int EVENT_ACCEPT = 1;
@@ -125,7 +125,7 @@ public class SoftNotificationImpl extends SoftNotification {
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, channelId);
 			builder.setContentTitle(appName);
 			if (text != null) builder.setContentText(text);
-			if (groupText != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			if (groupText != null) {
 				builder.setGroup(groupText);
 			}
 			if (bitmap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

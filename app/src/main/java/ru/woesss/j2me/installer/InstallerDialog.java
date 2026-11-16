@@ -1,5 +1,5 @@
 /*
- *  Copyright 2020-2022 Yury Kharchenko
+ *  Copyright 2020-2023 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,18 +36,20 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import java.util.List;
+
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.applist.AppListModel;
-import ru.playsoftware.j2meloader.appsdb.AppRepository;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.databinding.DialogInstallerBinding;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import com.j2me.lixin.R;
+import com.j2me.lixin.applist.AppItem;
+import com.j2me.lixin.applist.AppListModel;
+import com.j2me.lixin.appsdb.AppRepository;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.databinding.DialogInstallerBinding;
+import com.j2me.lixin.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
@@ -183,11 +185,11 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	@SuppressLint("CheckResult")
-	private void onPickFileResult(Uri uri) {
-		if (uri == null) {
+	private void onPickFileResult(List<Uri> uris) {
+		if (uris == null || uris.isEmpty()) {
 			return;
 		}
-		Disposable disposable = installer.updateInfo(uri)
+		Disposable disposable = installer.updateInfo(uris.get(0))
 				.subscribeOn(Schedulers.computation())
 				.observeOn(AndroidSchedulers.mainThread())
 				.subscribe(this::onProgress, this::onError);

@@ -34,6 +34,7 @@ public class TextBox extends Screen {
 	}
 
 	public void setString(String text) {
+		android.util.Log.e("DEBUG_INPUT", "TextBox.setString: [" + text + "]");
 		textField.setString(text);
 	}
 
@@ -46,7 +47,9 @@ public class TextBox extends Screen {
 	}
 
 	public String getString() {
-		return textField.getString();
+		String res = textField.getString();
+		android.util.Log.e("DEBUG_INPUT", "TextBox.getString: returning [" + res + "]");
+		return res;
 	}
 
 	public int size() {

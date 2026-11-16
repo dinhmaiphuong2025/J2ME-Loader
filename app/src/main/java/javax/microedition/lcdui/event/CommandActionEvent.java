@@ -64,10 +64,16 @@ public class CommandActionEvent extends Event {
 
 	@Override
 	public void process() {
-		if (listener != null) {
-			listener.commandAction(command, displayable);
-		} else if (itemlistener != null) {
-			itemlistener.commandAction(command, item);
+		android.util.Log.e("DEBUG_INPUT", "CommandActionEvent.process: listener=" + listener + ", cmd=" + (command != null ? command.getLabel() : "null") + ", disp=" + displayable);
+		try {
+			if (listener != null) {
+				listener.commandAction(command, displayable);
+				android.util.Log.e("DEBUG_INPUT", "CommandActionEvent.process: commandAction finished successfully!");
+			} else if (itemlistener != null) {
+				itemlistener.commandAction(command, item);
+			}
+		} catch (Throwable t) {
+			android.util.Log.e("DEBUG_INPUT", "CommandActionEvent.process EXCEPTION:", t);
 		}
 	}
 

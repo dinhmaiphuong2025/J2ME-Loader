@@ -25,8 +25,8 @@ import android.widget.PopupWindow;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Screen;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.databinding.SoftButtonBarBinding;
+import com.j2me.lixin.R;
+import com.j2me.lixin.databinding.SoftButtonBarBinding;
 
 public class ScreenSoftBar extends AbstractSoftKeysBar {
 	private final SoftButtonBarBinding binding;
@@ -97,5 +97,14 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		binding.setVisibility(View.VISIBLE);
 		binding.setText(c.getAndroidLabel());
 		binding.setTag(c);
+	}
+
+	public void showMenu() {
+		PopupWindow popup = prepareMenu(2);
+		int y = binding.rightButton.getHeight();
+		View rootView = binding.rightButton.getRootView();
+		popup.setWidth(Math.min(rootView.getWidth(), rootView.getHeight()) / 2);
+		popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+		popup.showAtLocation(rootView, Gravity.RIGHT | Gravity.BOTTOM, 0, y);
 	}
 }

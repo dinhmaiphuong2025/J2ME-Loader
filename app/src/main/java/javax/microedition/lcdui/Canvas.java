@@ -1,8 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
- * Copyright 2017-2022 Nikita Shakarun
- * Copyright 2018-2022 Yriy Kharchenko
- * Copyright 2023 Arman Jussupgaliyev
+ * Copyright 2017-2020 Nikita Shakarun
+ * Copyright 2019-2023 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +21,15 @@ package javax.microedition.lcdui;
 import static android.opengl.GLES20.*;
 
 import android.annotation.SuppressLint;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
 import android.opengl.GLUtils;
 import android.os.Handler;
 import android.os.Looper;
@@ -52,8 +53,8 @@ import androidx.core.content.ContextCompat;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -77,8 +78,8 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.ShaderInfo;
+import com.j2me.lixin.R;
+import com.j2me.lixin.config.ShaderInfo;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Canvas extends Displayable {
@@ -150,7 +151,7 @@ public abstract class Canvas extends Displayable {
 	private int displayWidth;
 	private int displayHeight;
 	private boolean fullscreen;
-	private boolean visible;
+	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private Image offscreen;
 	private Image offscreenCopy;
@@ -176,8 +177,19 @@ public abstract class Canvas extends Displayable {
 		if (parallelRedraw) {
 			uiHandler = new Handler(Looper.getMainLooper(), msg -> repaintScreen());
 		}
-		displayWidth = ContextHolder.getDisplayWidth();
-		displayHeight = ContextHolder.getDisplayHeight();
+		int dw = ContextHolder.getDisplayWidth();
+		int dh = ContextHolder.getDisplayHeight();
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null && activity.getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
+			displayWidth = Math.max(dw, dh);
+			displayHeight = Math.min(dw, dh);
+		} else if (activity != null && activity.getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
+			displayWidth = Math.min(dw, dh);
+			displayHeight = Math.max(dw, dh);
+		} else {
+			displayWidth = dw;
+			displayHeight = dh;
+		}
 		updateSize();
 	}
 
@@ -375,7 +387,7 @@ public abstract class Canvas extends Displayable {
 				 * height is selected by the ratio of the real screen
 				 */
 				width = virtualWidth;
-				height = scaledDisplayHeight * virtualWidth / displayWidth;
+				height = Math.round((float) scaledDisplayHeight * virtualWidth / Math.max(1, displayWidth));
 			}
 		} else {
 			if (virtualHeight > 0) {
@@ -383,16 +395,20 @@ public abstract class Canvas extends Displayable {
 				 * only the canvas height is set
 				 * width is selected by the ratio of the real screen
 				 */
-				width = displayWidth * virtualHeight / scaledDisplayHeight;
+				width = Math.round((float) displayWidth * virtualHeight / Math.max(1, scaledDisplayHeight));
 				height = virtualHeight;
 			} else {
 				/*
-				 * nothing is set - screen-sized canvas
+				 * dynamic canvas - scaled by screen density (DPI)
 				 */
-				width = displayWidth;
-				height = scaledDisplayHeight;
+				float density = ContextHolder.getAppContext().getResources().getDisplayMetrics().density;
+				if (density < 1.0f) density = 1.0f;
+				width = Math.round(displayWidth / density);
+				height = Math.round(scaledDisplayHeight / density);
 			}
 		}
+		width = Math.max(1, width);
+		height = Math.max(1, height);
 
 		/*
 		 * We turn the size of the canvas into the size of the image
@@ -559,6 +575,10 @@ public abstract class Canvas extends Displayable {
 		innerView = null;
 	}
 
+	public void getVirtualScreenBounds(RectF out) {
+		out.set(virtualScreen);
+	}
+
 	public void setFullScreenMode(boolean flag) {
 		if (fullscreen == flag) {
 			return;
@@ -608,7 +628,7 @@ public abstract class Canvas extends Displayable {
 	public final void repaint(int x, int y, int width, int height) {
 		limitFps();
 		boolean post;
-		synchronized (paintEvent) {
+		synchronized (paintEvent.clip) {
 			post = paintEvent.invalidateClip(this, x, y, x + width, y + height) && !paintEvent.isPending;
 			if (post) {
 				paintEvent.isPending = true;
@@ -620,14 +640,14 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void repaintInternal() {
-		synchronized (paintEvent) {
+		synchronized (paintEvent.clip) {
 			paintEvent.invalidateClip(this, 0, 0, width, height);
 		}
 		Display.postEvent(paintEvent);
 	}
 
 	// GameCanvas
-	public void flushBuffer(Image image, int x, int y, int width, int height) {
+	protected void flushBuffer(Image image, int x, int y, int width, int height) {
 		limitFps();
 		if (width <= 0 || height <= 0 ||
 				x + width < 0 || y + height < 0 ||
@@ -635,6 +655,10 @@ public abstract class Canvas extends Displayable {
 			return;
 		}
 		synchronized (bufferLock) {
+			if (Thread.holdsLock(paintEvent)) {
+				offscreen.getSingleGraphics().flush(image, x, y, width, height);
+				return;
+			}
 			offscreenCopy.getSingleGraphics().flush(image, x, y, width, height);
 		}
 		requestFlushToScreen();
@@ -699,6 +723,11 @@ public abstract class Canvas extends Displayable {
 		Display.getEventQueue().serviceRepaints(paintEvent);
 	}
 
+	@Override
+	public boolean isShown() {
+		return visible;
+	}
+
 	protected void showNotify() {
 	}
 
@@ -753,6 +782,10 @@ public abstract class Canvas extends Displayable {
 	protected void pointerReleased(int x, int y) {
 	}
 
+	public void setVisible() {
+		this.visible = true;
+	}
+
 	void setInvisible() {
 		this.visible = false;
 	}
@@ -788,7 +821,7 @@ public abstract class Canvas extends Displayable {
 			initTex();
 			Bitmap bitmap = offscreenCopy.getBitmap();
 			program.loadVbo(vbo, bitmap.getWidth(), bitmap.getHeight());
-			if (shaderFilter != null && shaderFilter.values != null) {
+			if (shaderFilter != null && shaderFilter.values != null && program.uSetting >= 0) {
 				glUniform4fv(program.uSetting, 1, shaderFilter.values, 0);
 			}
 			isStarted = true;
@@ -797,7 +830,9 @@ public abstract class Canvas extends Displayable {
 		@Override
 		public void onSurfaceChanged(GL10 gl, int width, int height) {
 			glViewport(0, 0, width, height);
-			glUniform2f(program.uPixelDelta, 1.0f / width, 1.0f / height);
+			if (program.uPixelDelta >= 0) {
+				glUniform2f(program.uPixelDelta, 1.0f / width, 1.0f / height);
+			}
 		}
 
 		@Override
@@ -862,13 +897,18 @@ public abstract class Canvas extends Displayable {
 		}
 
 		private Single<Bitmap> takeScreenShot() {
-			return Single.<ByteBuffer>create(emitter -> {
-						ByteBuffer buf = ByteBuffer.allocateDirect(onWidth * onHeight * 4).order(ByteOrder.nativeOrder());
+			return Single.<int[]>create(emitter -> {
+						IntBuffer buf = IntBuffer.allocate(onWidth * onHeight * 4);
 						mView.requestRender();
 						mView.queueEvent(() -> {
 							try {
 								glReadPixels(displayWidth - onWidth - onX, displayHeight - onHeight - onY, onWidth, onHeight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-								emitter.onSuccess(buf);
+								int error = glGetError();
+								if (error != GL_NO_ERROR) {
+									emitter.onError(new RuntimeException(GLU.gluErrorString(error)));
+								} else {
+									emitter.onSuccess(buf.array());
+								}
 							} catch (Throwable e) {
 								emitter.onError(e);
 							}
@@ -876,45 +916,38 @@ public abstract class Canvas extends Displayable {
 					}).timeout(3, TimeUnit.SECONDS)
 					.subscribeOn(Schedulers.computation())
 					.observeOn(Schedulers.computation())
-					.map(bb -> {
-						Bitmap rawBitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
-						bb.rewind();
-						rawBitmap.copyPixelsFromBuffer(bb);
-						Matrix m = new Matrix();
-						m.setScale(1.0f, -1.0f);
-						return Bitmap.createBitmap(rawBitmap, 0, 0, onWidth, onHeight, m, false);
+					.map(pixels -> {
+						for (int i = 0, len = pixels.length; i < len; i++) {
+							int p = pixels[i];
+							pixels[i] = (p & 0xff00ff00) | ((p & 0xff0000) >> 16) | ((p & 0xff) << 16);
+						}
+						return Bitmap.createBitmap(pixels, onWidth * (onHeight - 1), -onWidth, onWidth, onHeight, Bitmap.Config.ARGB_8888);
 					});
 		}
 	}
 
 	private class PaintEvent extends Event implements EventFilter {
-		private int clipLeft;
-		private int clipTop;
-		private int clipRight;
-		private int clipBottom;
+		final Rect clip = new Rect();
 
-		private boolean isPending;
+		boolean isPending;
 
 		private int enqueued = 0;
 
 		@Override
-		public void process() {
+		public synchronized void process() {
 			if (!visible) {
 				return;
 			}
 			int l, t, r, b;
-			synchronized (this) {
+			synchronized (clip) {
 				isPending = false;
-				l = clipLeft;
-				t = clipTop;
-				r = clipRight;
-				b = clipBottom;
-				clipLeft = 0;
-				clipTop = 0;
-				clipRight = 0;
-				clipBottom = 0;
+				l = clip.left;
+				t = clip.top;
+				r = clip.right;
+				b = clip.bottom;
+				clip.setEmpty();
 			}
-			if (r - l <= 0 || b - t <= 0) {
+			if (l >= r || t >= b) {
 				return;
 			}
 			Graphics g = offscreen.getSingleGraphics();
@@ -964,26 +997,22 @@ public abstract class Canvas extends Displayable {
 		}
 
 		private boolean invalidateClip(Canvas canvas, int l, int t, int r, int b) {
-			boolean empty = clipRight - clipLeft <= 0 && clipBottom - clipTop <= 0;
+			boolean empty = clip.left >= clip.right || clip.top >= clip.bottom;
 			if (empty) {
-				clipLeft = l;
-				clipTop = t;
-				clipRight = r;
-				clipBottom = b;
+				clip.left = l;
+				clip.top = t;
+				clip.right = r;
+				clip.bottom = b;
 			} else {
-				if (clipLeft > l) clipLeft = l;
-				if (clipTop > t) clipTop = t;
-				if (clipRight < r) clipRight = r;
-				if (clipBottom < b) clipBottom = b;
+				if (clip.left > l) clip.left = l;
+				if (clip.top > t) clip.top = t;
+				if (clip.right < r) clip.right = r;
+				if (clip.bottom < b) clip.bottom = b;
 			}
-			int w = width;
-			int h = height;
-
-			if (clipLeft < 0) clipLeft = 0;
-			if (clipTop < 0) clipTop = 0;
-			if (clipRight > w) clipRight = w;
-			if (clipBottom > h) clipBottom = h;
-
+			if (clip.left < 0) clip.left = 0;
+			if (clip.top < 0) clip.top = 0;
+			if (clip.right > width) clip.right = width;
+			if (clip.bottom > height) clip.bottom = height;
 			return empty;
 		}
 	}
@@ -1051,6 +1080,13 @@ public abstract class Canvas extends Displayable {
 		@Override
 		@SuppressLint("ClickableViewAccessibility")
 		public boolean onTouch(View v, MotionEvent event) {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null && activity.isFloatingInputActive()) {
+				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+					activity.cancelFloatingInput();
+				}
+				return true;
+			}
 			switch (event.getActionMasked()) {
 				case MotionEvent.ACTION_DOWN:
 					if (overlay != null) {
@@ -1182,6 +1218,7 @@ public abstract class Canvas extends Displayable {
 			}
 			displayWidth = newWidth;
 			displayHeight = newHeight;
+			visible = true;
 			if (checkSizeChanged() || !sizeChangedCalled) {
 				Display.postEvent(CanvasEvent.getInstance(Canvas.this,
 						CanvasEvent.SIZE_CHANGED,
@@ -1189,6 +1226,8 @@ public abstract class Canvas extends Displayable {
 						height));
 				repaintInternal();
 				sizeChangedCalled = true;
+			} else {
+				repaintInternal();
 			}
 		}
 
@@ -1198,6 +1237,7 @@ public abstract class Canvas extends Displayable {
 				renderer.start();
 			}
 			surface = holder.getSurface();
+			visible = true;
 			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
 			if (showFps) {
@@ -1209,6 +1249,11 @@ public abstract class Canvas extends Displayable {
 			overlay = ContextHolder.getVk();
 			if (overlay != null) {
 				overlay.setTarget(Canvas.this);
+				if (overlay instanceof VirtualKeyboard) {
+					((VirtualKeyboard) overlay).setView(overlayView);
+				}
+				overlayView.addLayer(overlay);
+				updateSize();
 			}
 		}
 
@@ -1228,8 +1273,12 @@ public abstract class Canvas extends Displayable {
 			}
 			overlayView.removeLayer(softBar);
 			softBar.closeMenu();
-			overlayView.setVisibility(false);
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity == null || activity.getCurrent() == Canvas.this) {
+				overlayView.setVisibility(false);
+			}
 			if (overlay != null) {
+				overlayView.removeLayer(overlay);
 				overlay.setTarget(null);
 				overlay.cancel();
 				overlay = null;

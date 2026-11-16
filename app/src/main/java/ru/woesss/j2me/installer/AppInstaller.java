@@ -1,17 +1,17 @@
 /*
- *  Copyright 2020-2022 Yury Kharchenko
+ * Copyright 2020-2023 Yury Kharchenko
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package ru.woesss.j2me.installer;
@@ -22,11 +22,9 @@ import android.util.Log;
 
 import com.android.dx.command.dexer.Main;
 
-import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.model.FileHeader;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,13 +42,14 @@ import java.util.jar.JarFile;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.appsdb.AppRepository;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.util.ConverterException;
-import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.ZipUtils;
+import com.j2me.lixin.applist.AppItem;
+import com.j2me.lixin.appsdb.AppRepository;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.util.FileUtils;
+import com.j2me.lixin.util.IOUtils;
+import com.j2me.lixin.util.ZipUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import ru.woesss.util.zip.ZipFile;
 
 public class AppInstaller {
 	private static final String TAG = AppInstaller.class.getSimpleName();
@@ -233,7 +232,7 @@ public class AppInstaller {
 		try {
 			connection = (HttpURLConnection) new URL(url).openConnection();
 			connection.setInstanceFollowRedirects(true);
-			connection.setReadTimeout(3 * 60 * 1000);
+			connection.setReadTimeout(30 * 1000);
 			connection.setConnectTimeout(15000);
 			int code = connection.getResponseCode();
 			if (code == HttpURLConnection.HTTP_MOVED_PERM
@@ -242,7 +241,7 @@ public class AppInstaller {
 				connection.disconnect();
 				connection = (HttpURLConnection) new URL(urlStr).openConnection();
 				connection.setInstanceFollowRedirects(true);
-				connection.setReadTimeout(3 * 60 * 1000);
+				connection.setReadTimeout(30 * 1000);
 				connection.setConnectTimeout(15000);
 			}
 			try (InputStream inputStream = connection.getInputStream();
@@ -353,17 +352,15 @@ public class AppInstaller {
 	}
 
 	private Descriptor loadManifest(File jar) throws IOException {
-		ZipFile zip = new ZipFile(jar);
-		FileHeader manifest = zip.getFileHeader(JarFile.MANIFEST_NAME);
-		if (manifest == null) throw new IOException("JAR not have " + JarFile.MANIFEST_NAME);
-		try (ZipInputStream is = zip.getInputStream(manifest)) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(20480);
-			byte[] buf = new byte[4096];
-			int read;
-			while ((read = is.read(buf)) != -1) {
-				baos.write(buf, 0, read);
+		try (ZipFile zip = new ZipFile(jar)) {
+			FileHeader manifest = zip.getFileHeader(JarFile.MANIFEST_NAME);
+			if (manifest == null) {
+				throw new IOException("JAR not have " + JarFile.MANIFEST_NAME);
 			}
-			return new Descriptor(baos.toString(), false);
+			try (ZipInputStream is = zip.getInputStream(manifest)) {
+				String text = new String(IOUtils.toByteArray(is));
+				return new Descriptor(text, false);
+			}
 		}
 	}
 
@@ -431,7 +428,7 @@ public class AppInstaller {
 		try {
 			connection = (HttpURLConnection) new URL(url).openConnection();
 			connection.setInstanceFollowRedirects(true);
-			connection.setReadTimeout(3 * 60 * 1000);
+			connection.setReadTimeout(60 * 1000);
 			connection.setConnectTimeout(15000);
 			int code = connection.getResponseCode();
 			if (code == HttpURLConnection.HTTP_MOVED_PERM
@@ -440,7 +437,7 @@ public class AppInstaller {
 				connection.disconnect();
 				connection = (HttpURLConnection) new URL(urlStr).openConnection();
 				connection.setInstanceFollowRedirects(true);
-				connection.setReadTimeout(3 * 60 * 1000);
+				connection.setReadTimeout(60 * 1000);
 				connection.setConnectTimeout(15000);
 			}
 			try (InputStream inputStream = connection.getInputStream();

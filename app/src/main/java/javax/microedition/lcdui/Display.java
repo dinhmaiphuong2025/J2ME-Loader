@@ -24,6 +24,8 @@ import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
+import javax.microedition.shell.J2meContext;
+import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import ru.woesss.j2me.jar.Descriptor;
@@ -51,41 +53,58 @@ public class Display {
 					0xFF000080
 			};
 
-	private static Display instance;
-	static EventQueue queue = new EventQueue();
 	private static boolean multiTouchSupported;
 	private static String pointerNumber;
 
-	static {
-		queue.startProcessing();
-	}
-
 	private Displayable current;
 
-	public static Display getDisplay(MIDlet midlet) {
-		if (instance == null && midlet != null) {
-			String nokiaUiEnhancement = midlet.getAppProperty(Descriptor.NOKIA_UI_ENHANCEMENT);
-			if (nokiaUiEnhancement != null) {
-				multiTouchSupported = nokiaUiEnhancement.contains("EnableMultiPointTouchEvents");
-			}
-			instance = new Display();
+	private static J2meContext getContext() {
+		J2meContext context = J2meContext.current();
+		if (context != null) {
+			return context;
 		}
-		return instance;
+		MicroActivity activity = ContextHolder.getActivity();
+		return activity != null ? activity.getContext() : null;
+	}
+
+	public static Display getDisplay(MIDlet midlet) {
+		J2meContext context = getContext();
+		if (context == null) {
+			return null;
+		}
+		Display display = context.getDisplay();
+		if (display != null || midlet == null) {
+			return display;
+		}
+		String nokiaUiEnhancement = midlet.getAppProperty(Descriptor.NOKIA_UI_ENHANCEMENT);
+		if (nokiaUiEnhancement != null) {
+			multiTouchSupported = nokiaUiEnhancement.contains("EnableMultiPointTouchEvents");
+		}
+		display = new Display();
+		context.setDisplay(display);
+		return display;
 	}
 
 	private Display() {
 	}
 
 	public static void initDisplay() {
-		instance = null;
+		J2meContext context = getContext();
+		if (context != null) {
+			context.setDisplay(null);
+		}
 	}
 
 	public static void postEvent(Event event) {
-		queue.postEvent(event);
+		J2meContext context = getContext();
+		if (context != null) {
+			context.getEventQueue().postEvent(event);
+		}
 	}
 
 	static EventQueue getEventQueue() {
-		return queue;
+		J2meContext context = getContext();
+		return context != null ? context.getEventQueue() : null;
 	}
 
 	public static boolean isMultiTouchSupported() {
@@ -106,11 +125,16 @@ public class Display {
 
 	public void setCurrent(Displayable disp) {
 		if (disp == current) {
+			if (disp instanceof TextBox || disp instanceof Canvas) {
+				showCurrent();
+			}
 			return;
 		}
 		if (current instanceof Canvas) {
 			Canvas c = (Canvas) current;
-			c.setInvisible();
+			if (!(disp instanceof TextBox)) {
+				c.setInvisible();
+			}
 		}
 		if (disp instanceof Alert) {
 			Alert alert = (Alert) disp;
@@ -119,6 +143,10 @@ public class Display {
 		}
 		current = disp;
 		showCurrent();
+	}
+
+	public void setCurrentDirect(Displayable disp) {
+		this.current = disp;
 	}
 
 	public void setCurrent(final Alert alert, Displayable disp) {
@@ -142,7 +170,15 @@ public class Display {
 	}
 
 	private void showCurrent() {
-		ContextHolder.getActivity().setCurrent(current);
+		J2meContext context = J2meContext.current();
+		if (context != null && context.getUiHandler() != null) {
+			context.getUiHandler().onDisplayableChanged(current);
+			return;
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.setCurrent(current);
+		}
 	}
 
 	public Displayable getCurrent() {
@@ -165,8 +201,8 @@ public class Display {
 	}
 
 	public void setCurrentItem(Item item) {
-		if (item.hasOwnerForm()) {
-			setCurrent(item.getOwnerForm());
+		if (item.hasOwner()) {
+			setCurrent(item.getOwner());
 		}
 	}
 

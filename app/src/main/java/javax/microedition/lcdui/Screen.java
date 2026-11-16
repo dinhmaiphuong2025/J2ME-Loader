@@ -25,7 +25,7 @@ import android.widget.LinearLayout;
 
 import javax.microedition.lcdui.commands.ScreenSoftBar;
 
-import ru.playsoftware.j2meloader.databinding.SoftButtonBarBinding;
+import com.j2me.lixin.databinding.SoftButtonBarBinding;
 
 public abstract class Screen extends Displayable {
 
@@ -52,8 +52,10 @@ public abstract class Screen extends Displayable {
 	public void clearDisplayableView() {
 		super.clearDisplayableView();
 		layout = null;
-		softBar.closeMenu();
-		softBar = null;
+		if (softBar != null) {
+			softBar.closeMenu();
+			softBar = null;
+		}
 		clearScreenView();
 	}
 

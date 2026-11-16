@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat;
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -65,24 +66,25 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.config.ProfileModel;
-import ru.playsoftware.j2meloader.config.ProfilesManager;
-import ru.playsoftware.j2meloader.config.ShaderInfo;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.IOUtils;
+import com.j2me.lixin.BuildConfig;
+import com.j2me.lixin.config.Config;
+import com.j2me.lixin.config.ProfileModel;
+import com.j2me.lixin.config.ProfilesManager;
+import com.j2me.lixin.config.ShaderInfo;
+import com.j2me.lixin.util.Constants;
+import com.j2me.lixin.util.FileUtils;
+import com.j2me.lixin.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
+	private static String soundBank;
 
+	ProfileModel params;
 	private final File appDir;
 	private final Context context;
 	private final String workDir;
 	private final String appDirName;
-	private ProfileModel params;
 
 	MicroLoader(Context context, String appPath) {
 		this.context = context;
@@ -183,14 +185,12 @@ public class MicroLoader {
 			} else if (!dexOptDir.mkdir()) {
 				throw new IOException("Can't create directory: [" + dexOptDir + ']');
 			}
-			if (SDK_INT >= UPSIDE_DOWN_CAKE) {
-				File dexCache = new File(dexOptDir, appDirName);
-				FilesKt.copyTo(dexSource, dexCache, true, ConstantsKt.DEFAULT_BUFFER_SIZE);
-				if (!dexCache.setReadOnly()) {
-					throw new IOException("Can't set readOnly flag for dex cache file");
-				}
-				dexSource = dexCache;
+			File dexCache = new File(dexOptDir, appDirName);
+			FilesKt.copyTo(dexSource, dexCache, true, ConstantsKt.DEFAULT_BUFFER_SIZE);
+			if (!dexCache.setReadOnly()) {
+				throw new IOException("Can't set readOnly flag for dex cache file");
 			}
+			dexSource = dexCache;
 			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
 					dexOptDir.getAbsolutePath(), context.getClassLoader(), appDir);
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
@@ -216,7 +216,13 @@ public class MicroLoader {
 				+ (country.length() == 2 ? "-" + country : ""));
 		// FIXME: 21.10.2020 Config.getDataDir() may be in different storage
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
-		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName;
+		J2meContext context = J2meContext.current();
+		String accountDir = context != null ? context.getAccountDir() : null;
+		if (accountDir == null && context != null && context.getAccountName() != null && !context.getAccountName().equals("Mặc định")) {
+			accountDir = context.getAccountName();
+		}
+		String accountSuffix = (accountDir == null || accountDir.isEmpty()) ? "" : "/" + accountDir;
+		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName + accountSuffix;
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
 		System.setProperty("fileconn.dir.cache", dataUri + "/cache");
@@ -227,6 +233,57 @@ public class MicroLoader {
 
 	public int getOrientation() {
 		return params.orientation;
+	}
+
+	public boolean isPauseDisabled() {
+		return params.disablePause;
+	}
+
+	/** Writes the in-memory profile back to disk (used after a runtime switch). */
+	void persistConfig() {
+		com.j2me.lixin.config.ProfilesManager.saveConfig(params);
+	}
+
+	/** Records the keypad choice; the instance is kept alive by MicroActivity. */
+	void setVirtualKeyboardEnabled(boolean enabled) {
+		params.showKeyboard = enabled;
+	}
+
+	ProfileModel getParams() {
+		return params;
+	}
+
+	/**
+	 * Applies one of the three quick profiles.
+	 * 0 = smooth, 1 = pretty, 2 = battery saver.
+	 */
+	void applyQuickPreset(int kind) {
+		switch (kind) {
+			case 0:
+				params.screenFilter = true;
+				params.fpsLimit = 60;
+				params.screenScaleToFit = true;
+				params.screenKeepAspectRatio = true;
+				break;
+			case 1:
+				params.screenFilter = true;
+				params.fpsLimit = 0;
+				params.forceFullscreen = true;
+				params.screenScaleToFit = true;
+				break;
+			default:
+				params.screenFilter = false;
+				params.fpsLimit = 30;
+				break;
+		}
+		Canvas.setFilterBitmap(params.screenFilter);
+		Canvas.setLimitFps(params.fpsLimit);
+		com.j2me.lixin.config.ProfilesManager.saveConfig(params);
+	}
+
+	/** True when the classic on-screen keypad is enabled for this game. */
+	public boolean isShowKeyboard() {
+		return params.showKeyboard;
 	}
 
 	void setLimitFps(int fps) {
@@ -261,12 +318,56 @@ public class MicroLoader {
 
 			int screenWidth = params.screenWidth;
 			int screenHeight = params.screenHeight;
+			if (screenWidth <= 0) {
+				int dispW = ContextHolder.getDisplayWidth();
+				int dispH = ContextHolder.getDisplayHeight();
+				int maxSide = Math.max(dispW, dispH);
+				int minSide = Math.min(dispW, dispH);
+				int orientation = params.orientation;
+				VirtualKeyboard vk = ContextHolder.getVk();
+				if (vk != null && vk.isPhone() && orientation == 0) {
+					orientation = 2; // ORIENTATION_PORTRAIT
+				}
+				int realW, realH;
+				if (orientation == 3) { // ORIENTATION_LANDSCAPE
+					realW = maxSide;
+					realH = minSide;
+				} else if (orientation == 2) { // ORIENTATION_PORTRAIT
+					realW = minSide;
+					realH = maxSide;
+				} else { // DEFAULT or AUTO
+					if (dispW > dispH) {
+						realW = maxSide;
+						realH = minSide;
+					} else {
+						realW = minSide;
+						realH = maxSide;
+					}
+				}
+				if (screenHeight <= 0) {
+					float density = ContextHolder.getAppContext().getResources().getDisplayMetrics().density;
+					if (density < 1.0f) density = 1.0f;
+					screenHeight = Math.round(realH / density);
+					screenWidth = Math.round(realW / density);
+				} else {
+					screenWidth = Math.round((float) realW * screenHeight / Math.max(1, realH));
+				}
+			} else if (screenHeight <= 0) {
+				int dispW = ContextHolder.getDisplayWidth();
+				int dispH = ContextHolder.getDisplayHeight();
+				int maxSide = Math.max(dispW, dispH);
+				int minSide = Math.min(dispW, dispH);
+				int realW = (params.orientation == 3) ? maxSide : (params.orientation == 2 ? minSide : dispW);
+				int realH = (params.orientation == 3) ? minSide : (params.orientation == 2 ? maxSide : dispH);
+				screenHeight = Math.round((float) realH * screenWidth / Math.max(1, realW));
+			}
 			Displayable.setVirtualSize(screenWidth, screenHeight);
 			Canvas.setBackgroundColor(params.screenBackgroundColor);
 			Canvas.setScale(params.screenGravity, params.screenScaleType, params.screenScaleRatio);
 			Canvas.setFilterBitmap(params.screenFilter);
 			EventQueue.setImmediate(params.immediateMode);
 			Canvas.setGraphicsMode(params.graphicsMode, params.parallelRedrawScreen);
+			Graphics3D.setUnlitTexturesWorkaround(params.m3gForceDisableLighting);
 			ShaderInfo shader = params.shader;
 			if (shader != null) {
 				shader.dir = workDir + Config.SHADERS_DIR;
@@ -280,6 +381,10 @@ public class MicroLoader {
 
 			KeyMapper.setKeyMapping(params);
 			Canvas.setHasTouchInput(params.touchInput);
+			File sb = new File(workDir + Config.SOUNDBANKS_DIR + params.soundBank);
+			if (sb.exists()) {
+				soundBank = sb.getPath();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -300,8 +405,9 @@ public class MicroLoader {
 					if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
 						throw new IOException("Can't create directory: " + screenshotDir);
 					}
-					FileOutputStream out = new FileOutputStream(screenshotFile);
-					bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+					try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(screenshotFile))) {
+						bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+					}
 					return screenshotFile.getAbsolutePath();
 				})
 				.observeOn(AndroidSchedulers.mainThread())
@@ -318,5 +424,9 @@ public class MicroLoader {
 			return KeyEvent.KEYCODE_BACK;
 		}
 		return mappings.keyAt(i);
+	}
+
+	public static String getSoundBank() {
+		return soundBank;
 	}
 }

@@ -53,7 +53,7 @@ import javax.microedition.util.ContextHolder;
 
 import androidx.core.content.FileProvider;
 
-import ru.playsoftware.j2meloader.config.Config;
+import com.j2me.lixin.config.Config;
 
 public class FileSystemFileConnection implements FileConnection {
 	private static final String TAG = FileSystemFileConnection.class.getSimpleName();
@@ -142,13 +142,13 @@ public class FileSystemFileConnection implements FileConnection {
 	@Override
 	public long availableSize() {
 		throwClosed();
-		return file.getFreeSpace();
+		return new File(getFsRoot()).getUsableSpace();
 	}
 
 	@Override
 	public long totalSize() {
 		throwClosed();
-		return file.getTotalSpace();
+		return new File(getFsRoot()).getTotalSpace();
 	}
 
 	@Override

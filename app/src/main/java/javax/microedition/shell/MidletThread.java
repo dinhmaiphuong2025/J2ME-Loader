@@ -20,7 +20,6 @@ package javax.microedition.shell;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.os.Process;
 import android.util.Log;
 
 import javax.microedition.lcdui.Canvas;
@@ -31,7 +30,7 @@ import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
 
-import ru.playsoftware.j2meloader.config.Config;
+import com.j2me.lixin.config.Config;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
@@ -47,66 +46,95 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final int PAUSED = 2;
 	private static final int DESTROYED = 3;
 	public static String[] startAfterDestroy;
-	private static MidletThread instance;
+	private final J2meContext context;
 	private final MicroLoader microLoader;
 	private final String mainClass;
 	private MIDlet midlet;
 	private final Handler handler;
 	private int state;
 
-	private MidletThread(MicroLoader microLoader, String mainClass) {
+	private MidletThread(MicroLoader microLoader, String mainClass, J2meContext context) {
 		super("MidletMain");
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
+		this.context = context;
+		context.setMidletThread(this);
 		start();
 		handler = new Handler(getLooper(), this);
 		handler.obtainMessage(INIT).sendToTarget();
 	}
 
-	static void create(MicroLoader microLoader, String mainClass) {
-		instance = new MidletThread(microLoader, mainClass);
+	static void create(MicroLoader microLoader, String mainClass, J2meContext context) {
+		new MidletThread(microLoader, mainClass, context);
+	}
+
+	public static MidletThread getInstance() {
+		J2meContext current = J2meContext.current();
+		if (current != null && current.getMidletThread() != null) {
+			return current.getMidletThread();
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null && activity.getContext() != null) {
+			return activity.getContext().getMidletThread();
+		}
+		return null;
 	}
 
 	public static void notifyDestroyed() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-		if (instance != null) {
-			instance.state = DESTROYED;
+		MidletThread thread = getInstance();
+		J2meContext context = null;
+		if (thread != null) {
+			thread.state = DESTROYED;
+			context = thread.context;
+		}
+		if (context == null) {
+			context = J2meContext.current();
+		}
+		if (context == null) {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				context = activity.getContext();
+			}
+		}
+		if (context != null) {
+			context.getEventQueue().stopProcessing();
+			context.unregister();
+		}
+		if (thread != null) {
+			thread.quit();
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
-			activity.finish();
+			activity.onMidletExit(context);
 		}
 		if (startAfterDestroy != null) {
 			Config.startApp(ContextHolder.getActivity(), startAfterDestroy[0], startAfterDestroy[1], false, startAfterDestroy[2]);
 		}
-		Process.killProcess(Process.myPid());
 	}
 
 	public static void notifyPaused() {
-		instance.state = PAUSED;
+		MidletThread thread = getInstance();
+		if (thread != null) {
+			thread.state = PAUSED;
+		}
 	}
 
 	static void pauseApp() {
-		if (instance != null)
-			instance.handler.obtainMessage(PAUSE).sendToTarget();
+		MidletThread thread = getInstance();
+		if (thread != null)
+			thread.handler.obtainMessage(PAUSE).sendToTarget();
 	}
 
 	public static void resumeApp() {
 		MicroActivity activity = ContextHolder.getActivity();
-		if (instance != null && activity != null && activity.isVisible())
-			instance.handler.obtainMessage(START).sendToTarget();
+		MidletThread thread = getInstance();
+		if (thread != null && activity != null && activity.isVisible())
+			thread.handler.obtainMessage(START).sendToTarget();
 	}
 
 	static void destroyApp() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-		new Thread(() -> {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			Process.killProcess(Process.myPid());
-		}, "ForceDestroyTimer").start();
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
 			Displayable current = activity.getCurrent();
@@ -116,8 +144,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				canvas.postKeyReleased(Canvas.KEY_END);
 			}
 		}
-		if (instance != null) {
-			instance.handler.obtainMessage(DESTROY).sendToTarget();
+		MidletThread thread = getInstance();
+		if (thread != null) {
+			thread.handler.obtainMessage(DESTROY).sendToTarget();
 		}
 	}
 
@@ -128,6 +157,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != UNINITIALIZED) {
 					break;
 				}
+				context.register();
 				try {
 					midlet = microLoader.loadMIDlet(this.mainClass);
 					state = PAUSED;

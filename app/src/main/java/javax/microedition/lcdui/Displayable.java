@@ -2,8 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
- * Copyright 2020-2022 Yriy Kharchenko
- * Copyright 2021 Arman Jussupgaliyev
+ * Copyright 2020-2023 Yriy Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +43,9 @@ public abstract class Displayable {
 	protected static int virtualWidth;
 	protected static int virtualHeight;
 
+	final ArrayList<Command> commands = new ArrayList<>();
 	CommandListener listener;
 	AbstractSoftKeysBar softBar;
-
-	private final ArrayList<Command> commands = new ArrayList<>();
 
 	private String title;
 	private int tickerMode;
@@ -74,6 +72,16 @@ public abstract class Displayable {
 	};
 
 	public static void setVirtualSize(int virtualWidth, int virtualHeight) {
+		if (virtualWidth <= 0 && virtualHeight <= 0) {
+			int dw = ContextHolder.getDisplayWidth();
+			int dh = ContextHolder.getDisplayHeight();
+			virtualWidth = dw;
+			virtualHeight = dh;
+		} else if (virtualWidth <= 0) {
+			virtualWidth = Math.round((float) virtualHeight * ContextHolder.getDisplayWidth() / Math.max(1, ContextHolder.getDisplayHeight()));
+		} else if (virtualHeight <= 0) {
+			virtualHeight = Math.round((float) virtualWidth * ContextHolder.getDisplayHeight() / Math.max(1, ContextHolder.getDisplayWidth()));
+		}
 		Displayable.virtualWidth = virtualWidth;
 		Displayable.virtualHeight = virtualHeight;
 	}
@@ -89,9 +97,8 @@ public abstract class Displayable {
 	public void setTitle(String title) {
 		this.title = title;
 
-		MicroActivity activity = ContextHolder.getActivity();
 		if (isShown()) {
-			ViewHandler.postEvent(() -> activity.setTitle(title));
+			ViewHandler.postEvent(() -> ContextHolder.getActivity().setTitle(title));
 		}
 	}
 
@@ -101,10 +108,7 @@ public abstract class Displayable {
 
 	public boolean isShown() {
 		MicroActivity activity = ContextHolder.getActivity();
-		if (activity != null) {
-			return activity.isVisible() && activity.getCurrent() == this;
-		}
-		return false;
+		return activity != null && activity.isVisible() && activity.getCurrent() == this;
 	}
 
 	public View getDisplayableView() {
@@ -156,7 +160,7 @@ public abstract class Displayable {
 		}
 	}
 
-	public int countCommands() {
+	int countCommands() {
 		return commands.size();
 	}
 
@@ -168,9 +172,16 @@ public abstract class Displayable {
 		this.listener = listener;
 	}
 
+	public CommandListener getCommandListener() {
+		return listener;
+	}
+
 	public void fireCommandAction(Command c) {
+		android.util.Log.e("DEBUG_INPUT", "Displayable.fireCommandAction: cmd=" + c + ", label=" + (c != null ? c.getLabel() : "null") + ", listener=" + listener);
 		if (listener != null) {
 			Display.postEvent(CommandActionEvent.getInstance(listener, c, this));
+		} else {
+			android.util.Log.e("DEBUG_INPUT", "Displayable.fireCommandAction: listener is NULL!");
 		}
 	}
 

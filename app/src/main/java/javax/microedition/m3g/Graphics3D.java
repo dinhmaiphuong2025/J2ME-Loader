@@ -40,6 +40,8 @@ public class Graphics3D {
 	// Singleton instances
 	private static Graphics3D s_instance = null;
 
+	private static boolean unlitTexturesWorkaround;
+
 	//------------------------------------------------------------------
 	// Instance data
 	//------------------------------------------------------------------
@@ -112,6 +114,14 @@ public class Graphics3D {
 		s_instance = null;
 	}
 
+	public static void setUnlitTexturesWorkaround(boolean enabled) {
+		unlitTexturesWorkaround = enabled;
+	}
+
+	static boolean isUnlitTexturesWorkaroundEnabled() {
+		return unlitTexturesWorkaround;
+	}
+
 	private Graphics3D() {
 		iInterface = Interface.getInstance();
 		initNativePeer();
@@ -159,20 +169,6 @@ public class Graphics3D {
 			buffer = finalG.getBitmap();
 			final int width = buffer.getWidth();
 			final int height = buffer.getHeight();
-
-			// TODO: draw on background? Probably should fix alpha
-			/*
-			android.graphics.Bitmap bitmap;
-			try {
-				java.lang.reflect.Field mBitmap = canvas.getClass().getDeclaredField("mBitmap");
-				mBitmap.setAccessible(true);
-				bitmap = (Bitmap) mBitmap.get(canvas);
-				bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-				for (int i = 0; i < pixels.length; i++)
-					pixels[i] |= 0xFF000000;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}*/
 
 			Platform.executeInUIThread(
 					new M3gRunnable() {
