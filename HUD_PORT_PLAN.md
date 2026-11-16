@@ -132,6 +132,38 @@ này hiện đúng 1:1 khi chơi — không phải viết lại cách vẽ.
 Giữ lại "gắn nút vào lớp bàn phím" (attach to keyboard) vì hợp với ý tưởng nút chỉ
 hiện khi mở bàn phím ảo.
 
+### 3.4 Cái gì bị THAY THẾ hẳn (không cùng tồn tại)
+
+Nguyên tắc: mỗi chức năng chỉ có MỘT nơi chỉnh. Anland thắng ở các mục dưới đây thì
+xoá bản cũ, không để hai bộ song song.
+
+| App đang có | Anland tương đương | Xử lý |
+|---|---|---|
+| Editor bàn phím ảo cũ: 5 mục menu (Layout edit mode / Scale mode / Layout switch / Hide buttons / Finish) + nhánh LAYOUT_KEYS, LAYOUT_SCALES | Editor HUD: kéo, resize, snap, undo/redo, inspector | **XOÁ** toàn bộ editor cũ; menu chỉ còn 1 mục "HUD Editor" |
+| Nhóm màu/độ mờ/kiểu nút trong ConfigActivity (5 ô HEX, alpha, shape, force opacity) | Inspector tab Style + Transform | **CHUYỂN** hết vào editor; xoá nhóm khỏi ConfigActivity (giữ bật/tắt, rung, ẩn sau) |
+| Kiểu bàn phím "Custom" + "Anland" (TYPE_CUSTOM/TYPE_ANLAND tự sinh layout) | HudLayoutProfile + preset | Preset máy (Nokia/Motorola/số) **GIỮ**; "Custom/Anland" → **HUD tự thiết kế** |
+| Icon từng phím kiểu drawable xếp lớp | HudVectorIcons + icon NRO (asset) | **BỎ** icon drawable, chỉ dùng vector + asset |
+| "Hide buttons" (ẩn nút) | hud_hidden_mode (giữ phím KB để quay lại) | **THAY** bằng của Anland |
+| 4 slot layout của Anland (portrait/landscape/keyboard × 4) | ProfilesManager của app (mỗi game 1 profile) | **BỎ slot**, nhúng 1 HUD layout vào profile từng game sẵn có |
+| Key mapping (activity_keymapper: gán phím cứng) | Key picker của HUD (gán phím cho nút) | **GIỮ CẢ HAI** vì khác mục đích (cứng vs mềm), nhưng key picker dùng đúng bảng mã của keymapper |
+| "Nút chỉ hiện khi mở bàn phím" (LAYER_HUD/LAYER_KEYBOARD) | attach to keyboard | **THAY** bằng cơ chế layer của Anland |
+| Screenshot / khoá xoay / giới hạn FPS trong menu ⋮ | HUD system command | **GIỮ menu**, nhưng nút HUD gọi lại đúng hành động đó |
+
+### 3.5 Lỗi toolbar của editor dở (sẽ biến mất khi thay)
+
+Đã đọc phần vẽ toolbar hiện tại, có 4 lỗi hiển thị thật:
+1. Kích thước dùng pixel thô (cao 46 px, rộng tối đa 540 px, bo 14 px) → trên màn
+   1080p toolbar chỉ cao ~15 dp, chữ bị cắt, nút dẹt.
+2. Nhãn nhồi vào nút: "−1.0x" nằm trong ô rộng ~90 px nên tràn; các nút khác không
+   có nhãn chức năng nên không biết bấm để làm gì.
+3. Không có đường phân cách giữa 6 nút → nhìn thành một khối.
+4. Toolbar nằm đè lên dải trên của vùng phím; nút nào nằm dưới toolbar thì không
+   chọn được khi đang sửa (ưu tiên chạm thuộc về toolbar).
+
+→ Khi dùng toolbar thật của Anland (Android View, kích thước dp, có icon vector,
+tách lớp khỏi vùng phím) cả 4 lỗi này không còn. Nếu muốn dùng tạm bản hiện tại
+trước khi port xong thì phải sửa tối thiểu mục 1 và 4 (~15 dòng).
+
 ---
 
 ## 4. Kiến trúc
@@ -245,7 +277,10 @@ cấu hình bàn phím ảo.
 - Test: chơi 10 phút, 2 ngón + joystick, chuyển tab, xoay màn hình, thoát vào lại.
 
 ### P8 — Dọn cuối (0,5 ngày)
-- Xoá editor dở trong `VirtualKeyboard` (LAYOUT_ANLAND_EDITOR) và nhánh LAYOUT_KEYS chết.
+- Xoá editor dở trong `VirtualKeyboard` (LAYOUT_ANLAND_EDITOR) và các nhánh editor cũ
+  không còn đường vào (LAYOUT_KEYS, LAYOUT_SCALES) + 4 mục menu còn lại
+  (Scale mode, Layout switch, Hide buttons, Finish).
+- Xoá nhóm màu/độ mờ/kiểu nút khỏi ConfigActivity (đã chuyển vào editor).
 - Cập nhật skill + tài liệu.
 
 Tổng: ~8 ngày làm việc.
