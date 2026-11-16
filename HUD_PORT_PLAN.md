@@ -143,7 +143,7 @@ xoá bản cũ, không để hai bộ song song.
 | Nhóm màu/độ mờ/kiểu nút trong ConfigActivity (5 ô HEX, alpha, shape, force opacity) | Inspector tab Style + Transform | **CHUYỂN** hết vào editor; xoá nhóm khỏi ConfigActivity (giữ bật/tắt, rung, ẩn sau) |
 | Kiểu bàn phím "Custom" + "Anland" (TYPE_CUSTOM/TYPE_ANLAND tự sinh layout) | HudLayoutProfile + preset | Preset máy (Nokia/Motorola/số) **GIỮ**; "Custom/Anland" → **HUD tự thiết kế** |
 | Icon từng phím kiểu drawable xếp lớp | HudVectorIcons + icon NRO (asset) | **BỎ** icon drawable, chỉ dùng vector + asset |
-| "Hide buttons" (ẩn nút) | hud_hidden_mode (giữ phím KB để quay lại) | **THAY** bằng của Anland |
+| "Hide buttons" (ẩn nút) | hud_hidden_mode (giữ phím KB để quay lại) | **THAY** bằng của Anland — xem quy tắc 3.6 |
 | 4 slot layout của Anland (portrait/landscape/keyboard × 4) | ProfilesManager của app (mỗi game 1 profile) | **BỎ slot**, nhúng 1 HUD layout vào profile từng game sẵn có |
 | Key mapping (activity_keymapper: gán phím cứng) | Key picker của HUD (gán phím cho nút) | **GIỮ CẢ HAI** vì khác mục đích (cứng vs mềm), nhưng key picker dùng đúng bảng mã của keymapper |
 | "Nút chỉ hiện khi mở bàn phím" (LAYER_HUD/LAYER_KEYBOARD) | attach to keyboard | **THAY** bằng cơ chế layer của Anland |
@@ -163,6 +163,27 @@ xoá bản cũ, không để hai bộ song song.
 → Khi dùng toolbar thật của Anland (Android View, kích thước dp, có icon vector,
 tách lớp khỏi vùng phím) cả 4 lỗi này không còn. Nếu muốn dùng tạm bản hiện tại
 trước khi port xong thì phải sửa tối thiểu mục 1 và 4 (~15 dòng).
+
+### 3.6 Ẩn phím: chỉ còn MỘT cơ chế, không đụng "+ thêm nút"
+
+Hiện tại app có mục "Hide buttons": bật là đặt `visible = false` cho toàn bộ phím,
+muốn hiện lại chỉ còn cách mở lại đúng menu đó. Cơ chế này xung đột với editor Anland
+ở hai điểm: (a) phím đang bị ẩn thì vào editor nhìn như layout rỗng, dễ tưởng mất nút;
+(b) nút "+ thêm nút" thêm vào một layout mà các phím cũ vẫn mang cờ ẩn, nên thêm xong
+không thấy đâu.
+
+Quy tắc chốt:
+1. **Trong editor luôn hiện đủ mọi nút**, bất kể đang ẩn hay không. Anland đã làm sẵn
+   điều này (`mHudHidden && !mIsEditMode`), nên "+ thêm nút" luôn thấy toàn bộ layout.
+2. **HUD**: ẩn/hiện dùng đúng cơ chế của Anland — ẩn thì vẫn giữ một nút để bật lại;
+   nếu layout không còn nút bật lại (đổi layout, xoay màn hình) thì tự thoát trạng thái
+   ẩn. Anland đã có sẵn phần kiểm tra này.
+3. **"Ẩn" trong HUD không phải thuộc tính của nút** — không có nút nào bị ẩn; muốn bớt
+   nút thì xoá nút. Vì vậy không thể xung đột với "+ thêm nút".
+4. **Bàn phím cổ điển (Nokia/Motorola)** giữ mục "Ẩn phím" như hiện tại, vì người chơi
+   bằng phím cứng cần ẩn hết phím ảo; đường quay lại là thanh pill (luôn hiện), không
+   phải HUD. Mục này chỉ áp dụng khi renderer = `keypad`.
+5. Xoá nhánh `states[]` dùng chung: mỗi renderer tự quản trạng thái ẩn của mình.
 
 ---
 
