@@ -1939,6 +1939,19 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
      * the tap and merely gets selected.
      */
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        android.util.Log.e("HUDSTATE", "attached " + getWidth() + "x" + getHeight());
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        android.util.Log.e("HUDSTATE", "layout " + (r - l) + "x" + (b - t)
+                + " children=" + getChildCount() + " edit=" + mIsEditMode);
+    }
+
+    @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         int action = event.getActionMasked();
         android.util.Log.e("HUDTOUCH", "action=" + action + " x=" + (int) event.getX()

@@ -509,6 +509,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		hudView.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		binding.hudContainer.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		updateOverlayLocation();
+		Log.e("HUDSTATE", "setup runtime=" + hudRuntimeEnabled + " path=" + appPath
+				+ " containerVis=" + binding.hudContainer.getVisibility()
+				+ " hudVis=" + hudView.getVisibility());
+		binding.hudContainer.post(() -> Log.e("HUDSTATE", "after layout: container="
+				+ binding.hudContainer.getWidth() + "x" + binding.hudContainer.getHeight()
+				+ " top=" + binding.hudContainer.getY()
+				+ " hud=" + hudView.getWidth() + "x" + hudView.getHeight()));
 	}
 
 	/** Opens the visual HUD editor on top of the running game. */
@@ -550,6 +557,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			hudView.setVisibility(View.GONE);
 			binding.hudContainer.setVisibility(View.GONE);
 		}
+		Log.e("HUDSTATE", "toggle -> runtime=" + hudRuntimeEnabled
+				+ " containerVis=" + binding.hudContainer.getVisibility()
+				+ " hudVis=" + hudView.getVisibility());
 		Toast.makeText(this, hudRuntimeEnabled ? "HUD: bật" : "HUD: tắt", Toast.LENGTH_SHORT).show();
 	}
 
