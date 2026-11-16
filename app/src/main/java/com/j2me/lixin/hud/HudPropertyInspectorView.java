@@ -2177,6 +2177,9 @@ public final class HudPropertyInspectorView extends LinearLayout {
     }
 
     public static String labelForEvdev(Context context, int keycode) {
+        // A J2ME key must read back as itself: showing "*" as SHIFT and "1" as N
+        // came from running MIDP codes through the PC scancode table.
+        if (HudKeyBridge.isJ2meKey(keycode)) return HudKeyBridge.label(keycode);
         if (keycode <= 0) return context.getString(R.string.hud_none);
         switch (keycode) {
             case 1: return "ESC";

@@ -143,10 +143,10 @@ final class HudPrefsMigration {
      * Without this, most buttons carry scancodes the emulator can never deliver.
      */
     static void normalizeKeyCodes(SharedPreferences prefs) {
-        if (prefs.getBoolean("code_space_midp_v1", false)) {
+        if (prefs.getBoolean("code_space_midp_v2", false)) {
             return;
         }
-        prefs.edit().putBoolean("code_space_midp_v1", true).apply();
+        prefs.edit().putBoolean("code_space_midp_v2", true).apply();
         String json = prefs.getString(PREF_PROFILE, null);
         if (json == null || json.isEmpty()) {
             return;
@@ -208,18 +208,22 @@ final class HudPrefsMigration {
         if ("key".equals(type)) {
             if (!a.has("space")) {
                 int code = a.optInt("code", 0);
-                int mapped = HudKeyBridge.fromEvdev(code);
+                if (code == 0) return false;
                 try {
-                    if (mapped != HudKeyBridge.UNMAPPED) {
-                        a.put("code", mapped);
+                    if (HudKeyBridge.isJ2meKey(code)) {
+                        // Already a J2ME key (digits 48..57, negatives, * and #).
+                        // Older builds also stored PC letters in that range, but J2ME
+                        // has no letter keys, so keeping the digit reading is the
+                        // behaviour a player expects.
                         a.put("space", "midp");
                         changed = true;
-                    } else if (code >= 48 && code <= 57) {
-                        // 48..57 is B/N/M/,/./\/RSHIFT/KP*/LALT/SPACE on a PC but
-                        // digits 0..9 in J2ME. Guessing wrong types numbers as letters,
-                        // so leave the button unassigned instead.
-                        a.put("code", 0);
-                        changed = true;
+                    } else {
+                        int mapped = HudKeyBridge.fromEvdev(code);
+                        if (mapped != HudKeyBridge.UNMAPPED) {
+                            a.put("code", mapped);
+                            a.put("space", "midp");
+                            changed = true;
+                        }
                     }
                 } catch (Exception ignored) {
                 }
@@ -229,6 +233,7 @@ final class HudPrefsMigration {
             if (keys != null) {
                 for (int i = 0; i < keys.length(); i++) {
                     int code = keys.optInt(i, Integer.MIN_VALUE);
+                    if (HudKeyBridge.isJ2meKey(code)) continue;
                     int mapped = HudKeyBridge.fromEvdev(code);
                     if (mapped != HudKeyBridge.UNMAPPED) {
                         try {
