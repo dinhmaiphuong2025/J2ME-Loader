@@ -1309,55 +1309,14 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
         dpadLp.leftMargin = dp(8);
         row1.addView(dpadCard, dpadLp);
 
-        // 3. TOUCHPAD
-        View touchpadCard = createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_touchpad), getContext().getString(R.string.hud_editor_widget_mouse_trackpad), () -> {
-            dialog.dismiss();
-            if (mIsEditMode) addWidgetOfKind(HudButton.WidgetKind.TOUCHPAD);
-        });
-        LinearLayout.LayoutParams tpLp = new LinearLayout.LayoutParams(0, dp(58), 1f);
-        tpLp.leftMargin = dp(8);
-        row1.addView(touchpadCard, tpLp);
-
-        // 4. SCROLLBAR / SLIDER
-        row2.addView(createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_slider), getContext().getString(R.string.hud_editor_widget_scrollbar), () -> {
-            dialog.dismiss();
-            if (mIsEditMode) addWidgetOfKind(HudButton.WidgetKind.SCROLLBAR);
-        }), new LinearLayout.LayoutParams(0, dp(58), 1f));
-
-        // 5. SUPER GESTURE
-        View gestureCard = createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_gesture), getContext().getString(R.string.hud_editor_widget_swipe), () -> {
-            dialog.dismiss();
-            if (mIsEditMode) addWidgetOfKind(HudButton.WidgetKind.SUPER_GESTURE);
-        });
-        LinearLayout.LayoutParams gestLp = new LinearLayout.LayoutParams(0, dp(58), 1f);
-        gestLp.leftMargin = dp(8);
-        row2.addView(gestureCard, gestLp);
-
-        // 6. GROUP CONTAINER
+        // Row 2: only the two blocks a J2ME pad needs — a container and a 1-0 row.
+        // Touchpad / scrollbar / super-gesture / F-rows are desktop-only and were
+        // producing buttons that could never send anything to a MIDlet.
         View groupCard = createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_group), getContext().getString(R.string.hud_editor_widget_container), () -> {
             dialog.dismiss();
             if (mIsEditMode) addWidgetOfKind(HudButton.WidgetKind.GROUP);
         });
-        LinearLayout.LayoutParams grpLp = new LinearLayout.LayoutParams(0, dp(58), 1f);
-        grpLp.leftMargin = dp(8);
-        row2.addView(groupCard, grpLp);
-
-        root.addView(row1);
-        root.addView(row2);
-
-        // Row 3: 7. EXTRA KEYS BAR, 8. NUMBER ROW (1-0), 9. FUNCTION KEYS (F1-F12)
-        LinearLayout row3 = new LinearLayout(ctx);
-        row3.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams r3lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        r3lp.topMargin = dp(8);
-        row3.setLayoutParams(r3lp);
-
-        View extraKeysCard = createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_extra_keys), getContext().getString(R.string.hud_editor_widget_termux_bar), () -> {
-            dialog.dismiss();
-            if (mIsEditMode) addWidgetOfKind(HudButton.WidgetKind.EXTRA_KEYS);
-        });
-        row3.addView(extraKeysCard, new LinearLayout.LayoutParams(0, dp(58), 1f));
+        row2.addView(groupCard, new LinearLayout.LayoutParams(0, dp(58), 1f));
 
         View numCard = createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_number_row), getContext().getString(R.string.hud_editor_widget_number_bar), () -> {
             dialog.dismiss();
@@ -1365,17 +1324,11 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
         });
         LinearLayout.LayoutParams numLp = new LinearLayout.LayoutParams(0, dp(58), 1f);
         numLp.leftMargin = dp(8);
-        row3.addView(numCard, numLp);
+        row2.addView(numCard, numLp);
 
-        View fnCard = createWidgetChoiceCard(ctx, getContext().getString(R.string.hud_editor_widget_fn_row), getContext().getString(R.string.hud_editor_widget_fn_bar), () -> {
-            dialog.dismiss();
-            if (mIsEditMode) addWidgetOfKind(HudButton.WidgetKind.FN_ROW);
-        });
-        LinearLayout.LayoutParams fnLp = new LinearLayout.LayoutParams(0, dp(58), 1f);
-        fnLp.leftMargin = dp(8);
-        row3.addView(fnCard, fnLp);
+        root.addView(row1);
+        root.addView(row2);
 
-        root.addView(row3);
 
         dialog.show();
         boolean isLandscape = ctx.getResources().getConfiguration().orientation

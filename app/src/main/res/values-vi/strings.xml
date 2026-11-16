@@ -202,6 +202,8 @@
     <string name="action_hud_editor">Trình sửa HUD</string>
     <string name="action_hud_toggle">Bật/tắt HUD khi chơi</string>
     <string name="action_accounts">Tài khoản</string>
+    <string name="hud_reset_default">Đặt lại HUD mặc định</string>
+    <string name="hud_reset_done">Đã đặt lại HUD</string>
     <string name="notif_running_title">J2ME Loader</string>
     <string name="notif_running_text">Game đang chạy</string>
     <string name="select_account_title">Chọn tài khoản</string>

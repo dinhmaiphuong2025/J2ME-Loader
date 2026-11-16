@@ -557,6 +557,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		});
 	}
 
+	/** Restores the built-in J2ME pad layout for this game. */
+	private void resetHudLayout() {
+		SharedPreferences prefs = getSharedPreferences(
+				"hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE);
+		prefs.edit().remove("hud_layout_profile_v2").putBoolean("code_space_midp_v2", true).apply();
+		if (hudView != null) {
+			hudView.loadProfile();
+		}
+		Toast.makeText(this, R.string.hud_reset_done, Toast.LENGTH_SHORT).show();
+	}
+
 	/** Turns the HUD on/off as the input layer while playing (persisted per game). */
 	private void toggleHudRuntime() {
 		if (hudView == null) {
@@ -1198,6 +1209,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			toggleHudRuntime();
 		} else if (id == R.id.action_accounts) {
 			showAccountPicker(appName, appPath, false);
+		} else if (id == R.id.action_hud_reset) {
+			resetHudLayout();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {

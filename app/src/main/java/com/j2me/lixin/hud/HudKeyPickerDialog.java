@@ -435,10 +435,6 @@ public final class HudKeyPickerDialog {
     private static List<KeyEntry> getModsAndSystemKeys(Context context) {
         List<KeyEntry> list = new ArrayList<>();
         // Modifiers
-        list.add(new KeyEntry("SUPER", HudAction.modifier(125)));
-        list.add(new KeyEntry("CTRL", HudAction.modifier(29)));
-        list.add(new KeyEntry("ALT", HudAction.modifier(56)));
-        list.add(new KeyEntry("SHIFT", HudAction.modifier(42)));
         // Common editing keys
         list.add(new KeyEntry("ESC", HudAction.key(1)));
         list.add(new KeyEntry("TAB", HudAction.key(15)));
@@ -456,19 +452,11 @@ public final class HudKeyPickerDialog {
         list.add(new KeyEntry("LEFT", HudAction.key(105)));
         list.add(new KeyEntry("RIGHT", HudAction.key(106)));
         // System actions - clear, concise titles that fit comfortably on any screen
-        list.add(new KeyEntry(context.getString(R.string.hud_slot_1), HudAction.system("switch_layout_1")));
-        list.add(new KeyEntry(context.getString(R.string.hud_slot_2), HudAction.system("switch_layout_2")));
-        list.add(new KeyEntry(context.getString(R.string.hud_slot_3), HudAction.system("switch_layout_3")));
         list.add(new KeyEntry(context.getString(R.string.hud_system_soft_keyboard), HudAction.system("toggle_ime")));
         list.add(new KeyEntry(context.getString(R.string.hud_system_virtual_keyboard), HudAction.system("toggle_vk")));
         list.add(new KeyEntry(context.getString(R.string.hud_system_toggle_hud_hidden), HudAction.system("toggle_hud_hidden")));
         list.add(new KeyEntry(context.getString(R.string.hud_system_settings), HudAction.system("open_settings")));
         list.add(new KeyEntry(context.getString(R.string.hud_system_open_editor), HudAction.system("open_editor")));
-        list.add(new KeyEntry(context.getString(R.string.hud_system_mouse_left), HudAction.mouse(0x110)));
-        list.add(new KeyEntry(context.getString(R.string.hud_system_mouse_right), HudAction.mouse(0x111)));
-        list.add(new KeyEntry(context.getString(R.string.hud_system_mouse_middle), HudAction.mouse(0x112)));
-        list.add(new KeyEntry(context.getString(R.string.hud_system_scroll_up), HudAction.system("mouse_scroll_up")));
-        list.add(new KeyEntry(context.getString(R.string.hud_system_scroll_down), HudAction.system("mouse_scroll_down")));
         return list;
     }
 
