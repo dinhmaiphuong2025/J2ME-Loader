@@ -158,6 +158,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private final android.os.Handler hudKeyHandler = new android.os.Handler(android.os.Looper.getMainLooper());
 	private android.widget.TextView hudKeyDebug;
 	private boolean hudRuntimeEnabled;
+	private int inputMode = 0;
 	private Canvas lastActiveCanvas;
 
 	public ActivityMicroBinding binding;
@@ -517,6 +518,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			hudPrefs.edit().putInt("hud_layout_slot", 0).apply();
 		}
 		hudRuntimeEnabled = hudPrefs.getBoolean("use_hud_overlay", defaultValueOn);
+		inputMode = hudRuntimeEnabled ? 2
+				: (microLoader != null && microLoader.isShowKeyboard() ? 1 : 0);
 		if (!hudPrefs.contains("use_hud_overlay")) {
 			hudPrefs.edit().putBoolean("use_hud_overlay", hudRuntimeEnabled).apply();
 		}
@@ -577,8 +580,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			if (hudView == null) {
 				setupHudOverlay(true);
 			}
-			microLoader.setVirtualKeyboardEnabled(false);
-			detachKeypadLayer();
+			hideKeypad();
 			updateOverlayLocation();
 			binding.hudContainer.setVisibility(View.VISIBLE);
 			hudView.setVisibility(View.VISIBLE);
@@ -597,33 +599,25 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	 * in-game menu can never disagree.
 	 */
 	private void setInputMode(int mode) {
-		boolean hud = mode == 2;
-		boolean keypad = mode == 1;
-		microLoader.setVirtualKeyboardEnabled(keypad);
+		inputMode = mode;
+		microLoader.setVirtualKeyboardEnabled(mode == 1);
 		microLoader.persistConfig();
 		getSharedPreferences("hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE)
-				.edit().putBoolean("use_hud_overlay", hud).apply();
-		if (hud) {
-			setHudRuntime(true);
+				.edit().putBoolean("use_hud_overlay", mode == 2).apply();
+		setHudRuntime(mode == 2);
+		if (mode == 1) {
+			showKeypad();
 		} else {
-			setHudRuntime(false);
-			if (keypad) {
-				attachKeypadLayer();
-				VirtualKeyboard vk = ContextHolder.getVk();
-				if (vk != null) {
-					vk.show();
-				}
-			} else {
-				detachKeypadLayer();
-			}
+			hideKeypad();
 		}
 		Toast.makeText(this, mode == 2 ? R.string.input_mode_hud
 				: mode == 1 ? R.string.input_mode_keypad : R.string.input_mode_none,
 				Toast.LENGTH_SHORT).show();
 	}
 
-	private void attachKeypadLayer() {
-		VirtualKeyboard vk = ContextHolder.getVk();
+	/** The keypad object survives mode switches; only its layer presence changes. */
+	private void showKeypad() {
+		VirtualKeyboard vk = keypadInstance();
 		if (vk == null) {
 			return;
 		}
@@ -638,13 +632,27 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			vk.setTarget(target);
 			target.updateSize();
 		}
+		vk.setForceVisible(true);
 		binding.overlayView.setVisibility(true);
 		binding.overlayView.postInvalidate();
 	}
 
-	private void detachKeypadLayer() {
+	private void hideKeypad() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk != null) {
+			vk.setForceVisible(false);
+		}
 		binding.overlayView.removeLayers(VirtualKeyboard.class);
 		binding.overlayView.postInvalidate();
+	}
+
+	private VirtualKeyboard keypadInstance() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk == null && microLoader != null) {
+			vk = new VirtualKeyboard(microLoader.getParams());
+			ContextHolder.setVk(vk);
+		}
+		return vk;
 	}
 
 	private void hideHudLayer() {
@@ -925,7 +933,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		popup.inflate(R.menu.midlet_displayable);
 		Menu menu = popup.getMenu();
 		menu.findItem(R.id.action_lock_orientation).setVisible(true);
-		int mode = hudRuntimeEnabled ? 2 : (ContextHolder.getVk() != null ? 1 : 0);
+		int mode = inputMode;
 		menu.findItem(R.id.action_input_off).setChecked(mode == 0);
 		menu.findItem(R.id.action_input_keypad).setChecked(mode == 1);
 		menu.findItem(R.id.action_input_hud).setChecked(mode == 2);

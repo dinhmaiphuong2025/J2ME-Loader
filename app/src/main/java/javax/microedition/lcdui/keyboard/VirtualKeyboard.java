@@ -1251,7 +1251,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
-	@Override
+	/** Hard show/hide that ignores the auto-hide delay, used when switching input modes. */
+	public void setForceVisible(boolean show) {
+		visible = show;
+		invalidateView();
+	}
+
 	public void hide() {
 		long delay = settings.vkHideDelay;
 		if (delay > 0 && obscuresVirtualScreen && layoutEditMode == LAYOUT_EOF) {

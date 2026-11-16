@@ -244,10 +244,13 @@ public class MicroLoader {
 		com.j2me.lixin.config.ProfilesManager.saveConfig(params);
 	}
 
-	/** Turns the classic keypad on/off at runtime and rebuilds its instance. */
+	/** Records the keypad choice; the instance is kept alive by MicroActivity. */
 	void setVirtualKeyboardEnabled(boolean enabled) {
 		params.showKeyboard = enabled;
-		ContextHolder.setVk(enabled ? new VirtualKeyboard(params) : null);
+	}
+
+	ProfileModel getParams() {
+		return params;
 	}
 
 	/**
