@@ -39,3 +39,5 @@ captures/
 .externalNativeBuild
 .cxx
 keystore.properties
+.gradle_user/
+analytics.settings

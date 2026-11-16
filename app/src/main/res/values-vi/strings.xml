@@ -114,6 +114,7 @@
     <string name="pref_vk_type_numbers_arrows">Số &amp; mũi tên</string>
     <string name="pref_vk_type_phone">Điện thoại</string>
     <string name="pref_vk_type_phone_arrows">Điện thoại(mũi tên)</string>
+    <string name="pref_vk_type_anland">Bản Anland (Dragon Boy / RPG)</string>
     <string name="PREF_LAYOUT">Bố cục</string>
     <string name="PREF_SHADER_FILTER">Shader:</string>
     <string name="identity_filter">Nhanh (không bộ lọc)</string>

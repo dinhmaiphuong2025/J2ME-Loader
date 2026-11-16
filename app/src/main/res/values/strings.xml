@@ -135,6 +135,7 @@
     <string name="pref_vk_type_numbers_arrows">Numbers &amp; arrows</string>
     <string name="pref_vk_type_phone">Phone</string>
     <string name="pref_vk_type_phone_arrows">Phone (arrows)</string>
+    <string name="pref_vk_type_anland">Anland HUD (Dragon Boy / RPG)</string>
     <string name="PREF_LAYOUT">Layout</string>
     <string name="PREF_SHADER_FILTER">Shader:</string>
     <string name="browse">Browse</string>

@@ -68,6 +68,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@SuppressWarnings("unused")
 	public static final int LAYOUT_COLORS = 2;
 	public static final int LAYOUT_TYPE = 3;
+	public static final int LAYOUT_KEY_SCALES = 4;
 
 	private static final int OVAL_SHAPE = 0;
 	private static final int RECT_SHAPE = 1;
@@ -80,6 +81,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final int TYPE_ARR_NUM = 4;
 	private static final int TYPE_NUMBERS = 5;
 	private static final int TYPE_ARROWS = 6;
+	public static final int TYPE_ANLAND = 7;
 
 	private static final float PHONE_KEY_ROWS = 5;
 	private static final float PHONE_KEY_SCALE_X = 2.0f;
@@ -273,6 +275,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private void resetLayout(int variant) {
+		for (VirtualKey key : keypad) {
+			key.scale = 1.0f;
+		}
 		switch (variant) {
 			case TYPE_PHONE:
 				for (int j = 0, len = keyScales.length; j < len;) {
@@ -479,7 +484,67 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				setSnap(KEY_D, KEY_DOWN_RIGHT, RectSnap.EXT_EAST, false);
 				setSnap(KEY_MENU, SCREEN, RectSnap.INT_NORTHEAST, false);
 				break;
+			case TYPE_ANLAND:
+				Arrays.fill(keyScales, 1);
+				keypad[KEY_FIRE].scale = 1.7f;
+				keypad[KEY_NUM7].scale = 1.05f;
+				keypad[KEY_NUM1].scale = 1.05f;
+				keypad[KEY_NUM3].scale = 1.05f;
+				keypad[KEY_NUM9].scale = 1.05f;
+				keypad[KEY_STAR].scale = 0.9f;
+				keypad[KEY_NUM0].scale = 0.9f;
+				keypad[KEY_UP].scale = 1.15f;
+				keypad[KEY_DOWN].scale = 1.15f;
+				keypad[KEY_LEFT].scale = 1.15f;
+				keypad[KEY_RIGHT].scale = 1.15f;
+				keypad[KEY_SOFT_LEFT].scale = 0.9f;
+				keypad[KEY_SOFT_RIGHT].scale = 0.9f;
+				keypad[KEY_POUND].scale = 0.85f;
+
+				setAnlandLayout();
+				break;
 		}
+	}
+
+	private void setAnlandLayout() {
+		float kSize = keySize;
+
+		// Right Cluster (Skill Arc around Fire):
+		setSnap(KEY_FIRE, SCREEN, RectSnap.INT_SOUTHEAST, -kSize * 1.3f, -kSize * 1.25f, true);
+		setSnap(KEY_NUM7, KEY_FIRE, RectSnap.EXT_NORTH, 0, -4, true);
+		setSnap(KEY_NUM1, KEY_FIRE, RectSnap.EXT_WEST, -4, 0, true);
+		setSnap(KEY_NUM3, KEY_FIRE, RectSnap.EXT_EAST, 4, 0, true);
+		setSnap(KEY_NUM9, KEY_FIRE, RectSnap.EXT_SOUTH, 0, 4, true);
+		setSnap(KEY_STAR, KEY_NUM3, RectSnap.EXT_NORTH, 0, -4, true);
+		setSnap(KEY_NUM0, KEY_NUM1, RectSnap.EXT_NORTH, 0, -4, true);
+
+		// Left Cluster (D-Pad cross):
+		float dpadSize = kSize * 1.15f;
+		setSnap(KEY_LEFT, SCREEN, RectSnap.INT_SOUTHWEST, kSize * 0.4f, -kSize * 1.35f, true);
+		setSnap(KEY_DOWN, KEY_LEFT, RectSnap.EXT_EAST, 2, dpadSize + 2, true);
+		setSnap(KEY_UP, KEY_DOWN, RectSnap.EXT_NORTH, 0, -(dpadSize + 4), true);
+		setSnap(KEY_RIGHT, KEY_LEFT, RectSnap.EXT_EAST, dpadSize + 4, 0, true);
+
+		// Corners:
+		setSnap(KEY_SOFT_LEFT, SCREEN, RectSnap.INT_SOUTHWEST, kSize * 0.15f, -kSize * 0.15f, true);
+		setSnap(KEY_SOFT_RIGHT, SCREEN, RectSnap.INT_SOUTHEAST, -kSize * 0.15f, -kSize * 0.15f, true);
+		setSnap(KEY_POUND, SCREEN, RectSnap.INT_NORTHEAST, -kSize * 0.2f, kSize * 0.2f, true);
+
+		// Hide all other unused keys:
+		setSnap(KEY_NUM2, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_NUM4, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_NUM5, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_NUM6, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_NUM8, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_UP_LEFT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_UP_RIGHT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_DOWN_LEFT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_DOWN_RIGHT, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_A, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_B, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_C, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_D, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
+		setSnap(KEY_MENU, SCREEN, RectSnap.INT_NORTH, 0, 0, false);
 	}
 
 	public int getLayout() {
@@ -585,6 +650,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			raf.writeInt(keyScales.length);
 			for (float keyScale : keyScales) {
 				raf.writeFloat(keyScale);
+			}
+			raf.writeInt(LAYOUT_KEY_SCALES);
+			raf.writeInt(keypad.length * 8 + 4);
+			raf.writeInt(keypad.length);
+			for (VirtualKey key : keypad) {
+				raf.writeInt(key.hashCode());
+				raf.writeFloat(key.scale);
 			}
 			raf.writeInt(LAYOUT_EOF);
 			raf.writeInt(0);
@@ -697,6 +769,19 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							dis.skipBytes(count * 4);
 						}
 						break;
+					case LAYOUT_KEY_SCALES:
+						count = dis.readInt();
+						for (int i = 0; i < count; i++) {
+							int hash = dis.readInt();
+							float s = dis.readFloat();
+							for (VirtualKey key : keypad) {
+								if (key.hashCode() == hash) {
+									key.scale = s;
+									break;
+								}
+							}
+						}
+						break;
 					default:
 						dis.skipBytes(length);
 						break;
@@ -734,13 +819,17 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		highlightGroup(-1);
 	}
 
-	private void setSnap(int key, int origin, int mode, boolean visible) {
+	private void setSnap(int key, int origin, int mode, float offsetX, float offsetY, boolean visible) {
 		VirtualKey vKey = keypad[key];
 		vKey.snapOrigin = origin;
 		vKey.snapMode = mode;
-		vKey.snapOffset.set(0, 0);
+		vKey.snapOffset.set(offsetX, offsetY);
 		vKey.snapValid = false;
 		vKey.visible = visible;
+	}
+
+	private void setSnap(int key, int origin, int mode, boolean visible) {
+		setSnap(key, origin, mode, 0, 0, visible);
 	}
 
 	private boolean findSnap(int target, int origin) {
@@ -840,7 +929,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	private void resizeKey(int key, float w, float h) {
 		VirtualKey vKey = keypad[key];
-		vKey.resize(w, h);
+		vKey.resize(w * vKey.scale, h * vKey.scale);
 		vKey.snapValid = false;
 	}
 
@@ -866,6 +955,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		float keySize = getKeySize(screen.width(), screen.height());
 		snapRadius = keySize * snapRadius / 4;
 		this.keySize = keySize;
+		if (layoutVariant == TYPE_ANLAND) {
+			setAnlandLayout();
+		}
 		for (int group = 0; group < keyScaleGroups.length; group++) {
 			resizeKeyGroup(group);
 		}
@@ -1214,6 +1306,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		final int keyCode;
 		final RectF rect = new RectF();
 		final PointF snapOffset = new PointF();
+		float scale = 1.0f;
 		int snapOrigin;
 		int snapMode;
 		boolean snapValid;
