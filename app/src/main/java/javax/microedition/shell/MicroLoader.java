@@ -239,6 +239,11 @@ public class MicroLoader {
 		return params.disablePause;
 	}
 
+	/** True when the classic on-screen keypad is enabled for this game. */
+	public boolean isShowKeyboard() {
+		return params.showKeyboard;
+	}
+
 	void setLimitFps(int fps) {
 		if (fps == -1) Canvas.setLimitFps(params.fpsLimit);
 		else Canvas.setLimitFps(fps);

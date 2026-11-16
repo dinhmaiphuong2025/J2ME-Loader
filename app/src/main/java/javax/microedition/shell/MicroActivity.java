@@ -233,7 +233,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		}
 		MidletSystem.setProperty("com.nokia.mid.cmdline.instance", "1");
-		setupHudOverlay();
 		microLoader = new MicroLoader(this, appPath);
 		if (!microLoader.init()) {
 			Config.startApp(this, appName, appPath, true, arguments);
@@ -242,7 +241,14 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 		applyOrientation();
 		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-		showAccountPicker(appName, appPath, true);
+		// No keypad means the HUD is the only way to play, so it starts enabled.
+		setupHudOverlay(!microLoader.isShowKeyboard());
+		if (AccountManager.getAccountList(appPath).size() <= 1) {
+			// One account only: asking every launch is friction, especially offline games.
+			launchFirstTab(null);
+		} else {
+			showAccountPicker(appName, appPath, true);
+		}
 	}
 
 	private void launchFirstTab(AccountManager.Account account) {
@@ -495,6 +501,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	/** Creates the Anland HUD layer for the current game (hidden by default). */
 	private void setupHudOverlay() {
+		setupHudOverlay(false);
+	}
+
+	private void setupHudOverlay(boolean defaultValueOn) {
 		if (hudView != null || appPath == null) {
 			return;
 		}
@@ -506,7 +516,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (hudPrefs.getInt("hud_layout_slot", 2) != 0) {
 			hudPrefs.edit().putInt("hud_layout_slot", 0).apply();
 		}
-		hudRuntimeEnabled = hudPrefs.getBoolean("use_hud_overlay", false);
+		hudRuntimeEnabled = hudPrefs.getBoolean("use_hud_overlay", defaultValueOn);
+		if (!hudPrefs.contains("use_hud_overlay")) {
+			hudPrefs.edit().putBoolean("use_hud_overlay", hudRuntimeEnabled).apply();
+		}
 		hudView = new HudOverlayView(this, hudPrefs, hudHost);
 		binding.hudContainer.addView(hudView, new FrameLayout.LayoutParams(
 				FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -994,6 +1007,14 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			dialog.setOnCancelListener(d -> finish());
 		}
 		dialog.show();
+		// In landscape the row collapsed to its content width, so the rename pencil
+		// ended up glued to the name instead of sitting at the trailing edge.
+		if (dialog.getWindow() != null) {
+			int screen = getResources().getDisplayMetrics().widthPixels;
+			int width = Math.min((int) (screen * 0.92f),
+					(int) (520 * getResources().getDisplayMetrics().density));
+			dialog.getWindow().setLayout(width, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+		}
 	}
 
 	private void showRenameAccountDialog(String appPath, String currentName, Runnable onRenamed) {
@@ -1175,6 +1196,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			showHudEditor();
 		} else if (id == R.id.action_hud_toggle) {
 			toggleHudRuntime();
+		} else if (id == R.id.action_accounts) {
+			showAccountPicker(appName, appPath, false);
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {

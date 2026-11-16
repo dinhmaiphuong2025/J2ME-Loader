@@ -302,6 +302,7 @@
     <string name="action_more">Menu</string>
     <string name="action_hud_editor">HUD editor</string>
     <string name="action_hud_toggle">Show HUD while playing</string>
+    <string name="action_accounts">Accounts</string>
     <string name="notif_running_title">J2ME Loader</string>
     <string name="notif_running_text">Game đang chạy</string>
     <string name="select_account_title">Select account</string>
