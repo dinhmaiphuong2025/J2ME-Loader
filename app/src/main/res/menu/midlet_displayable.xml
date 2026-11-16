@@ -1,50 +1,79 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_exit_midlet"
-        android:title="@string/exit" />
-    <item
-        android:id="@+id/action_save_log"
-        android:title="@string/save_log" />
-    <item
         android:id="@+id/action_lock_orientation"
         android:title="@string/action_lock_orientation"
         android:checkable="true"
         android:checked="false"
         android:visible="false" />
+
+    <!-- Everything about how you control the game sits together -->
+    <item
+        android:id="@+id/action_input_mode"
+        android:title="@string/input_mode_title">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/action_input_off"
+                    android:title="@string/input_mode_none" />
+                <item
+                    android:id="@+id/action_input_keypad"
+                    android:title="@string/input_mode_keypad" />
+                <item
+                    android:id="@+id/action_input_hud"
+                    android:title="@string/input_mode_hud" />
+            </group>
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_submenu_vk"
+        android:title="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS">
+        <menu>
+            <item
+                android:id="@+id/action_layout_scale_mode"
+                android:title="@string/layout_scale_mode" />
+            <item
+                android:id="@+id/action_layout_edit_finish"
+                android:title="@string/layout_edit_finish" />
+            <item
+                android:id="@+id/action_layout_switch"
+                android:title="@string/layout_switch" />
+            <item
+                android:id="@+id/action_hide_buttons"
+                android:title="@string/hide_buttons" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_hud_editor"
+        android:title="@string/action_hud_editor" />
+    <item
+        android:id="@+id/action_hud_reset"
+        android:title="@string/hud_reset_default" />
+
+    <group android:id="@+id/action_group_game">
+        <item
+            android:id="@+id/action_game_config"
+            android:title="@string/action_game_config" />
+        <item
+            android:id="@+id/action_accounts"
+            android:title="@string/action_accounts" />
+    </group>
+
     <group android:id="@+id/action_group_canvas">
         <item
-            android:icon="@drawable/ic_action_keyboard"
             android:id="@+id/action_ime_keyboard"
+            android:icon="@drawable/ic_action_keyboard"
             android:title="@string/action_keyboard_ime" />
         <item
-            android:icon="@drawable/ic_action_screenshot"
             android:id="@+id/action_take_screenshot"
+            android:icon="@drawable/ic_action_screenshot"
             android:title="@string/take_screenshot" />
+    </group>
 
+    <group android:id="@+id/action_group_exit">
         <item
-            android:id="@+id/action_limit_fps"
-            android:title="@string/PREF_LIMIT_FPS" />
-
-        <item
-            android:id="@+id/action_submenu_vk"
-            android:title="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS">
-            <menu>
-                <item
-                    android:id="@+id/action_layout_edit_mode"
-                    android:title="@string/layout_edit_mode" />
-                <item
-                    android:id="@+id/action_layout_scale_mode"
-                    android:title="@string/layout_scale_mode" />
-                <item
-                    android:id="@+id/action_layout_edit_finish"
-                    android:title="@string/layout_edit_finish" />
-                <item
-                    android:id="@+id/action_layout_switch"
-                    android:title="@string/layout_switch" />
-                <item
-                    android:id="@+id/action_hide_buttons"
-                    android:title="@string/hide_buttons" />
-            </menu>
-        </item>
+            android:id="@+id/action_exit_midlet"
+            android:title="@string/exit" />
     </group>
 </menu>
