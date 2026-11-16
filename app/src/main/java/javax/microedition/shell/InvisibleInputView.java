@@ -19,6 +19,7 @@ package javax.microedition.shell;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
 import androidx.appcompat.widget.AppCompatEditText;
 
 public class InvisibleInputView extends AppCompatEditText {
@@ -59,8 +60,12 @@ public class InvisibleInputView extends AppCompatEditText {
 	@Override
 	public void onEditorAction(int actionCode) {
 		super.onEditorAction(actionCode);
-		if (onCommitListener != null) {
-			onCommitListener.run();
+		if (actionCode == EditorInfo.IME_ACTION_DONE
+				|| actionCode == EditorInfo.IME_ACTION_GO
+				|| actionCode == EditorInfo.IME_ACTION_SEND) {
+			if (onCommitListener != null) {
+				onCommitListener.run();
+			}
 		}
 	}
 

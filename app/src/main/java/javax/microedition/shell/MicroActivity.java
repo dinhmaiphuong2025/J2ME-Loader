@@ -149,7 +149,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private int activeIndex = -1;
 	private TextBox activeTextBox;
 	private Canvas lastActiveCanvas;
-	private TextWatcher invisibleInputWatcher;
 
 	public ActivityMicroBinding binding;
 
@@ -1394,10 +1393,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 		InvisibleInputView input = binding.floatingInputEdit;
 
-		if (invisibleInputWatcher != null) {
-			input.removeTextChangedListener(invisibleInputWatcher);
-		}
-
 		int constraints = textBox.getConstraints();
 		boolean isPassword = (constraints & TextField.PASSWORD) != 0;
 		if (!isPassword && textBox.getTitle() != null) {
@@ -1498,29 +1493,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (input.getText() != null) {
 			input.setSelection(input.getText().length());
 		}
-
-		invisibleInputWatcher = new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-			@Override
-			public void afterTextChanged(Editable s) {
-				if (activeTextBox != null && s != null) {
-					try {
-						String text = s.toString();
-						int m = activeTextBox.getMaxSize();
-						if (m > 0 && text.length() > m) {
-							text = text.substring(0, m);
-						}
-						activeTextBox.setString(text);
-					} catch (Exception ignored) {}
-				}
-			}
-		};
-		input.addTextChangedListener(invisibleInputWatcher);
 
 		this.activeOkCommand = findOkCommand(textBox);
 		this.activeCancelCommand = findCancelCommand(textBox);
@@ -1679,6 +1651,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			Log.e("DEBUG_INPUT", "commitFloatingInput: ERROR - okCommand is NULL!");
 		}
 
+		Display display = (context != null) ? context.getDisplay() : null;
+		if (display == null) {
+			J2meContext currentContext = J2meContext.current();
+			if (currentContext != null) {
+				display = currentContext.getDisplay();
+			}
+		}
+		if (display != null && lastActiveCanvas != null) {
+			display.setCurrent(lastActiveCanvas);
+		}
+
 		if (lastActiveCanvas != null) {
 			lastActiveCanvas.setVisible();
 			Display.postEvent(CanvasEvent.getInstance(lastActiveCanvas, CanvasEvent.SHOW_NOTIFY));
@@ -1701,6 +1684,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 		if (cancelCommand != null) {
 			tb.fireCommandAction(cancelCommand);
+		}
+
+		Display display = (context != null) ? context.getDisplay() : null;
+		if (display == null) {
+			J2meContext currentContext = J2meContext.current();
+			if (currentContext != null) {
+				display = currentContext.getDisplay();
+			}
+		}
+		if (display != null && lastActiveCanvas != null) {
+			display.setCurrent(lastActiveCanvas);
 		}
 
 		if (lastActiveCanvas != null) {
@@ -1731,25 +1725,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			binding.btnFloatingPasswordToggle.setVisibility(View.GONE);
 		}
 		if (binding.floatingInputEdit != null) {
-			if (invisibleInputWatcher != null) {
-				binding.floatingInputEdit.removeTextChangedListener(invisibleInputWatcher);
-				invisibleInputWatcher = null;
-			}
 			binding.floatingInputEdit.setTransformationMethod(null);
 			binding.floatingInputEdit.setText("");
-		}
-		Display display = (context != null) ? context.getDisplay() : null;
-		if (display == null) {
-			J2meContext currentContext = J2meContext.current();
-			if (currentContext != null) {
-				display = currentContext.getDisplay();
-			}
-		}
-		if (lastActiveCanvas != null) {
-			if (display != null) {
-				display.setCurrentDirect(lastActiveCanvas);
-			}
-			MicroActivity.this.current = lastActiveCanvas;
 		}
 	}
 

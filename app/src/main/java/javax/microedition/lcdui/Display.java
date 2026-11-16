@@ -125,7 +125,7 @@ public class Display {
 
 	public void setCurrent(Displayable disp) {
 		if (disp == current) {
-			if (disp instanceof TextBox) {
+			if (disp instanceof TextBox || disp instanceof Canvas) {
 				showCurrent();
 			}
 			return;
