@@ -142,11 +142,23 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 				AppsListAdapter adapter = (AppsListAdapter) getBindingAdapter();
 				if (adapter != null) {
 					AppItem item = adapter.getItem(getLayoutPosition());
-					Intent quick = new Intent(v.getContext(), com.j2me.lixin.config.QuickConfigActivity.class);
-					quick.setAction(com.j2me.lixin.util.Constants.ACTION_EDIT);
-					quick.setData(android.net.Uri.parse(item.getPathExt()));
-					quick.putExtra(com.j2me.lixin.util.Constants.KEY_MIDLET_NAME, item.getTitle());
-					v.getContext().startActivity(quick);
+					// Ask only once: a game that already has a saved profile starts directly.
+					java.io.File gameDir = new java.io.File(item.getPathExt());
+					java.io.File work = gameDir.getParentFile() != null
+							? gameDir.getParentFile().getParentFile() : null;
+					java.io.File cfg = work == null ? null : new java.io.File(
+							work + com.j2me.lixin.config.Config.MIDLET_CONFIGS_DIR + gameDir.getName(),
+							com.j2me.lixin.config.Config.MIDLET_CONFIG_FILE);
+					if (cfg != null && cfg.exists()) {
+						com.j2me.lixin.config.Config.startApp(v.getContext(), item.getTitle(),
+								item.getPathExt(), false);
+					} else {
+						Intent quick = new Intent(v.getContext(), com.j2me.lixin.config.QuickConfigActivity.class);
+						quick.setAction(com.j2me.lixin.util.Constants.ACTION_EDIT);
+						quick.setData(android.net.Uri.parse(item.getPathExt()));
+						quick.putExtra(com.j2me.lixin.util.Constants.KEY_MIDLET_NAME, item.getTitle());
+						v.getContext().startActivity(quick);
+					}
 				}
 			});
 			itemView.setOnCreateContextMenuListener(contextMenuListener);

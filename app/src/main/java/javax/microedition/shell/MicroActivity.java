@@ -1281,6 +1281,13 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			setInputMode(1);
 		} else if (id == R.id.action_input_hud) {
 			setInputMode(2);
+		} else if (id == R.id.action_game_config) {
+			Intent cfg = new Intent(this, com.j2me.lixin.config.QuickConfigActivity.class);
+			cfg.setAction(Constants.ACTION_EDIT);
+			cfg.setData(android.net.Uri.parse(appPath));
+			cfg.putExtra(Constants.KEY_MIDLET_NAME, appName);
+			cfg.putExtra("from_game", true);
+			startActivity(cfg);
 		} else if (id == R.id.action_quick_preset) {
 			showQuickPresets();
 		} else if (id == R.id.action_take_screenshot) {

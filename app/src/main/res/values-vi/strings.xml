@@ -202,6 +202,8 @@
     <string name="action_hud_editor">Trình sửa HUD</string>
     <string name="action_hud_toggle">Bật/tắt HUD khi chơi</string>
     <string name="action_accounts">Tài khoản</string>
+    <string name="quick_done">Xong</string>
+    <string name="action_game_config">Cấu hình game</string>
     <string name="quick_play">Chơi</string>
     <string name="quick_section_control">Điều khiển</string>
     <string name="quick_section_quality">Đồ hoạ</string>

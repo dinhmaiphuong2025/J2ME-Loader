@@ -33,6 +33,7 @@ public class QuickConfigActivity extends AppCompatActivity {
     private File configDir;
     private String appPath;
     private String appName;
+    private boolean fromGame;
 
     private MaterialButtonToggleGroup controlGroup;
     private MaterialButtonToggleGroup qualityGroup;
@@ -46,6 +47,7 @@ public class QuickConfigActivity extends AppCompatActivity {
         Intent intent = getIntent();
         appPath = intent.getDataString();
         appName = intent.getStringExtra(Constants.KEY_MIDLET_NAME);
+        fromGame = intent.getBooleanExtra("from_game", false);
         if (appPath == null) {
             finish();
             return;
@@ -79,11 +81,15 @@ public class QuickConfigActivity extends AppCompatActivity {
         root.setPadding(pad, pad, pad, pad);
 
         MaterialButton play = new MaterialButton(this);
-        play.setText(R.string.quick_play);
+        play.setText(fromGame ? R.string.quick_done : R.string.quick_play);
         play.setTextSize(20);
         play.setOnClickListener(v -> {
             saveAll();
-            startGame();
+            if (fromGame) {
+                finish();
+            } else {
+                startGame();
+            }
         });
         LinearLayout.LayoutParams playLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(64));

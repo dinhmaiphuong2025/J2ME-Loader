@@ -303,6 +303,8 @@
     <string name="action_hud_editor">HUD editor</string>
     <string name="action_hud_toggle">Show HUD while playing</string>
     <string name="action_accounts">Accounts</string>
+    <string name="quick_done">Done</string>
+    <string name="action_game_config">Game settings</string>
     <string name="quick_play">Play</string>
     <string name="quick_section_control">Controls</string>
     <string name="quick_section_quality">Graphics</string>
