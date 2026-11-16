@@ -125,6 +125,9 @@ public class Display {
 
 	public void setCurrent(Displayable disp) {
 		if (disp == current) {
+			if (disp instanceof TextBox) {
+				showCurrent();
+			}
 			return;
 		}
 		if (current instanceof Canvas) {
@@ -140,6 +143,10 @@ public class Display {
 		}
 		current = disp;
 		showCurrent();
+	}
+
+	public void setCurrentDirect(Displayable disp) {
+		this.current = disp;
 	}
 
 	public void setCurrent(final Alert alert, Displayable disp) {

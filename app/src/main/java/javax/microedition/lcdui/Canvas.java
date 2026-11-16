@@ -1080,6 +1080,13 @@ public abstract class Canvas extends Displayable {
 		@Override
 		@SuppressLint("ClickableViewAccessibility")
 		public boolean onTouch(View v, MotionEvent event) {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null && activity.isFloatingInputActive()) {
+				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+					activity.cancelFloatingInput();
+				}
+				return true;
+			}
 			switch (event.getActionMasked()) {
 				case MotionEvent.ACTION_DOWN:
 					if (overlay != null) {

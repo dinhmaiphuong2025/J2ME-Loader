@@ -577,6 +577,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK && isFloatingInputActive()) {
+			cancelFloatingInput();
+			return true;
+		}
 		if ((keyCode == menuKey || keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU)
 				&& (event.getFlags() & (KeyEvent.FLAG_LONG_PRESS | KeyEvent.FLAG_CANCELED)) == 0) {
 			openOptionsMenu();
@@ -587,6 +591,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	@Override
 	public void onBackPressed() {
+		if (isFloatingInputActive()) {
+			cancelFloatingInput();
+			return;
+		}
 		// Intentionally overridden by empty due to support for back-key remapping.
 	}
 
@@ -1367,6 +1375,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private Command activeOkCommand;
 	private Command activeCancelCommand;
 	private boolean isPasswordVisible = false;
+	private String initialTextBoxString = "";
+	private boolean isFloatingInputCommitted = false;
+
+	public boolean isFloatingInputActive() {
+		return activeTextBox != null || (binding != null && binding.floatingInputBar != null && binding.floatingInputBar.getVisibility() == View.VISIBLE);
+	}
 
 	private void startFloatingInput(TextBox textBox) {
 		Log.e("DEBUG_INPUT", "startFloatingInput CALLED: tb=" + textBox + ", title=" + (textBox != null ? textBox.getTitle() : "null")
@@ -1374,6 +1388,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				+ ", currentStr=" + (textBox != null ? textBox.getString() : "null"));
 		this.activeTextBox = textBox;
 		this.isPasswordVisible = false;
+		this.isFloatingInputCommitted = false;
+		this.initialTextBoxString = (textBox != null && textBox.getString() != null) ? textBox.getString() : "";
 		if (binding.floatingInputBar == null || binding.floatingInputEdit == null) return;
 
 		InvisibleInputView input = binding.floatingInputEdit;
@@ -1629,6 +1645,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		Log.e("DEBUG_INPUT", "commitFloatingInput CALLED: activeTextBox=" + activeTextBox);
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
+		isFloatingInputCommitted = true;
 
 		String text = "";
 		if (binding.floatingInputEdit != null) {
@@ -1640,7 +1657,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		Log.e("DEBUG_INPUT", "commitFloatingInput: read text=[" + text + "], tb=" + tb);
 
 		Command okCommand = activeOkCommand != null ? activeOkCommand : findOkCommand(tb);
-		finishFloatingInput();
 
 		try {
 			int max = tb.getMaxSize();
@@ -1653,6 +1669,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		} catch (Exception e) {
 			Log.e("DEBUG_INPUT", "commitFloatingInput: EXCEPTION during setString!", e);
 		}
+
+		finishFloatingInput();
 
 		Log.e("DEBUG_INPUT", "commitFloatingInput: firing okCommand=" + okCommand + ", label=" + (okCommand != null ? okCommand.getLabel() : "null"));
 		if (okCommand != null) {
@@ -1668,16 +1686,21 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 	}
 
-	private void cancelFloatingInput() {
+	public void cancelFloatingInput() {
 		if (activeTextBox == null) return;
 		TextBox tb = activeTextBox;
 		Command cancelCommand = activeCancelCommand != null ? activeCancelCommand : findCancelCommand(tb);
+		isFloatingInputCommitted = false;
+
+		// Khôi phục lại text ban đầu (không để text gõ dở vương lại)
+		try {
+			tb.setString(initialTextBoxString);
+		} catch (Exception ignored) {}
+
 		finishFloatingInput();
 
 		if (cancelCommand != null) {
 			tb.fireCommandAction(cancelCommand);
-		} else if (lastActiveCanvas != null && context != null && context.getDisplay() != null) {
-			context.getDisplay().setCurrent(lastActiveCanvas);
 		}
 
 		if (lastActiveCanvas != null) {
@@ -1688,10 +1711,17 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void finishFloatingInput() {
+		if (!isFloatingInputCommitted && activeTextBox != null) {
+			try {
+				activeTextBox.setString(initialTextBoxString);
+			} catch (Exception ignored) {}
+		}
 		activeTextBox = null;
 		activeOkCommand = null;
 		activeCancelCommand = null;
 		isPasswordVisible = false;
+		isFloatingInputCommitted = false;
+		initialTextBoxString = "";
 		hideSoftInput();
 		if (binding.floatingInputBar != null) {
 			binding.floatingInputBar.setVisibility(View.GONE);
@@ -1707,6 +1737,19 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 			binding.floatingInputEdit.setTransformationMethod(null);
 			binding.floatingInputEdit.setText("");
+		}
+		Display display = (context != null) ? context.getDisplay() : null;
+		if (display == null) {
+			J2meContext currentContext = J2meContext.current();
+			if (currentContext != null) {
+				display = currentContext.getDisplay();
+			}
+		}
+		if (lastActiveCanvas != null) {
+			if (display != null) {
+				display.setCurrentDirect(lastActiveCanvas);
+			}
+			MicroActivity.this.current = lastActiveCanvas;
 		}
 	}
 
