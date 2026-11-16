@@ -303,6 +303,16 @@
     <string name="action_hud_editor">HUD editor</string>
     <string name="action_hud_toggle">Show HUD while playing</string>
     <string name="action_accounts">Accounts</string>
+    <string name="quick_play">Play</string>
+    <string name="quick_section_control">Controls</string>
+    <string name="quick_section_quality">Graphics</string>
+    <string name="quick_quality_smooth">Smooth</string>
+    <string name="quick_quality_pretty">Pretty</string>
+    <string name="quick_quality_battery">Battery saver</string>
+    <string name="quick_section_orientation">Screen rotation</string>
+    <string name="quick_fullscreen">Full screen</string>
+    <string name="quick_smooth">Smooth picture</string>
+    <string name="quick_advanced">Advanced settings ▸</string>
     <string name="input_mode_title">Input mode</string>
     <string name="input_mode_none">Off</string>
     <string name="input_mode_keypad">On-screen keypad</string>

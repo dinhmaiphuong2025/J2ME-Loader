@@ -202,6 +202,16 @@
     <string name="action_hud_editor">Trình sửa HUD</string>
     <string name="action_hud_toggle">Bật/tắt HUD khi chơi</string>
     <string name="action_accounts">Tài khoản</string>
+    <string name="quick_play">Chơi</string>
+    <string name="quick_section_control">Điều khiển</string>
+    <string name="quick_section_quality">Đồ hoạ</string>
+    <string name="quick_quality_smooth">Mượt</string>
+    <string name="quick_quality_pretty">Đẹp</string>
+    <string name="quick_quality_battery">Tiết kiệm pin</string>
+    <string name="quick_section_orientation">Xoay màn hình</string>
+    <string name="quick_fullscreen">Toàn màn hình</string>
+    <string name="quick_smooth">Làm mượt hình</string>
+    <string name="quick_advanced">Cài đặt nâng cao ▸</string>
     <string name="input_mode_title">Kiểu điều khiển</string>
     <string name="input_mode_none">Tắt</string>
     <string name="input_mode_keypad">Bàn phím ảo</string>

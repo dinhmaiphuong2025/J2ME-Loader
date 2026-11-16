@@ -18,6 +18,8 @@
 
 package com.j2me.lixin.applist;
 
+import android.content.Intent;
+
 import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
@@ -140,7 +142,11 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 				AppsListAdapter adapter = (AppsListAdapter) getBindingAdapter();
 				if (adapter != null) {
 					AppItem item = adapter.getItem(getLayoutPosition());
-					Config.startApp(v.getContext(), item.getTitle(), item.getPathExt(), false);
+					Intent quick = new Intent(v.getContext(), com.j2me.lixin.config.QuickConfigActivity.class);
+					quick.setAction(com.j2me.lixin.util.Constants.ACTION_EDIT);
+					quick.setData(android.net.Uri.parse(item.getPathExt()));
+					quick.putExtra(com.j2me.lixin.util.Constants.KEY_MIDLET_NAME, item.getTitle());
+					v.getContext().startActivity(quick);
 				}
 			});
 			itemView.setOnCreateContextMenuListener(contextMenuListener);

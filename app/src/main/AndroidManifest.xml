@@ -123,6 +123,10 @@
             android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustPan" />
         <activity
+            android:name=".config.QuickConfigActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".config.ConfigFilesActivity"
             android:exported="false" />
         <activity
