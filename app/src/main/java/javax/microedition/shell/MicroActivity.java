@@ -177,6 +177,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		binding.btnMenu.setOnClickListener(v -> showMenu());
 		binding.btnAddTab.setOnClickListener(v -> addNewTab());
 
+
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
 		cutoutsEnabled = sp.getBoolean(PREF_ADD_CUTOUT_AREA, false) &&
 				Build.VERSION.SDK_INT >= Build.VERSION_CODES.P;
@@ -590,6 +591,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	@Override
 	public void onBackPressed() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF) {
+			vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+			showSaveVkAlert(false);
+			return;
+		}
 		if (isFloatingInputActive()) {
 			cancelFloatingInput();
 			return;
@@ -920,6 +927,19 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
 						InputMethodManager.SHOW_FORCED, 0);
 			}
+		} else if (id == R.id.action_edit_hud) {
+			VirtualKeyboard vk = ContextHolder.getVk();
+			if (vk != null) {
+				vk.setOnKeyIconPickerListener((keyboard, keyIndex) -> {
+					runOnUiThread(() -> {
+						ru.playsoftware.j2meloader.hud.NroIconPickerDialog.show(MicroActivity.this, (iconPath) -> {
+							keyboard.setKeyIcon(keyIndex, iconPath);
+						});
+					});
+				});
+				vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_ANLAND_EDITOR);
+				Toast.makeText(this, R.string.action_edit_hud, Toast.LENGTH_SHORT).show();
+			}
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
@@ -933,10 +953,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private void handleVkOptions(int id) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (id == R.id.action_layout_edit_mode) {
-			vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
-			Toast.makeText(this, R.string.layout_edit_mode, Toast.LENGTH_SHORT).show();
-		} else if (id == R.id.action_layout_scale_mode) {
+		if (id == R.id.action_layout_scale_mode) {
 			vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_SCALES);
 			Toast.makeText(this, R.string.layout_scale_mode, Toast.LENGTH_SHORT).show();
 		} else if (id == R.id.action_layout_edit_finish) {

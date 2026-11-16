@@ -20,6 +20,7 @@ package javax.microedition.lcdui.keyboard;
 import static javax.microedition.lcdui.keyboard.KeyMapper.SE_KEY_SPECIAL_GAMING_A;
 import static javax.microedition.lcdui.keyboard.KeyMapper.SE_KEY_SPECIAL_GAMING_B;
 
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.os.Handler;
@@ -44,6 +45,7 @@ import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
+import ru.playsoftware.j2meloader.hud.HudAssetManager;
 import com.j2me.lixin.config.Config;
 import com.j2me.lixin.config.ProfileModel;
 import com.j2me.lixin.config.ProfilesManager;
@@ -69,6 +71,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public static final int LAYOUT_COLORS = 2;
 	public static final int LAYOUT_TYPE = 3;
 	public static final int LAYOUT_KEY_SCALES = 4;
+	public static final int LAYOUT_ANLAND_EDITOR = 5;
+	public static final int LAYOUT_KEY_ICONS = 6;
 
 	private static final int OVAL_SHAPE = 0;
 	private static final int RECT_SHAPE = 1;
@@ -191,6 +195,33 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
 	private float snapRadius;
 	private int layoutVariant;
+
+	// Anland HUD Editor Fields
+	private int anlandSelectedKey = KEY_FIRE;
+	private final RectF toolbarRect = new RectF();
+	private final RectF btnMinusRect = new RectF();
+	private final RectF btnPlusRect = new RectF();
+	private final RectF btnVisibilityRect = new RectF();
+	private final RectF btnIconRect = new RectF();
+	private final RectF btnPresetRect = new RectF();
+	private final RectF btnDoneRect = new RectF();
+
+	public interface OnKeyIconPickerListener {
+		void onPickIconRequested(VirtualKeyboard vk, int keyIndex);
+	}
+	private OnKeyIconPickerListener iconPickerListener;
+
+	public void setOnKeyIconPickerListener(OnKeyIconPickerListener l) {
+		this.iconPickerListener = l;
+	}
+
+	public void setKeyIcon(int keyIndex, String iconPath) {
+		if (keyIndex >= 0 && keyIndex < keypad.length) {
+			keypad[keyIndex].setIcon(iconPath);
+			saveLayout();
+			invalidateView();
+		}
+	}
 
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
@@ -658,6 +689,29 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				raf.writeInt(key.hashCode());
 				raf.writeFloat(key.scale);
 			}
+			int iconCount = 0;
+			for (VirtualKey key : keypad) {
+				if (key.iconPath != null && !key.iconPath.isEmpty()) {
+					iconCount++;
+				}
+			}
+			if (iconCount > 0) {
+				raf.writeInt(LAYOUT_KEY_ICONS);
+				long lenPos = raf.getFilePointer();
+				raf.writeInt(0);
+				raf.writeInt(iconCount);
+				for (VirtualKey key : keypad) {
+					if (key.iconPath != null && !key.iconPath.isEmpty()) {
+						raf.writeInt(key.hashCode());
+						raf.writeUTF(key.iconPath);
+					}
+				}
+				long curPos = raf.getFilePointer();
+				int dataLen = (int) (curPos - lenPos - 4);
+				raf.seek(lenPos);
+				raf.writeInt(dataLen);
+				raf.seek(curPos);
+			}
 			raf.writeInt(LAYOUT_EOF);
 			raf.writeInt(0);
 			raf.setLength(raf.getFilePointer());
@@ -777,6 +831,19 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							for (VirtualKey key : keypad) {
 								if (key.hashCode() == hash) {
 									key.scale = s;
+									break;
+								}
+							}
+						}
+						break;
+					case LAYOUT_KEY_ICONS:
+						count = dis.readInt();
+						for (int i = 0; i < count; i++) {
+							int hash = dis.readInt();
+							String path = dis.readUTF();
+							for (VirtualKey key : keypad) {
+								if (key.hashCode() == hash) {
+									key.setIcon(path);
 									break;
 								}
 							}
@@ -923,6 +990,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		highlightGroup(group);
 		handler.removeCallbacks(this);
 		visible = true;
+		if (mode == LAYOUT_ANLAND_EDITOR) {
+			anlandSelectedKey = KEY_FIRE;
+		}
 		invalidateView();
 		hide();
 	}
@@ -999,17 +1069,153 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void paint(CanvasWrapper g) {
 		if (visible) {
-			for (VirtualKey key : keypad) {
-				if (key.visible) {
+			for (int i = 0; i < keypad.length; i++) {
+				VirtualKey key = keypad[i];
+				if (key.visible || layoutEditMode == LAYOUT_ANLAND_EDITOR) {
 					key.paint(g);
 				}
+				if (layoutEditMode == LAYOUT_ANLAND_EDITOR && i == anlandSelectedKey) {
+					drawKeyHighlight(g, key);
+				}
 			}
+			if (layoutEditMode == LAYOUT_ANLAND_EDITOR) {
+				drawAnlandToolbar(g);
+			}
+		}
+	}
+
+	private void drawKeyHighlight(CanvasWrapper g, VirtualKey key) {
+		g.setDrawColor(0xFF00E5FF);
+		RectF r = new RectF(key.rect.left - 2, key.rect.top - 2, key.rect.right + 2, key.rect.bottom + 2);
+		g.drawRoundRect(r, key.corners + 2, key.corners + 2);
+		g.setFillColor(0xFF00E5FF);
+		g.fillArc(new RectF(r.left - 4, r.top - 4, r.left + 4, r.top + 4), 0, 360);
+		g.fillArc(new RectF(r.right - 4, r.top - 4, r.right + 4, r.top + 4), 0, 360);
+		g.fillArc(new RectF(r.left - 4, r.bottom - 4, r.left + 4, r.bottom + 4), 0, 360);
+		g.fillArc(new RectF(r.right - 4, r.bottom - 4, r.right + 4, r.bottom + 4), 0, 360);
+	}
+
+	private void updateToolbarBounds() {
+		if (screen == null) return;
+		float tbW = Math.min(screen.width() - 24, 540);
+		float tbH = 46;
+		float tbLeft = (screen.width() - tbW) / 2;
+		float tbTop = 14;
+		toolbarRect.set(tbLeft, tbTop, tbLeft + tbW, tbTop + tbH);
+
+		float btnW = tbW / 6.0f;
+		btnMinusRect.set(tbLeft, tbTop, tbLeft + btnW, tbTop + tbH);
+		btnPlusRect.set(tbLeft + btnW, tbTop, tbLeft + btnW * 2, tbTop + tbH);
+		btnVisibilityRect.set(tbLeft + btnW * 2, tbTop, tbLeft + btnW * 3, tbTop + tbH);
+		btnIconRect.set(tbLeft + btnW * 3, tbTop, tbLeft + btnW * 4, tbTop + tbH);
+		btnPresetRect.set(tbLeft + btnW * 4, tbTop, tbLeft + btnW * 5, tbTop + tbH);
+		btnDoneRect.set(tbLeft + btnW * 5, tbTop, tbLeft + tbW, tbTop + tbH);
+	}
+
+	private void drawAnlandToolbar(CanvasWrapper g) {
+		updateToolbarBounds();
+
+		// Nền Toolbar
+		g.setFillColor(0xEB1E1E24);
+		g.fillRoundRect(toolbarRect, 14, 14);
+		g.setDrawColor(0xFF9D85C2);
+		g.drawRoundRect(toolbarRect, 14, 14);
+
+		// Nút Xong màu tím/xanh nổi bật
+		g.setFillColor(0xFF3875FF);
+		g.fillRoundRect(btnDoneRect, 14, 14);
+
+		// Nhãn trên các nút
+		VirtualKey curKey = (anlandSelectedKey >= 0 && anlandSelectedKey < keypad.length) ? keypad[anlandSelectedKey] : null;
+		String visLabel = (curKey != null && curKey.visible) ? "Ẩn" : "Hiện";
+		String sizeLabel = (curKey != null) ? String.format(java.util.Locale.US, "%.1fx", curKey.scale) : "1.0x";
+
+		g.setTextColor(0xFFFFFFFF);
+		g.drawString("-" + sizeLabel, btnMinusRect.centerX(), btnMinusRect.centerY());
+		g.drawString("+", btnPlusRect.centerX(), btnPlusRect.centerY());
+		g.drawString(visLabel, btnVisibilityRect.centerX(), btnVisibilityRect.centerY());
+		g.drawString("Icon", btnIconRect.centerX(), btnIconRect.centerY());
+		g.drawString("NRO", btnPresetRect.centerX(), btnPresetRect.centerY());
+		g.drawString("Xong", btnDoneRect.centerX(), btnDoneRect.centerY());
+	}
+
+	private void resizeSelectedKey(float delta) {
+		if (anlandSelectedKey < 0 || anlandSelectedKey >= keypad.length) return;
+		VirtualKey key = keypad[anlandSelectedKey];
+		key.scale = Math.max(0.5f, Math.min(2.5f, key.scale + delta));
+		resizeKey(anlandSelectedKey, keySize, keySize);
+		invalidateView();
+	}
+
+	private void toggleSelectedKeyVisibility() {
+		if (anlandSelectedKey < 0 || anlandSelectedKey >= keypad.length) return;
+		VirtualKey key = keypad[anlandSelectedKey];
+		key.visible = !key.visible;
+		invalidateView();
+	}
+
+	private void pickSelectedKeyIcon() {
+		if (iconPickerListener != null && anlandSelectedKey >= 0) {
+			iconPickerListener.onPickIconRequested(this, anlandSelectedKey);
+		}
+	}
+
+	private void applyNroPreset() {
+		setAnlandLayout();
+		for (int group = 0; group < keyScaleGroups.length; group++) {
+			resizeKeyGroup(group);
+		}
+		snapKeys();
+		keypad[KEY_FIRE].setIcon("hud_presets/nro/ui/fire_normal.png");
+		keypad[KEY_NUM7].setIcon("hud_presets/nro/ui/pea.png");
+		invalidateView();
+	}
+
+	private void finishAnlandEdit() {
+		setLayoutEditMode(LAYOUT_EOF);
+		layoutVariant = TYPE_CUSTOM;
+		saveLayout();
+		invalidateView();
+		MicroActivity act = (MicroActivity) ContextHolder.getActivity();
+		if (act != null) {
+			act.runOnUiThread(() -> android.widget.Toast.makeText(act, "Đã lưu bố cục phím ảo Anland!", android.widget.Toast.LENGTH_SHORT).show());
 		}
 	}
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
 		switch (layoutEditMode) {
+			case LAYOUT_ANLAND_EDITOR:
+				updateToolbarBounds();
+				if (toolbarRect.contains(x, y)) {
+					if (btnMinusRect.contains(x, y)) {
+						resizeSelectedKey(-0.1f);
+					} else if (btnPlusRect.contains(x, y)) {
+						resizeSelectedKey(0.1f);
+					} else if (btnVisibilityRect.contains(x, y)) {
+						toggleSelectedKeyVisibility();
+					} else if (btnIconRect.contains(x, y)) {
+						pickSelectedKeyIcon();
+					} else if (btnPresetRect.contains(x, y)) {
+						applyNroPreset();
+					} else if (btnDoneRect.contains(x, y)) {
+						finishAnlandEdit();
+					}
+					return true;
+				}
+				editedIndex = -1;
+				for (int i = 0; i < keypad.length; i++) {
+					if (keypad[i].rect.contains(x, y)) {
+						editedIndex = i;
+						anlandSelectedKey = i;
+						offsetX = x - keypad[i].rect.left;
+						offsetY = y - keypad[i].rect.top;
+						vibrate();
+						invalidateView();
+						return true;
+					}
+				}
+				break;
 			case LAYOUT_EOF:
 				if (pointer > associatedKeys.length) {
 					return false;
@@ -1062,6 +1268,23 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public boolean pointerDragged(int pointer, float x, float y) {
 		switch (layoutEditMode) {
+			case LAYOUT_ANLAND_EDITOR:
+				if (editedIndex >= 0 && editedIndex < keypad.length) {
+					VirtualKey key = keypad[editedIndex];
+					float nx = x - offsetX;
+					float ny = y - offsetY;
+					if (screen != null) {
+						nx = Math.max(0, Math.min(screen.width() - key.rect.width(), nx));
+						ny = Math.max(0, Math.min(screen.height() - key.rect.height(), ny));
+					}
+					key.rect.offsetTo(nx, ny);
+					key.snapOrigin = SCREEN;
+					key.snapMode = RectSnap.NO_SNAP;
+					key.snapOffset.set(nx, ny);
+					invalidateView();
+					return true;
+				}
+				break;
 			case LAYOUT_EOF:
 				if (pointer > associatedKeys.length) {
 					return false;
@@ -1070,10 +1293,25 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				if (aKey == null) {
 					pointerPressed(pointer, x, y);
 				} else if (!aKey.contains(x, y)) {
-					associatedKeys[pointer] = null;
-					aKey.onUp();
-					invalidateView();
-					pointerPressed(pointer, x, y);
+					// D-Pad / Multi-direction swipe tracking
+					VirtualKey newKey = null;
+					for (VirtualKey k : keypad) {
+						if (k.contains(x, y)) {
+							newKey = k;
+							break;
+						}
+					}
+					if (newKey != null && newKey != aKey) {
+						associatedKeys[pointer] = newKey;
+						aKey.onUp();
+						newKey.onDown();
+						vibrate();
+						invalidateView();
+					} else if (newKey == null) {
+						associatedKeys[pointer] = null;
+						aKey.onUp();
+						invalidateView();
+					}
 				}
 				break;
 			case LAYOUT_KEYS:
@@ -1133,7 +1371,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public boolean pointerReleased(int pointer, float x, float y) {
-		if (layoutEditMode == LAYOUT_EOF) {
+		if (layoutEditMode == LAYOUT_ANLAND_EDITOR) {
+			editedIndex = -1;
+			return true;
+		} else if (layoutEditMode == LAYOUT_EOF) {
 			if (pointer > associatedKeys.length) {
 				return false;
 			}
@@ -1314,6 +1555,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		boolean visible = true;
 		boolean opaque = true;
 		int corners;
+		String iconPath;
+		Bitmap iconBitmap;
 		private final int hashCode;
 		private int repeatCount;
 
@@ -1321,6 +1564,15 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			this.keyCode = keyCode;
 			this.label = label;
 			hashCode = 31 * (31 + this.keyCode);
+		}
+
+		void setIcon(String path) {
+			this.iconPath = path;
+			if (path != null && !path.isEmpty()) {
+				this.iconBitmap = HudAssetManager.getBitmap(ContextHolder.getAppContext(), path);
+			} else {
+				this.iconBitmap = null;
+			}
 		}
 
 		void resize(float width, float height) {
@@ -1342,7 +1594,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				bgColor = settings.vkBgColor;
 				fgColor = settings.vkFgColor;
 			}
-			int alpha = (opaque || layoutEditMode != LAYOUT_EOF ? 0xFF : settings.vkAlpha) << 24;
+			int alphaVal;
+			if (layoutEditMode == LAYOUT_ANLAND_EDITOR) {
+				alphaVal = visible ? 0xE0 : 0x38;
+			} else {
+				alphaVal = (opaque || layoutEditMode != LAYOUT_EOF ? 0xFF : settings.vkAlpha);
+			}
+			int alpha = alphaVal << 24;
 			g.setFillColor(alpha | bgColor);
 			g.setTextColor(alpha | fgColor);
 			g.setDrawColor(alpha | settings.vkOutlineColor);
@@ -1361,7 +1619,21 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					g.drawArc(rect, 0, 360);
 					break;
 			}
-			g.drawString(label, rect.centerX(), rect.centerY());
+
+			if (iconBitmap != null) {
+				float pad = Math.min(rect.width(), rect.height()) * 0.15f;
+				RectF dst = new RectF(rect.left + pad, rect.top + pad, rect.right - pad, rect.bottom - pad);
+				g.drawBitmap(iconBitmap, null, dst);
+				if (label != null && !label.isEmpty()) {
+					g.drawString(label, rect.centerX(), rect.bottom - 4);
+				}
+			} else {
+				g.drawString(label, rect.centerX(), rect.centerY());
+			}
+
+			if (layoutEditMode == LAYOUT_ANLAND_EDITOR && !visible) {
+				g.drawString("\u2715", rect.centerX(), rect.centerY());
+			}
 		}
 
 		@NonNull
