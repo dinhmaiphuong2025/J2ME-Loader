@@ -1941,6 +1941,9 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         int action = event.getActionMasked();
+        android.util.Log.e("HUDTOUCH", "action=" + action + " x=" + (int) event.getX()
+                + " y=" + (int) event.getY() + " edit=" + mIsEditMode
+                + " hidden=" + mHudHidden + " child=" + getChildCount());
         if (action == MotionEvent.ACTION_DOWN) {
             mQuickActionTouch = quickActionStrip(mQuickActionRect)
                     && mQuickActionRect.contains(event.getX(), event.getY());

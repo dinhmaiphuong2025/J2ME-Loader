@@ -601,7 +601,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void postHudKey(int action, int code) {
 		int key = HudKeyBridge.resolve(code);
 		if (key == HudKeyBridge.UNMAPPED) {
-			Log.w("HUDKEY", "unmapped code=" + code);
+			Log.e("HUDKEY", "unmapped code=" + code);
 			showHudKeyDebug("\u2715 không dịch được: " + code);
 			return;
 		}
@@ -610,10 +610,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			canvas = (Canvas) current;
 		}
 		if (canvas == null) {
-			Log.w("HUDKEY", "no canvas for key=" + key);
+			Log.e("HUDKEY", "no canvas for key=" + key);
 			return;
 		}
-		Log.d("HUDKEY", "action=" + (action == 0 ? "down" : "up")
+		Log.e("HUDKEY", "action=" + (action == 0 ? "down" : "up")
 				+ " raw=" + code + " key=" + HudKeyBridge.label(key));
 		if (action == 0) {
 			showHudKeyDebug("\u25BC " + HudKeyBridge.label(key) + "  (" + key + ")");
