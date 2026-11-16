@@ -81,6 +81,13 @@
         android:layout_height="match_parent" />
 
 
+    <!-- HUD layer: editor + runtime HUD (hidden until enabled) -->
+    <FrameLayout
+        android:id="@+id/hud_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <!-- Floating Mini Input Bar -->
     <LinearLayout
         android:id="@+id/floating_input_bar"

@@ -26,6 +26,10 @@
             android:title="@string/PREF_LIMIT_FPS" />
 
         <item
+            android:id="@+id/action_hud_editor"
+            android:title="@string/action_hud_editor" />
+
+        <item
             android:id="@+id/action_submenu_vk"
             android:title="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS">
             <menu>

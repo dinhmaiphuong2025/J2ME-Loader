@@ -120,6 +120,8 @@ import com.j2me.lixin.R;
 import com.j2me.lixin.applist.AppItem;
 import com.j2me.lixin.config.Config;
 import com.j2me.lixin.databinding.ActivityMicroBinding;
+import com.j2me.lixin.hud.HudKeyBridge;
+import com.j2me.lixin.hud.HudOverlayView;
 import com.j2me.lixin.util.AccountManager;
 import com.j2me.lixin.util.AppUtils;
 import com.j2me.lixin.util.Constants;
@@ -148,6 +150,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private final List<Tab> tabs = new ArrayList<>();
 	private int activeIndex = -1;
 	private TextBox activeTextBox;
+	private HudOverlayView hudView;
+	private boolean hudRuntimeEnabled;
 	private Canvas lastActiveCanvas;
 
 	public ActivityMicroBinding binding;
@@ -223,6 +227,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		}
 		MidletSystem.setProperty("com.nokia.mid.cmdline.instance", "1");
+		setupHudOverlay();
 		microLoader = new MicroLoader(this, appPath);
 		if (!microLoader.init()) {
 			Config.startApp(this, appName, appPath, true, arguments);
@@ -472,9 +477,133 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private void updateOverlayLocation() {
 		binding.topBar.post(() -> {
-			binding.overlayView.setLocation(0, statusBarInset + binding.topBar.getHeight());
+			int top = statusBarInset + binding.topBar.getHeight();
+			binding.overlayView.setLocation(0, top);
+			if (binding.hudContainer != null) {
+				FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) binding.hudContainer.getLayoutParams();
+				lp.topMargin = top;
+				binding.hudContainer.setLayoutParams(lp);
+			}
 		});
 	}
+
+	/** Creates the Anland HUD layer for the current game (hidden by default). */
+	private void setupHudOverlay() {
+		if (hudView != null || appPath == null) {
+			return;
+		}
+		SharedPreferences hudPrefs = getSharedPreferences(
+				"hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE);
+		hudRuntimeEnabled = hudPrefs.getBoolean("use_hud_overlay", false);
+		hudView = new HudOverlayView(this, hudPrefs, hudHost);
+		binding.hudContainer.addView(hudView, new FrameLayout.LayoutParams(
+				FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+		hudView.loadProfile();
+		hudView.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
+		binding.hudContainer.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
+	}
+
+	/** Opens the visual HUD editor on top of the running game. */
+	private void showHudEditor() {
+		if (hudView == null) {
+			setupHudOverlay();
+		}
+		if (hudView == null) {
+			return;
+		}
+		binding.topBar.setVisibility(View.GONE);
+		binding.hudContainer.setVisibility(View.VISIBLE);
+		hudView.setVisibility(View.VISIBLE);
+		hudView.post(hudView::openEditor);
+	}
+
+	private void hideHudLayer() {
+		if (hudView == null) {
+			return;
+		}
+		binding.topBar.setVisibility(View.VISIBLE);
+		if (!hudRuntimeEnabled) {
+			hudView.setVisibility(View.GONE);
+			binding.hudContainer.setVisibility(View.GONE);
+		}
+	}
+
+	private void postHudKey(int action, int code) {
+		int key = HudKeyBridge.resolve(code);
+		if (key == HudKeyBridge.UNMAPPED) {
+			return;
+		}
+		Canvas canvas = lastActiveCanvas;
+		if (canvas == null && current instanceof Canvas) {
+			canvas = (Canvas) current;
+		}
+		if (canvas == null) {
+			return;
+		}
+		if (action == 0) {
+			canvas.postKeyPressed(key);
+		} else {
+			canvas.postKeyReleased(key);
+		}
+	}
+
+	private final HudOverlayView.HudHost hudHost = new HudOverlayView.HudHost() {
+		@Override
+		public void sendKey(int action, int evdevCode) {
+			postHudKey(action, evdevCode);
+		}
+
+		@Override
+		public void sendTextInput(byte[] utf8) {
+			// J2ME text goes through TextBox / the floating input bar.
+		}
+
+		@Override
+		public void sendMouseMotion(float dx, float dy) {
+		}
+
+		@Override
+		public void sendMouseButton(int button, boolean pressed) {
+		}
+
+		@Override
+		public void sendMouseScroll(int axis, float value) {
+		}
+
+		@Override
+		public void toggleSystemKeyboard() {
+			if (inputMethodManager != null) {
+				inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+			}
+		}
+
+		@Override
+		public void toggleVirtualKeyboard() {
+			VirtualKeyboard vk = ContextHolder.getVk();
+			if (vk != null) {
+				vk.show();
+			}
+		}
+
+		@Override
+		public void openSettings() {
+			runOnUiThread(MicroActivity.this::showMenu);
+		}
+
+		@Override
+		public void onLayoutSaved() {
+		}
+
+		@Override
+		public boolean isNativeReady() {
+			return true;
+		}
+
+		@Override
+		public void onEditModeExited() {
+			runOnUiThread(MicroActivity.this::hideHudLayer);
+		}
+	};
 
 	private WindowInsetsControllerCompat getWindowInsetsController() {
 		Window window = getWindow();
@@ -921,6 +1050,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
 						InputMethodManager.SHOW_FORCED, 0);
 			}
+		} else if (id == R.id.action_hud_editor) {
+			showHudEditor();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
