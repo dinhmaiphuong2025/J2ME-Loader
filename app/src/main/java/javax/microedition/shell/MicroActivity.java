@@ -591,12 +591,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	@Override
 	public void onBackPressed() {
-		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF) {
-			vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
-			showSaveVkAlert(false);
-			return;
-		}
 		if (isFloatingInputActive()) {
 			cancelFloatingInput();
 			return;
@@ -926,19 +920,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			} else {
 				inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
 						InputMethodManager.SHOW_FORCED, 0);
-			}
-		} else if (id == R.id.action_edit_hud) {
-			VirtualKeyboard vk = ContextHolder.getVk();
-			if (vk != null) {
-				vk.setOnKeyIconPickerListener((keyboard, keyIndex) -> {
-					runOnUiThread(() -> {
-						ru.playsoftware.j2meloader.hud.NroIconPickerDialog.show(MicroActivity.this, (iconPath) -> {
-							keyboard.setKeyIcon(keyIndex, iconPath);
-						});
-					});
-				});
-				vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_ANLAND_EDITOR);
-				Toast.makeText(this, R.string.action_edit_hud, Toast.LENGTH_SHORT).show();
 			}
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();

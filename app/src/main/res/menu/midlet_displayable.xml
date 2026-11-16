@@ -30,9 +30,6 @@
             android:title="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS">
             <menu>
                 <item
-                    android:id="@+id/action_edit_hud"
-                    android:title="@string/action_edit_hud" />
-                <item
                     android:id="@+id/action_layout_scale_mode"
                     android:title="@string/layout_scale_mode" />
                 <item
