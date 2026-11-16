@@ -211,7 +211,7 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
             if (HudAction.TYPE_MODIFIER.equals(btn.action.type)) {
                 if (isDown) toggleModifier(btn.action.code);
             } else if (HudAction.TYPE_KEY.equals(btn.action.type)) {
-                if (mHost != null && btn.action.code > 0) mHost.sendKey(isDown ? 0 : 1, btn.action.code);
+                if (mHost != null) mHost.sendKey(isDown ? 0 : 1, btn.action.code);
             } else if (HudAction.TYPE_MOUSE.equals(btn.action.type)) {
                 // Edge-driven like a real button: down holds it, up releases it. A quick tap is
                 // still a click, and holding it while the pad moves the cursor is a drag.
@@ -346,6 +346,9 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
     }
 
     public void loadProfile() {
+        // Layouts authored before the port landed in Anland's extra slot; move them
+        // into the main slot so the game actually renders them.
+        HudPrefsMigration.migrateExtraSlotToMain(mPrefs);
         // A reload replaces every model instance; snapshots from the previous
         // profile must not be replayed onto the new objects.
         mHistory.clear();

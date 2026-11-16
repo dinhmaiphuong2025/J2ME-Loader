@@ -494,6 +494,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 		SharedPreferences hudPrefs = getSharedPreferences(
 				"hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE);
+		// The port keeps a single layout per game: Anland's extra slots default to 2,
+		// which made edits land in a layout the game never shows.
+		if (hudPrefs.getInt("hud_layout_slot", 2) != 0) {
+			hudPrefs.edit().putInt("hud_layout_slot", 0).apply();
+		}
 		hudRuntimeEnabled = hudPrefs.getBoolean("use_hud_overlay", false);
 		hudView = new HudOverlayView(this, hudPrefs, hudHost);
 		binding.hudContainer.addView(hudView, new FrameLayout.LayoutParams(
@@ -501,6 +506,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		hudView.loadProfile();
 		hudView.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		binding.hudContainer.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
+		updateOverlayLocation();
 	}
 
 	/** Opens the visual HUD editor on top of the running game. */
@@ -511,17 +517,44 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (hudView == null) {
 			return;
 		}
-		binding.topBar.setVisibility(View.GONE);
-		binding.hudContainer.setVisibility(View.VISIBLE);
-		hudView.setVisibility(View.VISIBLE);
-		hudView.post(hudView::openEditor);
+		// Recompute the offset right before editing: the pill bar height is only
+		// known after the first layout pass, and a stale offset shifts every widget.
+		updateOverlayLocation();
+		binding.topBar.post(() -> {
+			binding.hudContainer.setVisibility(View.VISIBLE);
+			hudView.setVisibility(View.VISIBLE);
+			hudView.requestLayout();
+			hudView.post(hudView::openEditor);
+		});
+	}
+
+	/** Turns the HUD on/off as the input layer while playing (persisted per game). */
+	private void toggleHudRuntime() {
+		if (hudView == null) {
+			setupHudOverlay();
+		}
+		if (hudView == null) {
+			return;
+		}
+		hudRuntimeEnabled = !hudRuntimeEnabled;
+		getSharedPreferences("hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE)
+				.edit().putBoolean("use_hud_overlay", hudRuntimeEnabled).apply();
+		if (hudRuntimeEnabled) {
+			updateOverlayLocation();
+			binding.hudContainer.setVisibility(View.VISIBLE);
+			hudView.setVisibility(View.VISIBLE);
+			hudView.setEditMode(false);
+		} else {
+			hudView.setVisibility(View.GONE);
+			binding.hudContainer.setVisibility(View.GONE);
+		}
+		Toast.makeText(this, hudRuntimeEnabled ? "HUD: bật" : "HUD: tắt", Toast.LENGTH_SHORT).show();
 	}
 
 	private void hideHudLayer() {
 		if (hudView == null) {
 			return;
 		}
-		binding.topBar.setVisibility(View.VISIBLE);
 		if (!hudRuntimeEnabled) {
 			hudView.setVisibility(View.GONE);
 			binding.hudContainer.setVisibility(View.GONE);
@@ -531,6 +564,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void postHudKey(int action, int code) {
 		int key = HudKeyBridge.resolve(code);
 		if (key == HudKeyBridge.UNMAPPED) {
+			Log.w("HUDKEY", "unmapped code=" + code);
 			return;
 		}
 		Canvas canvas = lastActiveCanvas;
@@ -538,8 +572,11 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			canvas = (Canvas) current;
 		}
 		if (canvas == null) {
+			Log.w("HUDKEY", "no canvas for key=" + key);
 			return;
 		}
+		Log.d("HUDKEY", "action=" + (action == 0 ? "down" : "up")
+				+ " raw=" + code + " key=" + HudKeyBridge.label(key));
 		if (action == 0) {
 			canvas.postKeyPressed(key);
 		} else {
@@ -1052,6 +1089,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		} else if (id == R.id.action_hud_editor) {
 			showHudEditor();
+		} else if (id == R.id.action_hud_toggle) {
+			toggleHudRuntime();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
