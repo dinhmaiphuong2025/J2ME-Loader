@@ -79,6 +79,65 @@ final class HudPrefsMigration {
         }
     }
 
+    /** Bumps widgets saved with Anland's 10% ghost opacity to a readable level. */
+    static void repairOpacity(SharedPreferences prefs) {
+        String json = prefs.getString(PREF_PROFILE, null);
+        if (json == null || json.isEmpty()) {
+            return;
+        }
+        try {
+            JSONObject root = new JSONObject(json);
+            boolean changed = false;
+            for (String key : new String[]{"portrait_layout", "landscape_layout",
+                    "keyboard_portrait_layout", "keyboard_landscape_layout"}) {
+                changed |= bump(root.optJSONObject(key));
+            }
+            for (String key : new String[]{"layout_2", "layout_3", "layout_4"}) {
+                JSONObject extra = root.optJSONObject(key);
+                if (extra == null) continue;
+                changed |= bump(extra.optJSONObject("portrait"));
+                changed |= bump(extra.optJSONObject("landscape"));
+            }
+            if (changed) {
+                prefs.edit().putString(PREF_PROFILE, root.toString()).apply();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static boolean bump(JSONObject layout) {
+        if (layout == null) return false;
+        org.json.JSONArray arr = layout.optJSONArray("floating_buttons");
+        if (arr == null) return false;
+        boolean changed = false;
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject b = arr.optJSONObject(i);
+            changed |= bumpOne(b);
+            if (b != null) {
+                org.json.JSONArray kids = b.optJSONArray("children");
+                if (kids != null) {
+                    for (int j = 0; j < kids.length(); j++) {
+                        changed |= bumpOne(kids.optJSONObject(j));
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
+    private static boolean bumpOne(JSONObject b) {
+        if (b == null || !b.has("opacity")) return false;
+        double op = b.optDouble("opacity", 0.55);
+        if (op > 0.05 && op < 0.20) {
+            try {
+                b.put("opacity", 0.55);
+                return true;
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
+    }
+
     private static boolean isLayoutEmpty(JSONObject layout) {
         if (layout == null) {
             return true;

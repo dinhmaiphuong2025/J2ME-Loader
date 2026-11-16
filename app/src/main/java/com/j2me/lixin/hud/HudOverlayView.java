@@ -349,6 +349,7 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
         // Layouts authored before the port landed in Anland's extra slot; move them
         // into the main slot so the game actually renders them.
         HudPrefsMigration.migrateExtraSlotToMain(mPrefs);
+        HudPrefsMigration.repairOpacity(mPrefs);
         // First run for a game: seed a keypad-shaped HUD instead of Anland's desktop layout.
         J2meHudPreset.ensureDefaults(mPrefs);
         // A reload replaces every model instance; snapshots from the previous
@@ -1608,8 +1609,10 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
     /** Apply the saved portrait layout's visual style to a newly added widget. */
     private static void applyNewWidgetStyle(HudButton b) {
         if (b == null) return;
-        b.opacity = 0.10f;
-        b.bgColor = HudColors.surfaceTranslucent;
+        // Anland used a 10% ghost style for freshly added widgets; at that opacity a
+        // J2ME number key is invisible on a bright game screen.
+        b.opacity = 0.55f;
+        b.bgColor = HudColors.surfaceHigh;
         b.textColor = HudColors.textPrimary;
         b.activeColor = HudColors.primary;
         b.borderStrokeWidthDp = 1;
