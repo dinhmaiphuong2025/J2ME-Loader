@@ -473,71 +473,13 @@ public final class HudKeyPickerDialog {
     }
 
     private static List<KeyEntry> getStandardKeys() {
+        // Only the 21 keys a J2ME game can actually receive. The desktop key list
+        // is gone: assigning "A" or "F5" to a HUD button never reached the game.
         List<KeyEntry> list = new ArrayList<>();
-        // Letters A-Z
-        int[] letterCodes = {30, 48, 46, 32, 18, 33, 34, 35, 23, 36, 37, 38, 50, 49, 24, 25, 16, 19, 31, 20, 22, 47, 17, 45, 21, 44};
-        for (int i = 0; i < 26; i++) {
-            char ch = (char) ('A' + i);
-            list.add(new KeyEntry(String.valueOf(ch), HudAction.key(letterCodes[i])));
+        for (int code : HudKeyBridge.ALL_KEYS) {
+            list.add(new KeyEntry(HudKeyBridge.label(code), HudAction.key(code)));
         }
-        // Numbers 0-9
-        int[] numCodes = {11, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        for (int i = 0; i <= 9; i++) {
-            list.add(new KeyEntry(String.valueOf(i), HudAction.key(numCodes[i])));
-        }
-        // F1-F12
-        int[] fCodes = {59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88};
-        for (int i = 1; i <= 12; i++) {
-            list.add(new KeyEntry("F" + i, HudAction.key(fCodes[i - 1])));
-        }
-
-        // ---- Punctuation (unshifted symbols) ----
-        addKeys(list, new String[]{
-                "`", "-", "=", "[", "]", "\\", ";", "'", ",", ".", "/"},
-                new int[]{41, 12, 13, 26, 27, 43, 39, 40, 51, 52, 53});
-
-        // ---- Shifted symbols: sent as Shift + base key combos ----
-        // evdev pairs are {shift, base}; the picker shows the resulting glyph.
-        String[] shifted = {"~", "!", "@", "#", "$", "%", "^", "&", "*",
-                "(", ")", "_", "+", "{", "}", "|", ":", "\"", "<", ">", "?"};
-        int[][] shiftedCodes = {
-                {42, 41}, {42, 2}, {42, 3}, {42, 4}, {42, 5}, {42, 6}, {42, 7},
-                {42, 8}, {42, 9}, {42, 10}, {42, 11}, {42, 12}, {42, 13},
-                {42, 26}, {42, 27}, {42, 43}, {42, 39}, {42, 40}, {42, 51},
-                {42, 52}, {42, 53}};
-        for (int i = 0; i < shifted.length; i++) {
-            list.add(new KeyEntry(shifted[i], combo(shiftedCodes[i][0], shiftedCodes[i][1])));
-        }
-
-        // ---- Editing / locking keys ----
-        addKeys(list, new String[]{"INSERT", "MENU", "CAPS", "NUMLOCK", "PRTSC", "SCROLL", "PAUSE"},
-                new int[]{110, 139, 58, 69, 99, 70, 119});
-        // Right-hand modifiers, distinct from the generic ones in MODS & SYS.
-        list.add(new KeyEntry("SHIFT (R)", HudAction.modifier(54)));
-        list.add(new KeyEntry("CTRL (R)", HudAction.modifier(97)));
-        list.add(new KeyEntry("ALT (R)", HudAction.modifier(100)));
-
-        // ---- Numeric keypad ----
-        addKeys(list, new String[]{"KP0", "KP1", "KP2", "KP3", "KP4", "KP5", "KP6", "KP7", "KP8", "KP9"},
-                new int[]{82, 79, 80, 81, 75, 76, 77, 71, 72, 73});
-        addKeys(list, new String[]{"KP.", "KP*", "KP-", "KP+", "KPENTER", "KP/"},
-                new int[]{83, 55, 74, 78, 96, 98});
-
-        // ---- Multimedia / brightness ----
-        addKeys(list, new String[]{"MEDIA PLAY", "MEDIA NEXT", "MEDIA PREV", "MEDIA STOP",
-                        "MUTE", "VOL-", "VOL+", "BRI-", "BRI+"},
-                new int[]{164, 163, 165, 166, 113, 114, 115, 224, 225});
         return list;
-    }
-
-    /** Build a two-key (modifier + key) combo action. */
-    private static HudAction combo(int modifier, int key) {
-        HudAction a = new HudAction();
-        a.type = HudAction.TYPE_COMBO;
-        a.comboKeys = new java.util.ArrayList<>();
-        a.comboKeys.add(modifier);
-        a.comboKeys.add(key);
-        return a;
     }
 
     private static void addKeys(List<KeyEntry> list, String[] labels, int[] codes) {

@@ -47,10 +47,35 @@ final class HudPrefsMigration {
                     root.put("landscape_layout", landscape);
                 }
                 prefs.edit().putString(PREF_PROFILE, root.toString()).apply();
+                mirrorOrientation(root, prefs);
                 return;
             }
+            mirrorOrientation(root, prefs);
         } catch (Exception ignored) {
             // A malformed profile is replaced by the defaults on load anyway.
+        }
+    }
+
+    /**
+     * A game that forces landscape showed an empty HUD because the authored widgets
+     * only existed in the portrait layout. Mirror whichever side has content.
+     */
+    private static void mirrorOrientation(JSONObject root, SharedPreferences prefs) {
+        JSONObject portrait = root.optJSONObject("portrait_layout");
+        JSONObject landscape = root.optJSONObject("landscape_layout");
+        boolean portraitEmpty = isLayoutEmpty(portrait);
+        boolean landscapeEmpty = isLayoutEmpty(landscape);
+        if (portraitEmpty == landscapeEmpty) {
+            return;
+        }
+        try {
+            if (landscapeEmpty && portrait != null) {
+                root.put("landscape_layout", new JSONObject(portrait.toString()));
+            } else if (portraitEmpty && landscape != null) {
+                root.put("portrait_layout", new JSONObject(landscape.toString()));
+            }
+            prefs.edit().putString(PREF_PROFILE, root.toString()).apply();
+        } catch (Exception ignored) {
         }
     }
 
