@@ -34,6 +34,14 @@
             android:title="@string/action_hud_toggle" />
 
         <item
+            android:id="@+id/action_keypad_toggle"
+            android:title="@string/action_keypad_toggle" />
+
+        <item
+            android:id="@+id/action_quick_preset"
+            android:title="@string/action_quick_preset" />
+
+        <item
             android:id="@+id/action_accounts"
             android:title="@string/action_accounts" />
 

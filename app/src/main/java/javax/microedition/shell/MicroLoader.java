@@ -239,6 +239,40 @@ public class MicroLoader {
 		return params.disablePause;
 	}
 
+	/** Turns the classic keypad on/off at runtime and rebuilds its instance. */
+	void setVirtualKeyboardEnabled(boolean enabled) {
+		params.showKeyboard = enabled;
+		ContextHolder.setVk(enabled ? new VirtualKeyboard(params) : null);
+	}
+
+	/**
+	 * Applies one of the three quick profiles.
+	 * 0 = smooth, 1 = pretty, 2 = battery saver.
+	 */
+	void applyQuickPreset(int kind) {
+		switch (kind) {
+			case 0:
+				params.screenFilter = true;
+				params.fpsLimit = 60;
+				params.screenScaleToFit = true;
+				params.screenKeepAspectRatio = true;
+				break;
+			case 1:
+				params.screenFilter = true;
+				params.fpsLimit = 0;
+				params.forceFullscreen = true;
+				params.screenScaleToFit = true;
+				break;
+			default:
+				params.screenFilter = false;
+				params.fpsLimit = 30;
+				break;
+		}
+		Canvas.setFilterBitmap(params.screenFilter);
+		Canvas.setLimitFps(params.fpsLimit);
+		com.j2me.lixin.config.ProfilesManager.saveConfig(params);
+	}
+
 	/** True when the classic on-screen keypad is enabled for this game. */
 	public boolean isShowKeyboard() {
 		return params.showKeyboard;

@@ -568,35 +568,87 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		Toast.makeText(this, R.string.hud_reset_done, Toast.LENGTH_SHORT).show();
 	}
 
-	/** Turns the HUD on/off as the input layer while playing (persisted per game). */
-	private void toggleHudRuntime() {
-		if (hudView == null) {
-			setupHudOverlay();
-		}
-		if (hudView == null) {
-			return;
-		}
-		hudRuntimeEnabled = !hudRuntimeEnabled;
+	/** HUD and the classic keypad are mutually exclusive: enabling one disables the other. */
+	private void setHudRuntime(boolean on) {
+		hudRuntimeEnabled = on;
 		getSharedPreferences("hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE)
-				.edit().putBoolean("use_hud_overlay", hudRuntimeEnabled).apply();
-		if (hudRuntimeEnabled) {
+				.edit().putBoolean("use_hud_overlay", on).apply();
+		if (on) {
+			if (hudView == null) {
+				setupHudOverlay(true);
+			}
+			microLoader.setVirtualKeyboardEnabled(false);
+			detachKeypadLayer();
 			updateOverlayLocation();
 			binding.hudContainer.setVisibility(View.VISIBLE);
 			hudView.setVisibility(View.VISIBLE);
 			hudView.setEditMode(false);
 		} else {
-			// Remove the layer entirely instead of hiding it: an invisible full-screen
-			// sibling still participates in touch dispatch on some ROMs.
 			binding.hudContainer.removeAllViews();
 			binding.hudContainer.setVisibility(View.GONE);
 			hudView = null;
 			hudKeyDebug = null;
 		}
-		com.j2me.lixin.hud.HudTrace.log(this, "toggle runtime=" + hudRuntimeEnabled);
-		Log.e("HUDSTATE", "toggle -> runtime=" + hudRuntimeEnabled
-				+ " containerVis=" + binding.hudContainer.getVisibility()
-				+ " hudVis=" + hudView.getVisibility());
-		Toast.makeText(this, hudRuntimeEnabled ? "HUD: bật" : "HUD: tắt", Toast.LENGTH_SHORT).show();
+	}
+
+	private void toggleHudRuntime() {
+		setHudRuntime(!hudRuntimeEnabled);
+		Toast.makeText(this, hudRuntimeEnabled ? "HUD: bật (phím ảo tắt)" : "HUD: tắt",
+				Toast.LENGTH_SHORT).show();
+	}
+
+	/** Classic keypad on/off; turning it on switches the HUD off. */
+	private void toggleKeypadRuntime() {
+		boolean enable = ContextHolder.getVk() == null;
+		if (enable) {
+			setHudRuntime(false);
+			microLoader.setVirtualKeyboardEnabled(true);
+			attachKeypadLayer();
+		} else {
+			microLoader.setVirtualKeyboardEnabled(false);
+			detachKeypadLayer();
+		}
+		Toast.makeText(this, enable ? "Phím ảo: bật (HUD tắt)" : "Phím ảo: tắt",
+				Toast.LENGTH_SHORT).show();
+	}
+
+	private void attachKeypadLayer() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk == null) {
+			return;
+		}
+		Canvas target = lastActiveCanvas;
+		if (target == null && current instanceof Canvas) {
+			target = (Canvas) current;
+		}
+		vk.setView(binding.overlayView);
+		binding.overlayView.removeLayers(VirtualKeyboard.class);
+		binding.overlayView.addLayer(vk);
+		if (target != null) {
+			vk.setTarget(target);
+			target.updateSize();
+		}
+		binding.overlayView.setVisibility(true);
+		binding.overlayView.postInvalidate();
+	}
+
+	private void detachKeypadLayer() {
+		binding.overlayView.removeLayers(VirtualKeyboard.class);
+		binding.overlayView.postInvalidate();
+	}
+
+	/** Three one-tap profiles for players who do not want the full settings screen. */
+	private void showQuickPresets() {
+		String[] items = {"Mượt (60 FPS, làm mượt hình)",
+				"Đẹp (toàn màn hình, không giới hạn FPS)",
+				"Tiết kiệm pin (30 FPS, tắt làm mượt)"};
+		new AlertDialog.Builder(this)
+				.setTitle(R.string.quick_preset_title)
+				.setItems(items, (d, which) -> {
+					microLoader.applyQuickPreset(which);
+					Toast.makeText(this, R.string.quick_preset_applied, Toast.LENGTH_SHORT).show();
+				})
+				.show();
 	}
 
 	private void hideHudLayer() {
@@ -1211,6 +1263,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			showAccountPicker(appName, appPath, false);
 		} else if (id == R.id.action_hud_reset) {
 			resetHudLayout();
+		} else if (id == R.id.action_keypad_toggle) {
+			toggleKeypadRuntime();
+		} else if (id == R.id.action_quick_preset) {
+			showQuickPresets();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {

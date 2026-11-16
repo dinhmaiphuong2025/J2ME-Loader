@@ -303,6 +303,10 @@
     <string name="action_hud_editor">HUD editor</string>
     <string name="action_hud_toggle">Show HUD while playing</string>
     <string name="action_accounts">Accounts</string>
+    <string name="action_keypad_toggle">On-screen keypad</string>
+    <string name="action_quick_preset">Quick settings</string>
+    <string name="quick_preset_title">Quick settings</string>
+    <string name="quick_preset_applied">Applied</string>
     <string name="hud_reset_default">Reset HUD layout</string>
     <string name="hud_reset_done">Đã đặt lại HUD</string>
     <string name="notif_running_title">J2ME Loader</string>

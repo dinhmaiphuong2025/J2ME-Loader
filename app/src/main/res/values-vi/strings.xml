@@ -202,6 +202,10 @@
     <string name="action_hud_editor">Trình sửa HUD</string>
     <string name="action_hud_toggle">Bật/tắt HUD khi chơi</string>
     <string name="action_accounts">Tài khoản</string>
+    <string name="action_keypad_toggle">Bàn phím ảo</string>
+    <string name="action_quick_preset">Cấu hình nhanh</string>
+    <string name="quick_preset_title">Cấu hình nhanh</string>
+    <string name="quick_preset_applied">Đã áp dụng</string>
     <string name="hud_reset_default">Đặt lại HUD mặc định</string>
     <string name="hud_reset_done">Đã đặt lại HUD</string>
     <string name="notif_running_title">J2ME Loader</string>
