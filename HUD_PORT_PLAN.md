@@ -95,6 +95,43 @@ layout bàn phím, multi-monitor → phần lớn vô nghĩa với J2ME.
 
 Sau khi cắt: khoảng 7.000 dòng thay vì 13.113.
 
+### 3.1 Thuộc tính hiển thị — Anland đã có sẵn (giữ nguyên)
+
+Tab **Style** trong inspector (đã kiểm tra trong mã Anland HEAD):
+
+| Thuộc tính | Dải giá trị | Ghi chú |
+|---|---|---|
+| Độ mờ (Opacity) | 0–100 % | Áp lên toàn bộ nút khi vẽ |
+| Màu nền | 6 ô màu cố định | trắng, tím #9D85C2, cyan #80DEEA, hồng #F38BA8, vàng #F9E2AF, xanh #A6E3A1 |
+| Độ dày viền | 0–10 dp | 0 = không viền |
+| Màu viền | 6 ô màu cố định | có cả ô trong suốt |
+| Bo góc | 0–50 dp | thanh trượt |
+| Kiểu bo góc | 8 kiểu | góc trên/dưới/trái/phải, đối xứng, tất cả, không |
+| Kiểu nút | 3 kiểu | Minimal flat / Classic bevel / Glass outline |
+| Màu chữ | 6 ô màu cố định | |
+| Căn chữ | 3 kiểu | trái / giữa / phải |
+| Nhãn hoặc Icon | 2 chế độ | kèm dialog chọn icon NRO |
+
+Tab **Transform**: vị trí X/Y theo %, rộng/cao theo px, số cột/hàng lưới, chế độ
+grid hay free, "reserve space", nút áp kích thước cho toàn bộ nút.
+
+Vì runtime của layout tự chỉnh là chính HUD của Anland vẽ (mục 4.2), các thuộc tính
+này hiện đúng 1:1 khi chơi — không phải viết lại cách vẽ.
+
+### 3.2 Cần BỔ SUNG cho đủ ý bạn muốn
+
+| Thiếu | Cách làm |
+|---|---|
+| Màu khi NHẤN (đã có trong model `activeColor`, chưa có UI) | Thêm hàng "Màu khi nhấn" vào tab Style, cùng kiểu 6 ô màu |
+| Nhập mã màu tuỳ ý | Thêm ô nhập `#RRGGBB` cạnh bảng màu (bảng màu vẫn giữ để chọn nhanh) |
+| Đổ bóng / viền phát sáng | Chưa có trong Anland — để sau, không nằm trong bản port đầu |
+
+### 3.3 Phải ẨN khi port (thuộc tab Event của Anland)
+
+Độ nhạy chuột, kiểu kéo, khoá chạm, chế độ mouse/scroll — vô nghĩa với J2ME.
+Giữ lại "gắn nút vào lớp bàn phím" (attach to keyboard) vì hợp với ý tưởng nút chỉ
+hiện khi mở bàn phím ảo.
+
 ---
 
 ## 4. Kiến trúc
