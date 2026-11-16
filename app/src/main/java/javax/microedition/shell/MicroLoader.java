@@ -239,6 +239,11 @@ public class MicroLoader {
 		return params.disablePause;
 	}
 
+	/** Writes the in-memory profile back to disk (used after a runtime switch). */
+	void persistConfig() {
+		com.j2me.lixin.config.ProfilesManager.saveConfig(params);
+	}
+
 	/** Turns the classic keypad on/off at runtime and rebuilds its instance. */
 	void setVirtualKeyboardEnabled(boolean enabled) {
 		params.showKeyboard = enabled;

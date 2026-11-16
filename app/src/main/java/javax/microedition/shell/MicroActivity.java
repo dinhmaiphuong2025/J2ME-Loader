@@ -591,24 +591,34 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		}
 	}
 
-	private void toggleHudRuntime() {
-		setHudRuntime(!hudRuntimeEnabled);
-		Toast.makeText(this, hudRuntimeEnabled ? "HUD: bật (phím ảo tắt)" : "HUD: tắt",
-				Toast.LENGTH_SHORT).show();
-	}
-
-	/** Classic keypad on/off; turning it on switches the HUD off. */
-	private void toggleKeypadRuntime() {
-		boolean enable = ContextHolder.getVk() == null;
-		if (enable) {
-			setHudRuntime(false);
-			microLoader.setVirtualKeyboardEnabled(true);
-			attachKeypadLayer();
+	/**
+	 * One control mode at a time: 0 = neither, 1 = classic keypad, 2 = HUD.
+	 * The choice is written to the game profile, so the settings screen and the
+	 * in-game menu can never disagree.
+	 */
+	private void setInputMode(int mode) {
+		boolean hud = mode == 2;
+		boolean keypad = mode == 1;
+		microLoader.setVirtualKeyboardEnabled(keypad);
+		microLoader.persistConfig();
+		getSharedPreferences("hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE)
+				.edit().putBoolean("use_hud_overlay", hud).apply();
+		if (hud) {
+			setHudRuntime(true);
 		} else {
-			microLoader.setVirtualKeyboardEnabled(false);
-			detachKeypadLayer();
+			setHudRuntime(false);
+			if (keypad) {
+				attachKeypadLayer();
+				VirtualKeyboard vk = ContextHolder.getVk();
+				if (vk != null) {
+					vk.show();
+				}
+			} else {
+				detachKeypadLayer();
+			}
 		}
-		Toast.makeText(this, enable ? "Phím ảo: bật (HUD tắt)" : "Phím ảo: tắt",
+		Toast.makeText(this, mode == 2 ? R.string.input_mode_hud
+				: mode == 1 ? R.string.input_mode_keypad : R.string.input_mode_none,
 				Toast.LENGTH_SHORT).show();
 	}
 
@@ -929,6 +939,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		popup.inflate(R.menu.midlet_displayable);
 		Menu menu = popup.getMenu();
 		menu.findItem(R.id.action_lock_orientation).setVisible(true);
+		int mode = hudRuntimeEnabled ? 2 : (ContextHolder.getVk() != null ? 1 : 0);
+		menu.findItem(R.id.action_input_off).setChecked(mode == 0);
+		menu.findItem(R.id.action_input_keypad).setChecked(mode == 1);
+		menu.findItem(R.id.action_input_hud).setChecked(mode == 2);
 		if (inputMethodManager == null) {
 			menu.findItem(R.id.action_ime_keyboard).setVisible(false);
 		}
@@ -1257,14 +1271,16 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			}
 		} else if (id == R.id.action_hud_editor) {
 			showHudEditor();
-		} else if (id == R.id.action_hud_toggle) {
-			toggleHudRuntime();
 		} else if (id == R.id.action_accounts) {
 			showAccountPicker(appName, appPath, false);
 		} else if (id == R.id.action_hud_reset) {
 			resetHudLayout();
-		} else if (id == R.id.action_keypad_toggle) {
-			toggleKeypadRuntime();
+		} else if (id == R.id.action_input_off) {
+			setInputMode(0);
+		} else if (id == R.id.action_input_keypad) {
+			setInputMode(1);
+		} else if (id == R.id.action_input_hud) {
+			setInputMode(2);
 		} else if (id == R.id.action_quick_preset) {
 			showQuickPresets();
 		} else if (id == R.id.action_take_screenshot) {

@@ -650,18 +650,33 @@
                 app:layout_constraintTop_toBottomOf="@+id/show_key_mappings"
                 tools:visibility="visible" />
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/show_virtual_keyboard_toggle"
-                style="@style/SwitchStyle"
+            <!-- Input mode: one choice governs both the classic keypad and the HUD -->
+            <LinearLayout
+                android:id="@+id/input_mode_row"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/height_config_row"
                 android:layout_marginHorizontal="5dp"
                 android:layout_marginTop="10dp"
-                android:checked="true"
-                android:text="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/show_key_mappings" />
+                app:layout_constraintTop_toBottomOf="@+id/show_key_mappings">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/input_mode_title"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp" />
+
+                <Spinner
+                    android:id="@+id/input_mode_selector"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="140dp" />
+            </LinearLayout>
 
             <!-- Key shape type -->
             <TextView

@@ -106,6 +106,7 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 	private boolean isProfile;
 	private Display display;
 	private File configDir;
+	private String appPath;
 	private String defProfile;
 	private ArrayAdapter<ShaderInfo> spShaderAdapter;
 	private String workDir;
@@ -133,6 +134,7 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		isProfile = ACTION_EDIT_PROFILE.equals(action);
 		needShow = isProfile || ACTION_EDIT.equals(action);
 		String path = intent.getDataString();
+		appPath = path;
 		if (path == null) {
 			needShow = false;
 			finish();
@@ -269,19 +271,6 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 			@Override
 			public void onNothingSelected(AdapterView<?> parent) {
 			}
-		});
-		binding.showVirtualKeyboardToggle.setOnClickListener((b) -> {
-			View.OnLayoutChangeListener onLayoutChangeListener = new View.OnLayoutChangeListener() {
-				@Override
-				public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-					View focus = binding.wholeConfigRoot.findFocus();
-					if (focus != null) focus.clearFocus();
-					v.scrollTo(0, binding.inputConfigRoot.getTop());
-					v.removeOnLayoutChangeListener(this);
-				}
-			};
-			binding.wholeConfigRoot.addOnLayoutChangeListener(onLayoutChangeListener);
-			binding.virtualKeyboardConfigGroup.setVisibility(binding.showVirtualKeyboardToggle.isChecked() ? View.VISIBLE : View.GONE);
 		});
 		binding.screenBackgroundHexColor.addTextChangedListener(
 				new ColorTextWatcher(binding.screenBackgroundHexColor));
@@ -713,9 +702,22 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		binding.fontSizeLarge.setText(Integer.toString(params.fontSizeLarge));
 		binding.showFontSizesInScaledPixelsToggle.setChecked(params.fontApplyDimensions);
 		binding.enableAntiAliasingToggle.setChecked(params.fontAA);
-		boolean showVk = params.showKeyboard;
-		binding.showVirtualKeyboardToggle.setChecked(showVk);
-		binding.virtualKeyboardConfigGroup.setVisibility(showVk ? View.VISIBLE : View.GONE);
+		ArrayAdapter<CharSequence> inputModes = ArrayAdapter.createFromResource(this,
+				R.array.input_mode_entries, android.R.layout.simple_spinner_dropdown_item);
+		binding.inputModeSelector.setAdapter(inputModes);
+		int inputMode = currentInputMode();
+		binding.inputModeSelector.setSelection(inputMode);
+		binding.virtualKeyboardConfigGroup.setVisibility(inputMode == 0 ? View.GONE : View.VISIBLE);
+		binding.inputModeSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				binding.virtualKeyboardConfigGroup.setVisibility(position == 0 ? View.GONE : View.VISIBLE);
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+			}
+		});
 		binding.enableHapticFeedbackToggle.setChecked(params.vkFeedback);
 		binding.forceOpacityForOffscreenKeysToggle.setChecked(params.vkForceOpacity);
 		binding.enableTouchInputToggle.setChecked(params.touchInput);
@@ -800,7 +802,10 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 			}
 			params.fontApplyDimensions = binding.showFontSizesInScaledPixelsToggle.isChecked();
 			params.fontAA = binding.enableAntiAliasingToggle.isChecked();
-			params.showKeyboard = binding.showVirtualKeyboardToggle.isChecked();
+			int inputMode = binding.inputModeSelector.getSelectedItemPosition();
+			params.showKeyboard = inputMode == 1;
+			getSharedPreferences("hud_" + Integer.toHexString(appPath == null ? 0 : appPath.hashCode()),
+					MODE_PRIVATE).edit().putBoolean("use_hud_overlay", inputMode == 2).apply();
 			params.vkFeedback = binding.enableHapticFeedbackToggle.isChecked();
 			params.vkForceOpacity = binding.forceOpacityForOffscreenKeysToggle.isChecked();
 			params.touchInput = binding.enableTouchInputToggle.isChecked();
@@ -1269,5 +1274,14 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 	protected void onDestroy() {
 		binding = null;
 		super.onDestroy();
+	}
+
+	private int currentInputMode() {
+		if (appPath != null && getSharedPreferences(
+				"hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE)
+				.getBoolean("use_hud_overlay", false)) {
+			return 2;
+		}
+		return params != null && params.showKeyboard ? 1 : 0;
 	}
 }

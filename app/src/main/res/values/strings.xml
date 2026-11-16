@@ -303,6 +303,10 @@
     <string name="action_hud_editor">HUD editor</string>
     <string name="action_hud_toggle">Show HUD while playing</string>
     <string name="action_accounts">Accounts</string>
+    <string name="input_mode_title">Input mode</string>
+    <string name="input_mode_none">Off</string>
+    <string name="input_mode_keypad">On-screen keypad</string>
+    <string name="input_mode_hud">HUD (custom layout)</string>
     <string name="action_keypad_toggle">On-screen keypad</string>
     <string name="action_quick_preset">Quick settings</string>
     <string name="quick_preset_title">Quick settings</string>

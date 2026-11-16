@@ -30,12 +30,22 @@
             android:title="@string/action_hud_editor" />
 
         <item
-            android:id="@+id/action_hud_toggle"
-            android:title="@string/action_hud_toggle" />
-
-        <item
-            android:id="@+id/action_keypad_toggle"
-            android:title="@string/action_keypad_toggle" />
+            android:id="@+id/action_input_mode"
+            android:title="@string/input_mode_title">
+            <menu>
+                <group android:checkableBehavior="single">
+                    <item
+                        android:id="@+id/action_input_off"
+                        android:title="@string/input_mode_none" />
+                    <item
+                        android:id="@+id/action_input_keypad"
+                        android:title="@string/input_mode_keypad" />
+                    <item
+                        android:id="@+id/action_input_hud"
+                        android:title="@string/input_mode_hud" />
+                </group>
+            </menu>
+        </item>
 
         <item
             android:id="@+id/action_quick_preset"
