@@ -129,6 +129,9 @@ import com.j2me.lixin.util.LogUtils;
 
 public class MicroActivity extends AppCompatActivity implements J2meContext.UiHandler {
 	private static final int ORIENTATION_DEFAULT = 0;
+	/** Minimum time a HUD key stays pressed so polling games register it. */
+	private static final long MIN_HUD_KEY_HOLD_MS = 110;
+
 	private static final int ORIENTATION_AUTO = 1;
 	private static final int ORIENTATION_PORTRAIT = 2;
 	private static final int ORIENTATION_LANDSCAPE = 3;
@@ -151,6 +154,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private int activeIndex = -1;
 	private TextBox activeTextBox;
 	private HudOverlayView hudView;
+	private final android.util.SparseLongArray hudKeyDownAt = new android.util.SparseLongArray();
+	private final android.os.Handler hudKeyHandler = new android.os.Handler(android.os.Looper.getMainLooper());
 	private android.widget.TextView hudKeyDebug;
 	private boolean hudRuntimeEnabled;
 	private Canvas lastActiveCanvas;
@@ -644,9 +649,22 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			showHudKeyDebug("\u25BC " + HudKeyBridge.label(key) + "  (" + key + ")");
 		}
 		if (action == 0) {
+			hudKeyDownAt.put(key, android.os.SystemClock.uptimeMillis());
 			canvas.postKeyPressed(key);
 		} else {
-			canvas.postKeyReleased(key);
+			// A HUD tap lasts about a millisecond, which a game that polls
+			// Canvas.getKeyStates() once per frame never observes. Hold the key for a
+			// minimum time so a digit registered like a real thumb press.
+			long held = android.os.SystemClock.uptimeMillis()
+					- hudKeyDownAt.get(key, android.os.SystemClock.uptimeMillis());
+			hudKeyDownAt.delete(key);
+			long wait = MIN_HUD_KEY_HOLD_MS - held;
+			if (wait > 0) {
+				final Canvas target = canvas;
+				hudKeyHandler.postDelayed(() -> target.postKeyReleased(key), wait);
+			} else {
+				canvas.postKeyReleased(key);
+			}
 		}
 	}
 
