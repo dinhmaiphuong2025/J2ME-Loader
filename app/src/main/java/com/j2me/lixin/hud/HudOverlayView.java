@@ -305,6 +305,10 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
         this.mPrefs = prefs;
         setVisibility(prefs.getBoolean(PREF_KEY_USE_HUD, true) ? VISIBLE : GONE);
         this.mHost = host;
+        // The layer must never take focus away from the emulator surface.
+        setFocusable(false);
+        setFocusableInTouchMode(false);
+        setClickable(false);
         this.mSnapEngine = new SnapGeometryEngine(getResources().getDisplayMetrics().density);
 
         float density = getResources().getDisplayMetrics().density;

@@ -554,8 +554,12 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			hudView.setVisibility(View.VISIBLE);
 			hudView.setEditMode(false);
 		} else {
-			hudView.setVisibility(View.GONE);
+			// Remove the layer entirely instead of hiding it: an invisible full-screen
+			// sibling still participates in touch dispatch on some ROMs.
+			binding.hudContainer.removeAllViews();
 			binding.hudContainer.setVisibility(View.GONE);
+			hudView = null;
+			hudKeyDebug = null;
 		}
 		Log.e("HUDSTATE", "toggle -> runtime=" + hudRuntimeEnabled
 				+ " containerVis=" + binding.hudContainer.getVisibility()
@@ -568,8 +572,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			return;
 		}
 		if (!hudRuntimeEnabled) {
-			hudView.setVisibility(View.GONE);
+			binding.hudContainer.removeAllViews();
 			binding.hudContainer.setVisibility(View.GONE);
+			hudView = null;
+			hudKeyDebug = null;
 		}
 	}
 
@@ -615,10 +621,10 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			showHudKeyDebug("\u2715 không dịch được: " + code);
 			return;
 		}
-		Canvas canvas = lastActiveCanvas;
-		if (canvas == null && current instanceof Canvas) {
-			canvas = (Canvas) current;
-		}
+		// Prefer the displayable that is on screen right now: the game swaps Canvas
+		// instances when it opens a panel, and posting to the previous one made every
+		// HUD key after the first one disappear.
+		Canvas canvas = current instanceof Canvas ? (Canvas) current : lastActiveCanvas;
 		if (canvas == null) {
 			Log.e("HUDKEY", "no canvas for key=" + key);
 			return;
