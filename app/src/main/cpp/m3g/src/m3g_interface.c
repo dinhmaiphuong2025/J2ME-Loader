@@ -26,6 +26,8 @@
 #   error included by m3g_core.c; do not compile separately.
 #endif
 
+#include <stdio.h>
+#include <string.h>
 #include "m3g_array.h"
 #include "m3g_gl.h"
 
@@ -143,6 +145,9 @@ struct M3GInterfaceImpl
     M3Gbool supportAntialiasing;
     M3Gbool colorMaskWorkaround;
     M3Gbool twoSidedLightingWorkaround;
+
+    /*! Whether the application enabled the unlit textures workaround */
+    M3Gbool unlitTexturesWorkaround;
 };
 
 #if defined(M3G_DEBUG)
@@ -1471,6 +1476,11 @@ static M3Gbool m3gGetTwoSidedLightingWorkaround(Interface *m3g)
     return m3g->twoSidedLightingWorkaround;
 }
 
+static M3Gbool m3gIsUnlitTextures(Interface *m3g)
+{
+    return m3g->unlitTexturesWorkaround;
+}
+
 /*!
  * \internal
  * \brief Increment a statistics counter
@@ -1648,6 +1658,7 @@ M3G_API M3GInterface m3gCreateInterface(
         m3g->func.releaseFrameBuffer = params->endRenderFunc;
 
         m3g->userContext = params->userContext;
+        m3g->unlitTexturesWorkaround = params->unlitTexturesWorkaround;
         
         /* Initialize memory allocation failure debugging */
 #       if defined(M3G_DEBUG_OUT_OF_MEMORY)
@@ -1671,9 +1682,11 @@ M3G_API M3GInterface m3gCreateInterface(
 
 #       if !defined(M3G_NGL_CONTEXT_API)
         /* Before messing with EGL state, check if EGL is already
-         * initialized by the calling application. */
+         * initialized by the calling application. Take a new reference to avoid crash when
+         * eglTerminate() is called in GLSurfaceView */
     
-        if (eglQueryString(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_VERSION)) {
+        if (eglQueryString(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_VERSION)
+            && eglInitialize(eglGetDisplay(EGL_DEFAULT_DISPLAY), NULL, NULL)) {
             ++m3g->glRefCount;
         }
 #       endif /*!M3G_NGL_CONTEXT_API*/
