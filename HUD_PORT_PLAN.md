@@ -122,8 +122,8 @@ này hiện đúng 1:1 khi chơi — không phải viết lại cách vẽ.
 
 | Thiếu | Cách làm |
 |---|---|
-| Màu khi NHẤN (đã có trong model `activeColor`, chưa có UI) | Thêm hàng "Màu khi nhấn" vào tab Style, cùng kiểu 6 ô màu |
-| Nhập mã màu tuỳ ý | Thêm ô nhập `#RRGGBB` cạnh bảng màu (bảng màu vẫn giữ để chọn nhanh) |
+| Màu khi NHẤN (đã có UI ở cấu hình bàn phím ảo cũ, chưa có trong editor HUD) | Thêm hàng "Màu khi nhấn"; giá trị lấy từ trường "nền khi nhấn" đang có trong profile |
+| Nhập mã màu tuỳ ý | Dùng lại đúng kiểu 5 ô HEX của màn hình cấu hình bàn phím ảo (bảng 6 màu vẫn giữ để chọn nhanh) |
 | Đổ bóng / viền phát sáng | Chưa có trong Anland — để sau, không nằm trong bản port đầu |
 
 ### 3.3 Phải ẨN khi port (thuộc tab Event của Anland)
@@ -176,6 +176,26 @@ Dùng đúng bảng mã mà `VirtualKeyboard` đang dùng để hai bộ hiển 
 - Ghi `hud_layout.json` trong thư mục profile của từng game (cạnh layout bàn phím ảo),
   khớp `ProfilesManager` hiện có.
 - Giữ `version` trong JSON + migrate; đọc file cũ một lần nếu có.
+
+### 4.6 Quan hệ với cấu hình bàn phím ảo đang có (không nhân đôi)
+
+App hiện đã có, lưu theo từng game trong profile:
+- Bật/tắt bàn phím ảo, rung, force-opacity, ẩn sau N ms
+- Kiểu nút (oval / rect / round), độ mờ 0–255
+- **5 ô nhập mã màu HEX**: nền nút, màu chữ, nền khi nhấn, chữ khi nhấn, màu viền
+
+Quy tắc khi port HUD:
+
+| Trường hợp | Xử lý |
+|---|---|
+| Game dùng renderer `keypad` (Nokia/Motorola/số) | Giữ nguyên toàn bộ cấu hình cũ, không đổi gì |
+| Game dùng renderer `hud` | Ẩn nhóm màu/độ mờ/kiểu nút khỏi màn hình cấu hình cũ (đã có trong editor), chỉ giữ bật/tắt, rung, ẩn sau |
+| Tạo nút HUD mới | Lấy giá trị từ cấu hình cũ làm mặc định: nền ← nền nút, chữ ← màu chữ, **màu khi nhấn ← nền khi nhấn**, viền ← màu viền, độ mờ ← alpha, bo góc ← kiểu nút |
+| Lần đầu mở editor của một game đã có layout keypad | Sinh layout HUD từ layout keypad hiện tại + màu hiện tại → không phải làm lại từ đầu |
+
+Nhờ vậy: "màu khi nhấn" không phải khái niệm mới (app đã có sẵn), và ô nhập mã màu
+tự do cũng không phải làm mới — dùng lại đúng kiểu 5 ô HEX đang có trong màn hình
+cấu hình bàn phím ảo.
 
 ---
 
