@@ -48,6 +48,81 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/a_background</item>
+
+        <!-- Anland top bar: 56dp, flat surface, real end inset so the overflow
+             button never sits against the screen edge / rounded corner -->
+        <item name="actionBarStyle">@style/AnlandActionBar</item>
+        <item name="actionBarTheme">@style/ThemeOverlay.Anland.ActionBar</item>
+        <item name="actionOverflowButtonStyle">@style/AnlandOverflowButton</item>
+        <item name="actionButtonStyle">@style/AnlandActionButton</item>
+        <item name="actionMenuTextColor">?attr/colorOnSurface</item>
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.Anland.PopupMenu</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Anland.Dialog.Alert</item>
+    </style>
+
+    <style name="AnlandActionBar" parent="Widget.MaterialComponents.ActionBar.Solid">
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="background">?attr/colorSurface</item>
+        <item name="elevation">0dp</item>
+        <item name="contentInsetStart">16dp</item>
+        <item name="contentInsetEnd">12dp</item>
+        <item name="contentInsetStartWithNavigation">16dp</item>
+        <item name="contentInsetEndWithActions">12dp</item>
+        <item name="titleTextStyle">@style/AnlandBarTitle</item>
+        <item name="subtitleTextStyle">@style/AnlandBarSubtitle</item>
+        <item name="maxButtonHeight">48dp</item>
+    </style>
+
+    <style name="AnlandBarTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="AnlandBarSubtitle" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="AnlandActionButton" parent="Widget.AppCompat.ActionButton">
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:tint">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="AnlandOverflowButton" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:tint">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="ThemeOverlay.Anland.ActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="colorControlNormal">?attr/colorOnSurface</item>
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="ThemeOverlay.Anland.PopupMenu" parent="ThemeOverlay.MaterialComponents.Light">
+        <item name="popupMenuBackground">@drawable/bg_menu</item>
+        <item name="android:popupBackground">@drawable/bg_menu</item>
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="ThemeOverlay.Anland.Dialog.Alert" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/AnlandDialogShape</item>
+        <item name="android:background">@drawable/bg_menu</item>
+    </style>
+
+    <style name="AnlandDialogShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="AnlandPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:popupBackground">@drawable/bg_menu</item>
+        <item name="android:popupElevation">8dp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="AppTheme" parent="AppTheme.Base">
@@ -78,7 +153,7 @@
     </style>
 
     <style name="Widget.AppTheme.OverflowMenu" parent="Widget.AppCompat.Light.PopupMenu.Overflow">
-        <item name="android:popupBackground">@color/background</item>
+        <item name="android:popupBackground">@drawable/bg_menu</item>
         <item name="overlapAnchor">false</item>
     </style>
 

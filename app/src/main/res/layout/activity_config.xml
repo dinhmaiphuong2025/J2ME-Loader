@@ -18,9 +18,11 @@
             android:id="@+id/screen_config_root"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="8dp"
+            android:padding="12dp"
             android:background="?attr/bg_config_card"
-            android:padding="5dp">
+            >
 
 
             <TextView
@@ -435,10 +437,11 @@
             android:id="@+id/font_config_root"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="8dp"
+            android:padding="12dp"
             android:background="?attr/bg_config_card"
-            android:padding="5dp"
-            app:elevation="2dp">
+                        app:elevation="2dp">
 
             <TextView
                 android:id="@+id/font_config_options_title"
@@ -565,7 +568,9 @@
             android:id="@+id/input_config_root"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="8dp"
+            android:padding="12dp"
             android:background="?attr/bg_config_card"
             android:paddingTop="10dp"
             app:elevation="2dp">
@@ -993,9 +998,11 @@
             android:id="@+id/audio_config_root"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="8dp"
+            android:padding="12dp"
             android:background="?attr/bg_config_card"
-            android:padding="5dp">
+            >
 
             <TextView
                 android:id="@+id/audio_config_title"
@@ -1047,10 +1054,11 @@
             android:id="@+id/system_properties_config_root"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="8dp"
+            android:padding="12dp"
             android:background="?attr/bg_config_card"
-            android:padding="5dp"
-            app:elevation="2dp">
+                        app:elevation="2dp">
 
             <TextView
                 android:id="@+id/system_properties_title"
@@ -1090,7 +1098,9 @@
             android:id="@+id/other_config_root"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="8dp"
+            android:padding="12dp"
             android:background="?attr/bg_config_card"
             android:paddingTop="10dp"
             app:elevation="2dp">

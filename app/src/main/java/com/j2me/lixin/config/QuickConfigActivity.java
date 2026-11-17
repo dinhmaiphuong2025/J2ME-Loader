@@ -193,6 +193,7 @@ public class QuickConfigActivity extends AppCompatActivity {
             }
         });
         inner.addView(group);
+        styleCard(card);
         card.addView(inner);
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -207,6 +208,7 @@ public class QuickConfigActivity extends AppCompatActivity {
         sw.setText(title);
         sw.setPadding(dp(14), dp(12), dp(14), dp(12));
         sw.setOnCheckedChangeListener((b, checked) -> onChange.accept(checked));
+        styleCard(card);
         card.addView(sw);
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -257,6 +259,17 @@ public class QuickConfigActivity extends AppCompatActivity {
         i.putExtra(Constants.KEY_MIDLET_NAME, appName);
         startActivity(i);
         finish();
+    }
+
+
+    private void styleCard(MaterialCardView card) {
+        card.setRadius(dp(16));
+        card.setStrokeWidth(dp(1));
+        card.setCardElevation(0f);
+        card.setCardBackgroundColor(com.google.android.material.color.MaterialColors.getColor(
+                card, com.google.android.material.R.attr.colorSurfaceContainerLow));
+        card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(
+                card, com.google.android.material.R.attr.colorOutlineVariant));
     }
 
     private int dp(int value) {

@@ -6,7 +6,8 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    android:background="?android:selectableItemBackground"
+    android:background="@drawable/bg_list_card"
+    android:layout_margin="6dp"
     android:padding="10dp"
     android:focusable="true"
     tools:showIn="@layout/fragment_apps_list">
