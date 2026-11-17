@@ -74,7 +74,7 @@
     <string name="load_profile">Load profile</string>
     <string name="save_profile">Save profile</string>
     <string name="PREF_SCREEN_OPTIONS">Screen options</string>
-    <string name="PREF_SCALE_RATIO">Scale(%)</string>
+    <string name="PREF_SCALE_RATIO">Display scale (%)</string>
     <string name="PREF_SCALE_TO_FIT">Scale to fit</string>
     <string name="PREF_KEEP_ASPECT_RATIO">Keep aspect ratio</string>
     <string name="PREF_FILTER">Filter</string>
@@ -94,7 +94,7 @@
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual keyboard</string>
     <string name="PREF_VK_SHOW">Show keyboard</string>
     <string name="PREF_VK_FEEDBACK">Haptic feedback</string>
-    <string name="PREF_VK_FORCE_OPACITY">Force opacity for off-screen keys</string>
+    <string name="PREF_VK_FORCE_OPACITY">Always apply opacity to keys outside the screen</string>
     <string name="PREF_TOUCH_INPUT">Touch input</string>
     <string name="PREF_HW_ACCELERATION">HW acceleration (unstable)</string>
     <string name="pref_graphics_software">Software</string>
@@ -105,8 +105,8 @@
     <string name="PREF_VK_FORE">Labels</string>
     <string name="PREF_VK_OUTLINE">Outline</string>
     <string name="PREF_COLOR_HINT" translatable="false">RGB</string>
-    <string name="PREF_VK_ALPHA">Opacity: </string>
-    <string name="PREF_VK_HIDE_DELAY">Hide delay: </string>
+    <string name="PREF_VK_ALPHA">Opacity</string>
+    <string name="PREF_VK_HIDE_DELAY">Auto-hide after (ms)</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VK_SEL_FORE">Labels (P)</string>
     <string name="PREF_VK_SEL_BACK">Buttons (P)</string>
@@ -163,7 +163,7 @@
     <string name="pref_screen_scale_type_fill">Fill window (ignore aspect ratio)</string>
     <string name="pref_screen_scale_type_fit">Fit to window</string>
     <string name="pref_screen_scale_type_none">As is</string>
-    <string name="pref_vk_hide_hint">disabled</string>
+    <string name="pref_vk_hide_hint">0 = never auto-hide</string>
     <string name="unlimited">unlimited</string>
     <string name="parallel_screen_redrawing">Parallel screen redrawing</string>
     <string name="saved">Saved</string>
