@@ -272,33 +272,67 @@ public final class HudDpadView extends View {
         return super.onTouchEvent(event);
     }
 
+    /** Angle the finger must move past before the reported direction changes. */
+    private static final float HYSTERESIS_DEG = 9f;
+    /** A diagonal needs both axes to be strong, otherwise the finger reads as a cardinal. */
+    private static final float DIAGONAL_RATIO = 0.55f;
+    private float mLastAngle = Float.NaN;
+
     private void updateDirection(float x, float y) {
         float w = getWidth();
         float h = getHeight();
-        float cx = w * 0.5f;
-        float cy = h * 0.5f;
-        float dx = x - cx;
-        float dy = y - cy;
-        float dist = (float) Math.sqrt(dx * dx + dy * dy);
-        float maxR = Math.min(w, h) * 0.5f;
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        // Normalise by the two half-axes first: on a non-square pad raw dx/dy makes a
+        // visually straight press lean towards the longer axis, which is how "right"
+        // ended up reported as "down".
+        float nx = (x - w * 0.5f) / (w * 0.5f);
+        float ny = (y - h * 0.5f) / (h * 0.5f);
+        float dist = (float) Math.sqrt(nx * nx + ny * ny);
 
         boolean newUp = false, newDown = false, newLeft = false, newRight = false;
 
-        if (dist > maxR * DEADZONE_FRAC) {
-            float angle = (float) Math.toDegrees(Math.atan2(dy, dx));
+        if (dist > DEADZONE_FRAC) {
+            float angle = (float) Math.toDegrees(Math.atan2(ny, nx));
             if (angle < 0) angle += 360f;
 
-            // Cardinal + diagonal mapping with 45° sectors
-            if (inRange(angle, 292.5f, 337.5f)) { newUp = true; newRight = true; }      // UP-RIGHT
-            else if (inRange(angle, 247.5f, 292.5f)) { newUp = true; }                  // UP
-            else if (inRange(angle, 202.5f, 247.5f)) { newUp = true; newLeft = true; }  // UP-LEFT
-            else if (inRange(angle, 157.5f, 202.5f)) { newLeft = true; }                // LEFT
-            else if (inRange(angle, 112.5f, 157.5f)) { newDown = true; newLeft = true; }// DOWN-LEFT
-            else if (inRange(angle, 67.5f, 112.5f)) { newDown = true; }                 // DOWN
-            else if (inRange(angle, 22.5f, 67.5f)) { newDown = true; newRight = true; } // DOWN-RIGHT
-            else { newRight = true; }                                                     // RIGHT
-        }
+            // Hysteresis: inside the band around the previous angle keep the previous
+            // sector, so a finger resting on a boundary does not chatter between two
+            // directions.
+            if (!Float.isNaN(mLastAngle)) {
+                float delta = Math.abs(angle - mLastAngle);
+                if (delta > 180f) delta = 360f - delta;
+                if (delta < HYSTERESIS_DEG) {
+                    angle = mLastAngle;
+                }
+            }
+            mLastAngle = angle;
 
+            // Cardinal from the dominant axis, then promote to a diagonal only when the
+            // weaker axis carries enough weight (>= DIAGONAL_RATIO of the stronger one).
+            float ax = Math.abs(nx), ay = Math.abs(ny);
+            boolean horizontal = ax >= ay;
+            boolean diagonal = Math.min(ax, ay) >= DIAGONAL_RATIO * Math.max(ax, ay);
+
+            if (horizontal) {
+                newRight = nx > 0;
+                newLeft = !newRight;
+                if (diagonal) {
+                    newUp = ny < 0;
+                    newDown = !newUp;
+                }
+            } else {
+                newDown = ny > 0;
+                newUp = !newDown;
+                if (diagonal) {
+                    newRight = nx > 0;
+                    newLeft = !newRight;
+                }
+            }
+        } else {
+            mLastAngle = Float.NaN;
+        }
         boolean changed = newUp != mUpActive || newDown != mDownActive
                 || newLeft != mLeftActive || newRight != mRightActive;
         // Release old directions before pressing their opposites, so a release

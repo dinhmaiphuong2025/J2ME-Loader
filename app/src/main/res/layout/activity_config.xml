@@ -118,7 +118,10 @@
                 android:id="@+id/dynamic_screen_size_toggle"
                 style="@style/SwitchStyle"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/height_config_row"
+                android:layout_height="wrap_content"
+                android:minHeight="@dimen/height_config_row"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:checked="false"
                 android:text="@string/pref_dynamic_screen_size"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -143,6 +146,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:paddingStart="8dp"
+                android:paddingEnd="12dp"
                 android:hint="@string/PREF_COLOR_HINT"
                 android:importantForAutofill="no"
                 android:inputType="text|textCapCharacters|textNoSuggestions"
@@ -284,9 +289,9 @@
             <TextView
                 android:id="@+id/graphical_mode_hint"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/height_config_row"
-                android:checked="false"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
+                android:paddingTop="6dp"
                 android:text="@string/pref_graphics_mode_title"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="?attr/textColorSecondary"
@@ -303,10 +308,10 @@
                 android:layout_height="@dimen/height_config_row"
                 android:entries="@array/pref_graphics_mode_entries"
                 android:textColor="?attr/textColorSecondary"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/barrier_screen_config"
-                app:layout_constraintTop_toBottomOf="@+id/immediate_processing_toggle" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/graphical_mode_hint" />
 
             <LinearLayout
                 android:id="@+id/shader_root"
@@ -333,8 +338,10 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:paddingEnd="4dp"
                     android:textColor="?attr/textColorSecondary"
-                    android:textSize="15sp" />
+                    android:textSize="14sp" />
 
                 <ImageButton
                     android:id="@+id/tune_selected_shader"
@@ -351,7 +358,7 @@
                     style="@style/ImageButtonStyle"
                     android:layout_width="@dimen/height_config_row"
                     android:layout_height="@dimen/height_config_row"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="8dp"
                     android:contentDescription="@string/browse"
                     app:srcCompat="@drawable/ic_add" />
             </LinearLayout>
