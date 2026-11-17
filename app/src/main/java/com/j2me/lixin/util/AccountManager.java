@@ -55,6 +55,22 @@ public class AccountManager {
 		}
 	}
 
+
+	/** True for the implicit account every game starts with (it has no extra folder). */
+	public static boolean isDefaultName(String name) {
+		return name == null || name.trim().isEmpty() || DEFAULT_ACCOUNT.equals(name);
+	}
+
+	/** What the user should see instead of the internal "Mặc định" placeholder. */
+	public static String displayName(Account account, String appPath) {
+		if (account != null && !isDefaultName(account.getName())) {
+			return account.getName();
+		}
+		File appDir = appPath == null ? null : new File(appPath);
+		String game = appDir == null ? null : appDir.getName();
+		return (game == null || game.trim().isEmpty()) ? DEFAULT_ACCOUNT : game;
+	}
+
 	public static String sanitizeAccountName(String name) {
 		if (name == null) return "";
 		String sanitized = name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();

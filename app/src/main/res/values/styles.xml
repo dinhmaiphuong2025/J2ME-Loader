@@ -45,8 +45,9 @@
         <item name="shapeAppearanceLargeComponent">@style/AnlandShape.Large</item>
         <item name="materialButtonStyle">@style/AnlandButton</item>
 
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- System bars keep the platform colour: no app tint bleeding into them -->
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
         <item name="android:windowBackground">@color/a_background</item>
 
         <!-- Anland top bar: 56dp, flat surface, real end inset so the overflow

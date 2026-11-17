@@ -1036,7 +1036,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 				TextView tvName = convertView.findViewById(R.id.account_name);
 				ImageButton btnEdit = convertView.findViewById(R.id.btn_edit_account);
 
-				tvName.setText(acc.getName());
+				tvName.setText(AccountManager.displayName(acc, path));
 
 				btnEdit.setFocusable(false);
 				btnEdit.setOnClickListener(v -> {
@@ -1477,7 +1477,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private void addTabPill(int index) {
 		TextView pill = new TextView(this);
 		Tab tab = tabs.get(index);
-		String title = (tab.accountName != null && !tab.accountName.isEmpty()) ? tab.accountName : tab.name;
+		String title = com.j2me.lixin.util.AccountManager.isDefaultName(tab.accountName)
+				? tab.name : tab.accountName;
 		pill.setText(title);
 		boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 		pill.setTextSize(TypedValue.COMPLEX_UNIT_SP, isLandscape ? 12 : 13);
@@ -1576,7 +1577,7 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 
 	private void showCloseTabDialog(Tab tab) {
 		String title = tab.name;
-		if (tab.accountName != null && !tab.accountName.isEmpty()) {
+		if (!com.j2me.lixin.util.AccountManager.isDefaultName(tab.accountName)) {
 			title = tab.name + " (" + tab.accountName + ")";
 		}
 		new AlertDialog.Builder(this)
