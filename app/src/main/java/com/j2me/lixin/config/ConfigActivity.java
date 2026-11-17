@@ -190,7 +190,10 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 		binding = ActivityConfigBinding.inflate(getLayoutInflater());
 		View view = binding.getRoot();
 		setContentView(view);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		androidx.appcompat.app.ActionBar bar = getSupportActionBar();
+		if (bar != null) {
+			bar.setDisplayHomeAsUpEnabled(true);
+		}
 		display = getWindowManager().getDefaultDisplay();
 		fragmentManager = getSupportFragmentManager();
 

@@ -95,7 +95,10 @@ public class ConfigFilesActivity extends BaseActivity {
 		binding = ActivityConfigFilesBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		if (getSupportActionBar() != null) {
-			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+			androidx.appcompat.app.ActionBar bar = getSupportActionBar();
+			if (bar != null) {
+				bar.setDisplayHomeAsUpEnabled(true);
+			}
 		}
 
 		adapter = new FileAdapter();

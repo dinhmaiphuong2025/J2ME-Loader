@@ -59,6 +59,15 @@
         <item name="actionMenuTextColor">?attr/colorOnSurface</item>
         <item name="actionBarPopupTheme">@style/ThemeOverlay.Anland.PopupMenu</item>
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Anland.Dialog.Alert</item>
+
+        <!-- Dropdowns: the spinner lists use the same card surface as the menus -->
+        <item name="android:dropDownListViewStyle">@style/AnlandDropDownList</item>
+        <item name="dropDownListViewStyle">@style/AnlandDropDownList</item>
+        <item name="spinnerStyle">@style/AnlandSpinner</item>
+        <item name="android:spinnerStyle">@style/AnlandSpinner</item>
+        <item name="popupMenuStyle">@style/AnlandPopupWindow</item>
+        <item name="android:popupMenuStyle">@style/AnlandPopupWindow</item>
+        <item name="listPopupWindowStyle">@style/AnlandListPopup</item>
     </style>
 
     <style name="AnlandActionBar" parent="Widget.MaterialComponents.ActionBar.Solid">
@@ -123,6 +132,22 @@
     <style name="AnlandPopupWindow" parent="Widget.MaterialComponents.PopupMenu">
         <item name="android:popupBackground">@drawable/bg_menu</item>
         <item name="android:itemTextAppearance">@style/AnlandPopupItem</item>
+    </style>
+
+    <style name="AnlandSpinner" parent="Widget.AppCompat.Spinner">
+        <item name="android:popupBackground">@drawable/bg_menu</item>
+        <item name="android:dropDownVerticalOffset">2dp</item>
+    </style>
+
+    <style name="AnlandDropDownList" parent="Widget.AppCompat.ListView">
+        <item name="android:divider">@null</item>
+        <item name="android:listSelector">?attr/selectableItemBackground</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
+    <style name="AnlandListPopup" parent="Widget.AppCompat.ListPopupWindow">
+        <item name="android:popupBackground">@drawable/bg_menu</item>
     </style>
 
     <style name="AnlandPopupItem" parent="TextAppearance.Material3.BodyLarge">
