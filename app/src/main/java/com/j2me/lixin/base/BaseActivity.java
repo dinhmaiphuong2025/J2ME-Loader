@@ -28,10 +28,17 @@ public class BaseActivity extends AppCompatActivity {
 			getTheme().applyStyle(R.style.ThemeOverlay_App_Dark, true);
 		}
 		super.onCreate(savedInstanceState);
+		// System bars follow the app surface, not the accent colour: the strip above the
+		// content used to be painted with colorPrimary, which read as a purple band.
+		int systemBar = com.google.android.material.color.MaterialColors.getColor(this,
+				android.R.attr.colorBackground, Color.BLACK);
+		boolean night = (getResources().getConfiguration().uiMode
+				& android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+				== android.content.res.Configuration.UI_MODE_NIGHT_YES;
 		EdgeToEdge.enable(
 				this,
-				SystemBarStyle.dark(ContextCompat.getColor(this, R.color.primary)),
-				SystemBarStyle.dark(Color.BLACK)
+				night ? SystemBarStyle.dark(systemBar) : SystemBarStyle.light(systemBar, systemBar),
+				night ? SystemBarStyle.dark(systemBar) : SystemBarStyle.light(systemBar, systemBar)
 		);
 		View view = findViewById(android.R.id.content);
 		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {

@@ -23,6 +23,7 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Toast;
 
