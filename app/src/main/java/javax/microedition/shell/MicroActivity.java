@@ -929,7 +929,8 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	}
 
 	private void showMenu() {
-		PopupMenu popup = new PopupMenu(this, binding.btnMenu);
+		androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(
+				new android.view.ContextThemeWrapper(this, R.style.AnlandPopupWindow), binding.btnMenu);
 		popup.inflate(R.menu.midlet_displayable);
 		Menu menu = popup.getMenu();
 		menu.findItem(R.id.action_lock_orientation).setVisible(true);
