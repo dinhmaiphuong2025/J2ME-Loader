@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="AppTheme" parent="Theme.Material3.DynamicColors.DayNight">
+    <!-- Anland HUD design language: fixed lilac/charcoal palette, no dynamic colour. -->
+    <style name="AppTheme.Base" parent="Theme.Material3.DayNight">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
         <item name="buttonStyle">@style/ButtonStyle</item>
         <item name="bg_config_card">@drawable/bg_config_card</item>
@@ -9,9 +10,64 @@
         <item name="textColorSecondary">?attr/colorOnSurfaceVariant</item>
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
         <item name="actionBarSize">56dp</item>
+
+        <!-- colour roles -->
+        <item name="colorPrimary">@color/a_primary</item>
+        <item name="colorOnPrimary">@color/a_on_primary</item>
+        <item name="colorPrimaryContainer">@color/a_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/a_on_primary_container</item>
+        <item name="colorSecondary">@color/a_secondary</item>
+        <item name="colorOnSecondary">@color/a_on_secondary</item>
+        <item name="colorTertiary">@color/a_tertiary</item>
+        <item name="colorOnTertiary">@color/a_on_tertiary</item>
+        <item name="colorError">@color/a_error</item>
+        <item name="colorOnError">@color/a_on_error</item>
+        <item name="colorErrorContainer">@color/a_error_container</item>
+        <item name="colorOnErrorContainer">@color/a_on_error_container</item>
+        <item name="android:colorBackground">@color/a_background</item>
+        <item name="colorOnBackground">@color/a_on_background</item>
+        <item name="colorSurface">@color/a_surface</item>
+        <item name="colorOnSurface">@color/a_on_surface</item>
+        <item name="colorSurfaceVariant">@color/a_surface_container</item>
+        <item name="colorOnSurfaceVariant">@color/a_on_surface_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/a_surface_low</item>
+        <item name="colorSurfaceContainerLow">@color/a_surface_low</item>
+        <item name="colorSurfaceContainer">@color/a_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/a_surface_high</item>
+        <item name="colorSurfaceContainerHighest">@color/a_surface_highest</item>
+        <item name="colorOutline">@color/a_outline</item>
+        <item name="colorOutlineVariant">@color/a_outline_variant</item>
+        <item name="colorControlHighlight">@color/a_primary_container</item>
+
+        <!-- Anland shapes: hairline 1dp borders, 12dp controls, 16dp cards -->
+        <item name="shapeAppearanceSmallComponent">@style/AnlandShape.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/AnlandShape.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/AnlandShape.Large</item>
+        <item name="materialButtonStyle">@style/AnlandButton</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/a_background</item>
     </style>
 
-    <style name="AppTheme.NoActionBar">
+    <style name="AppTheme" parent="AppTheme.Base">
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+    </style>
+
+    <style name="AnlandShape.Small" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerSize">8dp</item>
+    </style>
+    <style name="AnlandShape.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">12dp</item>
+    </style>
+    <style name="AnlandShape.Large" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">16dp</item>
+    </style>
+    <style name="AnlandButton" parent="Widget.Material3.Button">
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="AppTheme.Base">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
@@ -38,12 +94,14 @@
         <item name="android:textColor">@color/text_primary</item>
     </style>
 
-    <style name="FilePickerTheme" parent="Theme.AppCompat.DayNight.DialogWhenLarge">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/file_picker_accent</item>
-        <item name="android:colorBackground">@color/background</item>
-        <item name="android:windowBackground">@color/background</item>
+    <style name="FilePickerTheme" parent="Theme.Material3.DayNight.DialogWhenLarge">
+        <item name="colorPrimary">@color/a_primary</item>
+        <item name="colorOnPrimary">@color/a_on_primary</item>
+        <item name="colorAccent">@color/a_primary</item>
+        <item name="colorSurface">@color/a_surface_container</item>
+        <item name="colorOnSurface">@color/a_on_surface</item>
+        <item name="android:colorBackground">@color/a_background</item>
+        <item name="android:windowBackground">@color/a_background</item>
         <item name="nnf_toolbarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
         <item name="alertDialogTheme">@style/FilePickerAlertDialogTheme</item>
         <item name="nnf_separator_color">@color/nnf_separator_color</item>
