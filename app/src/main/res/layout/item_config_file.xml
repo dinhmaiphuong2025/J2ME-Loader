@@ -19,8 +19,8 @@
     <ImageButton
         android:id="@+id/delete_file"
         style="@style/ImageButtonStyle"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:contentDescription="@string/action_context_delete"
         app:srcCompat="@drawable/ic_delete" />
 

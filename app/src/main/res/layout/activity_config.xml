@@ -124,7 +124,7 @@
             <Button
                 android:id="@+id/select_screen_background_color"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_margin="4dp"
                 android:text="@string/PREF_BACKGROUND"
                 app:layout_constraintEnd_toStartOf="@+id/barrier_screen_config"
@@ -335,8 +335,8 @@
                 <ImageButton
                     android:id="@+id/tune_selected_shader"
                     style="@style/ImageButtonStyle"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="@dimen/height_config_row"
+                    android:layout_height="@dimen/height_config_row"
                     android:contentDescription="@string/shader_tuning"
                     app:srcCompat="@drawable/ic_baseline_tune_24"
                     android:visibility="gone"
@@ -345,8 +345,8 @@
                 <ImageButton
                     android:id="@+id/browse_shaders"
                     style="@style/ImageButtonStyle"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="@dimen/height_config_row"
+                    android:layout_height="@dimen/height_config_row"
                     android:layout_marginStart="4dp"
                     android:contentDescription="@string/browse"
                     app:srcCompat="@drawable/ic_add" />
@@ -530,7 +530,7 @@
             <Button
                 android:id="@+id/show_font_size_presets"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_margin="4dp"
                 android:gravity="center"
                 android:text="@string/SIZE_PRESETS"
@@ -628,7 +628,7 @@
             <Button
                 android:id="@+id/show_key_mappings"
                 android:layout_width="match_parent"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_marginHorizontal="9dp"
                 android:layout_marginVertical="4dp"
                 android:text="@string/pref_map_keys"
@@ -817,7 +817,7 @@
             <Button
                 android:id="@+id/update_keyboard_not_pressed_button_label_color"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_marginVertical="4dp"
                 android:layout_marginStart="9dp"
                 android:layout_marginLeft="9dp"
@@ -849,7 +849,7 @@
             <Button
                 android:id="@+id/update_keyboard_not_pressed_button_background_color"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_marginVertical="4dp"
                 android:layout_marginStart="9dp"
                 android:layout_marginLeft="9dp"
@@ -881,7 +881,7 @@
             <Button
                 android:id="@+id/update_keyboard_pressed_button_label_color"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_marginVertical="4dp"
                 android:layout_marginStart="9dp"
                 android:layout_marginLeft="9dp"
@@ -914,7 +914,7 @@
             <Button
                 android:id="@+id/update_keyboard_pressed_button_background_color"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_marginVertical="4dp"
                 android:layout_marginStart="9dp"
                 android:layout_marginLeft="9dp"
@@ -948,7 +948,7 @@
             <Button
                 android:id="@+id/update_keyboard_outline_color"
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_marginVertical="4dp"
                 android:layout_marginStart="9dp"
                 android:layout_marginLeft="9dp"
@@ -1034,8 +1034,8 @@
                 <ImageButton
                     android:id="@+id/browse_soundbanks"
                     style="@style/ImageButtonStyle"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="@dimen/height_config_row"
+                    android:layout_height="@dimen/height_config_row"
                     android:layout_marginStart="4dp"
                     android:contentDescription="@string/browse"
                     app:srcCompat="@drawable/ic_add" />
@@ -1063,7 +1063,7 @@
             <Button
                 android:id="@+id/update_encoding"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
+                android:layout_height="@dimen/height_config_row"
                 android:layout_margin="4dp"
                 android:text="@string/pref_encoding_title"
                 app:layout_constraintStart_toStartOf="parent"

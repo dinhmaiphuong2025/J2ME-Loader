@@ -8,6 +8,7 @@
         <item name="textColorPrimary">?attr/colorOnSurface</item>
         <item name="textColorSecondary">?attr/colorOnSurfaceVariant</item>
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="actionBarSize">56dp</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
