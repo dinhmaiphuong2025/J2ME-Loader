@@ -4,12 +4,12 @@
     <color name="primary">#C7B3E8</color>
     <color name="primary_dark">#EDE3FA</color>
     <color name="accent">#C7B3E8</color>
-    <color name="background">#11111B</color>
+    <color name="background">#121212</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B3B3B3</color>
     <color name="btn_bg_normal">#504A60</color>
     <color name="btn_bg_pressed">#3A3450</color>
-    <color name="config_card">#1B1D2B</color>
+    <color name="config_card">#1B1B1B</color>
 
     <color name="nnf_separator_color">@color/nnf_dark_separator_color</color>
     <!-- ===== Anland-designed tokens (dark): lilac on charcoal ===== -->
@@ -25,13 +25,13 @@
     <color name="a_on_error">#3A0F1E</color>
     <color name="a_error_container">#4A2530</color>
     <color name="a_on_error_container">#FFD9E2</color>
-    <color name="a_background">#11111B</color>
+    <color name="a_background">#121212</color>
     <color name="a_on_background">#FFFFFF</color>
-    <color name="a_surface">#11111B</color>
-    <color name="a_surface_low">#1B1D2B</color>
-    <color name="a_surface_container">#262A3C</color>
-    <color name="a_surface_high">#2F344A</color>
-    <color name="a_surface_highest">#3A4058</color>
+    <color name="a_surface">#121212</color>
+    <color name="a_surface_low">#1B1B1B</color>
+    <color name="a_surface_container">#232323</color>
+    <color name="a_surface_high">#2C2C2C</color>
+    <color name="a_surface_highest">#353535</color>
     <color name="a_on_surface">#FFFFFF</color>
     <color name="a_on_surface_variant">#B3B3B3</color>
     <color name="a_outline">#5A5A5A</color>

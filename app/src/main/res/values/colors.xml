@@ -8,12 +8,12 @@
     <color name="primary">#6A4E96</color>
     <color name="primary_dark">#24173A</color>
     <color name="accent">#6A4E96</color>
-    <color name="background">#FDF8FF</color>
+    <color name="background">#FAFAFA</color>
     <color name="text_primary">#1B1B22</color>
     <color name="text_secondary">#4A4653</color>
     <color name="btn_bg_normal">#E7D9F8</color>
     <color name="btn_bg_pressed">#D5C2EE</color>
-    <color name="config_card">#F7F1FB</color>
+    <color name="config_card">#F4F4F6</color>
 
     <color name="nnf_separator_color">@color/nnf_light_separator_color</color>
     <!-- ===== Anland-derived design tokens (light) ===== -->
@@ -29,13 +29,13 @@
     <color name="a_on_error">#FFFFFF</color>
     <color name="a_error_container">#FFD9E2</color>
     <color name="a_on_error_container">#3F0018</color>
-    <color name="a_background">#FDF8FF</color>
+    <color name="a_background">#FAFAFA</color>
     <color name="a_on_background">#1B1B22</color>
-    <color name="a_surface">#FDF8FF</color>
-    <color name="a_surface_low">#F7F1FB</color>
-    <color name="a_surface_container">#F1EAF7</color>
-    <color name="a_surface_high">#EAE2F2</color>
-    <color name="a_surface_highest">#E2D9EC</color>
+    <color name="a_surface">#FFFFFF</color>
+    <color name="a_surface_low">#F4F4F6</color>
+    <color name="a_surface_container">#EDECEF</color>
+    <color name="a_surface_high">#E6E5E9</color>
+    <color name="a_surface_highest">#DFDEE3</color>
     <color name="a_on_surface">#1B1B22</color>
     <color name="a_on_surface_variant">#4A4653</color>
     <color name="a_outline">#7A7583</color>
