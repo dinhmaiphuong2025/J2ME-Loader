@@ -337,4 +337,11 @@
     <string name="pref_dynamic_screen_size">Adaptive Fullscreen (Dynamic Canvas)</string>
     <string name="pref_screen_fit_device">Fit Device (Auto DPI)</string>
     <string name="pref_screen_fullscreen_preset">Fullscreen (%sp UI)</string>
+    <string name="audio">Audio</string>
+    <string name="soundbank_label">Soundbank:</string>
+    <string name="times_symbol"> x </string>
+    <string name="cd_app_icon">Application icon</string>
+    <string name="cd_folder_icon">Folder</string>
+    <string name="cd_check_icon">Selected</string>
+    <string name="add_preset">Add preset</string>
 </resources>

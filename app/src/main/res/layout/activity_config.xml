@@ -98,7 +98,8 @@
                 app:srcCompat="@drawable/ic_add_preset"
                 app:layout_constraintBottom_toBottomOf="@+id/screen_height"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/screen_config_options_title" />
+                app:layout_constraintTop_toBottomOf="@+id/screen_config_options_title" android:contentDescription="@string/add_preset"
+                />
 
             <androidx.appcompat.widget.AppCompatCheckBox
                 android:id="@+id/keep_aspect_ratio_toggle"
@@ -999,7 +1000,7 @@
             <TextView
                 android:id="@+id/audio_config_title"
                 style="@style/ConfigTitleTextStyle"
-                android:text="Audio"
+                android:text="@string/audio"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -1017,7 +1018,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
-                    android:text="Soundbank:"
+                    android:text="@string/soundbank_label"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="?attr/textColorSecondary"
                     android:textSize="15sp" />

@@ -23,7 +23,8 @@
         android:tint="?attr/nnf_dir_icon_color"
         android:visibility="visible"
         app:srcCompat="@drawable/nnf_ic_folder_black_48dp"
-        tools:ignore="ContentDescription" />
+        tools:ignore="ContentDescription"
+        android:contentDescription="@string/cd_folder_icon" />
 
     <TextView
         android:id="@android:id/text1"

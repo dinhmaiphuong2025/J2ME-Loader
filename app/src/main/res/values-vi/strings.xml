@@ -236,4 +236,104 @@
     <string name="pref_dynamic_screen_size">Full màn hình tự thích ứng (Dynamic Canvas)</string>
     <string name="pref_screen_fit_device">Tự động (DPI thiết bị)</string>
     <string name="pref_screen_fullscreen_preset">Full màn hình (UI %sp)</string>
+
+    <!-- Bổ sung bản dịch tiếng Việt còn thiếu -->
+    <string name="navigation_drawer_open">Mở ngăn điều hướng</string>
+    <string name="navigation_drawer_close">Đóng ngăn điều hướng</string>
+    <string name="about_discord">&lt;BR>Discord: &lt;a href="https://discord.gg/Ag4rcpz">discord.gg/Ag4rcpz&lt;/a></string>
+    <string name="about_github">&lt;BR>GitHub: &lt;a href="https://github.com/nikita36078/J2ME-Loader">github.com/nikita36078/J2ME-Loader&lt;/a></string>
+    <string name="about_emugen_wiki">&lt;BR>EmuGen Wiki: &lt;a href="https://emulation.gametechwiki.com/index.php/J2ME_Loader">emulation.gametechwiki.com/index.php/J2ME_Loader&lt;/a></string>
+    <string name="about_4pda">&lt;BR>4PDA: &lt;a href="https://4pda.to/forum/index.php?showtopic=824201">4pda.to/forum/index.php?showtopic=824201&lt;/a></string>
+    <string name="about_xda">&lt;BR>XDA: &lt;a href="https://forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889">forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889&lt;/a></string>
+    <string name="about_crowdin">&lt;BR>Crowdin(translation): &lt;a href="https://crowdin.com/project/j2me-loader">crowdin.com/project/j2me-loader&lt;/a></string>
+    <string name="about_copyright">&lt;BR>&lt;BR>Copyright 2017-2026 Nikita Shakarun</string>
+    <string name="error_no_picker">Vui lòng cài ứng dụng chọn tệp</string>
+    <string name="install_multiple_progress">Đang cài %1$d/%2$d…</string>
+    <string name="install_multiple_done">Đã cài: %1$d</string>
+    <string name="install_multiple_failed">Thất bại: %1$d</string>
+    <string name="install_multiple_more">…và %1$d mục khác</string>
+    <string name="PREF_FORCE_DISABLE_3D_LIGHTING">Buộc tắt chiếu sáng 3D</string>
+    <string name="PREF_COLOR_HINT">RGB</string>
+    <string name="PREF_SYS_PROPS_HINT">microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0</string>
+    <string name="browse">Duyệt</string>
+    <string name="shaders">Shader</string>
+    <string name="soundbanks">Ngân hàng âm thanh</string>
+    <string name="delete_file_title">Xoá tệp?</string>
+    <string name="delete_file_message">Bạn có chắc muốn xoá \"%1$s\"?</string>
+    <string name="error_delete_file">Không xoá được \"%1$s\"</string>
+    <string name="error_add_file">Không thêm được \"%1$s\"</string>
+    <string name="shader_setting">%s: %s</string>
+    <string name="pref_language">Ngôn ngữ</string>
+    <string name="pref_other_options_title">Tuỳ chọn khác</string>
+    <string name="pref_disable_pause">Không tạm dừng khi thu nhỏ</string>
+    <string name="config_files_soundbank_help">Hỗ trợ ngân hàng âm thanh DLS/SF2</string>
+    <string name="config_files_shader_help">Hỗ trợ shader tương thích PPSSPP</string>
+    <string name="show">Hiện</string>
+    <string name="msg_error_loading_shader">Shader không hỗ trợ, dùng shader mặc định!</string>
+    <string name="msg_immediate_mode_disabled">Đã tắt chế độ tức thời do tràn ngăn xếp</string>
+    <string name="msg_mascot_capsule">Mascot Capsule 3D!</string>
+    <string name="pref_theme_default">sáng</string>
+    <string name="pref_black_background_title">Nền đen</string>
+    <string name="pref_black_background_summary">Dành cho giao diện tối</string>
+    <string name="pref_add_cutout_area_title">Thêm vùng tai thỏ</string>
+    <string name="pref_apps_view">kiểu xem</string>
+    <string name="pref_screenshot_summary">Tắt phóng to và làm mượt khi chụp màn hình</string>
+    <string name="pref_screenshot_title">Ảnh chụp gốc</string>
+    <string name="pref_backup">Nhập/xuất dữ liệu</string>
+    <string name="pref_backup_summary">Lưu hoặc phục hồi game và dữ liệu ứng dụng</string>
+    <string name="pref_export_data">Xuất dữ liệu</string>
+    <string name="pref_import_data">Nhập dữ liệu</string>
+    <string name="backup_export_title">Đang xuất dữ liệu…</string>
+    <string name="backup_import_title">Đang nhập dữ liệu…</string>
+    <string name="backup_export_done">Đã xuất dữ liệu</string>
+    <string name="backup_import_done">Đã nhập dữ liệu</string>
+    <string name="backup_import_confirm">Tệp cùng tên sẽ bị ghi đè.\n\nTiếp tục?</string>
+    <string name="backup_export_failed">Xuất dữ liệu thất bại</string>
+    <string name="backup_import_failed">Nhập dữ liệu thất bại</string>
+    <string name="pref_category_experimental">Tuỳ chọn thử nghiệm/tạm thời</string>
+    <string name="pref_mascot_summary">Hiện thông báo khi dùng</string>
+    <string name="pref_mascot_title">Phát hiện Mascot Capsule 3D</string>
+    <string name="_RESOLUTION_SEPARATOR">x</string>
+    <string name="_FONT_SEPARATOR">-</string>
+    <string name="_MINUS_ONE">-1</string>
+    <string name="virtual_key_left_soft">L</string>
+    <string name="virtual_key_right_soft">R</string>
+    <string name="virtual_key_menu">M</string>
+    <string name="virtual_key_d">D</string>
+    <string name="virtual_key_c">C</string>
+    <string name="virtual_key_left">←</string>
+    <string name="virtual_key_right">→</string>
+    <string name="virtual_key_up">↑</string>
+    <string name="virtual_key_down">↓</string>
+    <string name="virtual_key_f">F</string>
+    <string name="virtual_key_a" >A</string>
+    <string name="virtual_key_b">B</string>
+    <string name="virtual_key_1">1</string>
+    <string name="virtual_key_2">2</string>
+    <string name="virtual_key_3">3</string>
+    <string name="virtual_key_4">4</string>
+    <string name="virtual_key_5">5</string>
+    <string name="virtual_key_6">6</string>
+    <string name="virtual_key_7">7</string>
+    <string name="virtual_key_8">8</string>
+    <string name="virtual_key_9">9</string>
+    <string name="virtual_key_0">0</string>
+    <string name="virtual_key_star">*</string>
+    <string name="virtual_key_pound">#</string>
+    <string name="alert_map_menu">Phím Menu (M) chưa được gán!\nCó thể không mở được tuỳ chọn giả lập</string>
+    <string name="save">Lưu</string>
+    <string name="preset_cannot_delete">Không sửa được cấu hình có sẵn</string>
+    <string name="delete_resolution_title">Xoá độ phân giải?</string>
+    <string name="delete_resolution_message">Xoá %s?</string>
+    <string name="edit_resolution_title">Sửa độ phân giải</string>
+    <string name="alert_rewrite_profile">Đã có hồ sơ tên \"%1$s\".\nGhi đè?</string>
+    <string name="msg_no_matches">Không tìm thấy \"%1$s\"</string>
+    <string name="msg_unsupported_soundbank">Ngân hàng âm thanh không hỗ trợ, dùng bản mặc định!</string>
+    <string name="audio">Âm thanh</string>
+    <string name="soundbank_label">Ngân hàng âm thanh:</string>
+    <string name="times_symbol"> x </string>
+    <string name="cd_app_icon">Biểu tượng ứng dụng</string>
+    <string name="cd_folder_icon">Thư mục</string>
+    <string name="cd_check_icon">Đã chọn</string>
+    <string name="add_preset">Thêm cấu hình</string>
 </resources>
