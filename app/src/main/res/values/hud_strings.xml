@@ -144,8 +144,8 @@
     <string name="hud_editor_widget_group">Group</string>
     <string name="hud_editor_widget_key">Key</string>
     <string name="hud_editor_widget_mouse_trackpad">Trackpad</string>
-    <string name="hud_editor_widget_number_bar">1-0 Row</string>
-    <string name="hud_editor_widget_number_row">Numbers</string>
+    <string name="hud_editor_widget_number_bar">Keys 1-9, * , 0 and # in a 3x4 pad</string>
+    <string name="hud_editor_widget_number_row">Number cluster 1–#</string>
     <string name="hud_editor_widget_scrollbar">Scroll</string>
     <string name="hud_editor_widget_slider">Slider</string>
     <string name="hud_editor_widget_standard">Standard</string>

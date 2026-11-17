@@ -56,7 +56,7 @@
     <string name="load_profile">Tải biên dạng</string>
     <string name="save_profile">Lưu biên dạng</string>
     <string name="PREF_SCREEN_OPTIONS">Tùy chọn màn hình</string>
-    <string name="PREF_SCALE_RATIO">Đo lường(%)</string>
+    <string name="PREF_SCALE_RATIO">Đo lường (%)</string>
     <string name="PREF_SCALE_TO_FIT">Cân bằng</string>
     <string name="PREF_KEEP_ASPECT_RATIO">Giữ tỷ lệ khung hình</string>
     <string name="PREF_FILTER">Bộ lọc</string>
@@ -116,12 +116,12 @@
     <string name="pref_vk_type_phone_arrows">Điện thoại(mũi tên)</string>
     <string name="pref_vk_type_anland">Bản Anland (Dragon Boy / RPG)</string>
     <string name="PREF_LAYOUT">Bố cục</string>
-    <string name="PREF_SHADER_FILTER">Shader:</string>
+    <string name="PREF_SHADER_FILTER">Shader</string>
     <string name="identity_filter">Nhanh (không bộ lọc)</string>
     <string name="shader_tuning">Điều Chỉnh Shader</string>
     <string name="reset">Thiết lập lại</string>
     <string name="pref_input_devices_title">Thiết bị đầu vào</string>
-    <string name="pref_graphics_mode_title">Chế độ đồ họa:</string>
+    <string name="pref_graphics_mode_title">Chế độ đồ họa</string>
     <string name="PREF_FONT_ANTI_ALIASING">Khử răng cưa</string>
     <string name="pref_screen_gravity">Trọng lực màn hình</string>
     <string name="pref_screen_gravity_bottom">Đáy</string>
@@ -131,7 +131,7 @@
     <string name="pref_screen_gravity_top">Đầu</string>
     <string name="pref_screen_scale_type">Kiểu tỷ lệ</string>
     <string name="pref_screen_scale_type_fill">Fill window (bỏ qua tỷ lệ khung hình)</string>
-    <string name="pref_screen_scale_type_fit">Phù hợp với window</string>
+    <string name="pref_screen_scale_type_fit">Phù hợp với cửa sổ</string>
     <string name="pref_screen_scale_type_none">Như là</string>
     <string name="pref_vk_hide_hint">vô hiệu</string>
     <string name="unlimited">không giới hạn</string>

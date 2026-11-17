@@ -810,16 +810,11 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
             if (lp != null) {
                 int orientation = getResources().getConfiguration().orientation;
                 boolean isLandscape = (orientation == Configuration.ORIENTATION_LANDSCAPE);
-                if (isLandscape) {
-                    lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-                    lp.setMargins(0, Math.max(dp(8), mInsetTop), 0, 0);
-                } else {
-                    lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-                    int topMargin = Math.max(dp(36), mInsetTop + dp(6));
-                    lp.setMargins(0, topMargin, 0, 0);
-                }
+                // Sit right under the pill top bar: the HUD layer already starts below it,
+                // so any extra top margin reads as a floating gap.
+                lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                lp.setMargins(0, Math.max(dp(2), mInsetTop), 0, 0);
                 mTopToolbar.setLayoutParams(lp);
             }
             applyToolButtonLayoutParams();
@@ -1502,19 +1497,19 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
             case NUMBER_ROW:
                 b.widgetType = HudButton.WIDGET_GROUP;
                 b.label = "Numbers";
-                b.widthDp = 360;
-                b.heightDp = 44;
-                b.columns = 10; // 1 row of 10 digits
-                b.rows = 1;
+                b.widthDp = 120;  // 3 columns of 34dp + padding
+                b.heightDp = 150; // 4 rows of 34dp + padding
+                b.columns = 3;
+                b.rows = 4;
                 b.cornerRadiusDp = 10;
                 b.padDp = 5;
                 b.attachToKeyboard = true;
                 b.posXPercent = 0.5f;
                 b.posYPercent = 0.5f; // Centered on screen
 
-                // 1, 2, 3, 4, 5, 6, 7, 8, 9, 0
-                int[] numCodes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-                String[] numLabels = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
+                // Keypad cluster: 1-9, then * 0 # on the last row
+                int[] numCodes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 55, 11, 83};
+                String[] numLabels = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
                 for (int i = 0; i < numCodes.length; i++) {
                     HudButton child = new HudButton();
                     child.widgetType = HudButton.WIDGET_STANDARD;

@@ -146,7 +146,11 @@ public class ConfigActivity extends BaseActivity implements View.OnClickListener
 			workDir = Config.getEmulatorDir();
 			setTitle(path);
 		} else {
-			setTitle(intent.getStringExtra(KEY_MIDLET_NAME));
+			String midletName = intent.getStringExtra(KEY_MIDLET_NAME);
+			if (midletName == null || midletName.trim().isEmpty()) {
+				midletName = new File(path).getName();
+			}
+			setTitle(midletName);
 			File appDir = new File(path);
 			File convertedDir = appDir.getParentFile();
 			if (!appDir.isDirectory() || convertedDir == null
