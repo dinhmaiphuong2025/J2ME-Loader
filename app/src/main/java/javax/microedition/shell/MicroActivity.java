@@ -156,7 +156,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 	private HudOverlayView hudView;
 	private final android.util.SparseLongArray hudKeyDownAt = new android.util.SparseLongArray();
 	private final android.os.Handler hudKeyHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-	private android.widget.TextView hudKeyDebug;
 	private boolean hudRuntimeEnabled;
 	private int inputMode = 0;
 	private Canvas lastActiveCanvas;
@@ -509,7 +508,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		if (hudView != null || appPath == null) {
 			return;
 		}
-		com.j2me.lixin.hud.HudTrace.reset(this);
 		SharedPreferences hudPrefs = getSharedPreferences(
 				"hud_" + Integer.toHexString(appPath.hashCode()), MODE_PRIVATE);
 		// The port keeps a single layout per game: Anland's extra slots default to 2,
@@ -527,18 +525,9 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 		binding.hudContainer.addView(hudView, new FrameLayout.LayoutParams(
 				FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 		hudView.loadProfile();
-		createHudKeyDebug();
 		hudView.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		binding.hudContainer.setVisibility(hudRuntimeEnabled ? View.VISIBLE : View.GONE);
 		updateOverlayLocation();
-		com.j2me.lixin.hud.HudTrace.log(this, "setup runtime=" + hudRuntimeEnabled + " path=" + appPath);
-		Log.e("HUDSTATE", "setup runtime=" + hudRuntimeEnabled + " path=" + appPath
-				+ " containerVis=" + binding.hudContainer.getVisibility()
-				+ " hudVis=" + hudView.getVisibility());
-		binding.hudContainer.post(() -> Log.e("HUDSTATE", "after layout: container="
-				+ binding.hudContainer.getWidth() + "x" + binding.hudContainer.getHeight()
-				+ " top=" + binding.hudContainer.getY()
-				+ " hud=" + hudView.getWidth() + "x" + hudView.getHeight()));
 	}
 
 	/** Opens the visual HUD editor on top of the running game. */
@@ -589,7 +578,6 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			binding.hudContainer.removeAllViews();
 			binding.hudContainer.setVisibility(View.GONE);
 			hudView = null;
-			hudKeyDebug = null;
 		}
 	}
 
@@ -663,70 +651,20 @@ public class MicroActivity extends AppCompatActivity implements J2meContext.UiHa
 			binding.hudContainer.removeAllViews();
 			binding.hudContainer.setVisibility(View.GONE);
 			hudView = null;
-			hudKeyDebug = null;
 		}
 	}
-
-	/** Small on-screen readout of the last HUD key, so delivery is visible without logcat. */
-	private void createHudKeyDebug() {
-		if (hudKeyDebug != null) {
-			return;
-		}
-		hudKeyDebug = new android.widget.TextView(this);
-		hudKeyDebug.setTextSize(11);
-		hudKeyDebug.setTextColor(0xFFFFFFFF);
-		hudKeyDebug.setBackgroundColor(0x99000000);
-		hudKeyDebug.setPadding(10, 6, 10, 6);
-		hudKeyDebug.setVisibility(View.GONE);
-		FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-				FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-		lp.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-		lp.topMargin = 8;
-		lp.rightMargin = 8;
-		binding.hudContainer.addView(hudKeyDebug, lp);
-	}
-
-	private void showHudKeyDebug(String text) {
-		if (hudKeyDebug == null) {
-			return;
-		}
-		hudKeyDebug.setText(text);
-		hudKeyDebug.setVisibility(View.VISIBLE);
-		hudKeyDebug.removeCallbacks(hideHudKeyDebug);
-		hudKeyDebug.postDelayed(hideHudKeyDebug, 2000);
-	}
-
-	private final Runnable hideHudKeyDebug = () -> {
-		if (hudKeyDebug != null) {
-			hudKeyDebug.setVisibility(View.GONE);
-		}
-	};
 
 	private void postHudKey(int action, int code) {
 		int key = HudKeyBridge.resolve(code);
 		if (key == HudKeyBridge.UNMAPPED) {
-			Log.e("HUDKEY", "unmapped code=" + code);
-			showHudKeyDebug("\u2715 không dịch được: " + code);
 			return;
 		}
 		// Prefer the displayable that is on screen right now: the game swaps Canvas
 		// instances when it opens a panel, and posting to the previous one made every
 		// HUD key after the first one disappear.
 		Canvas canvas = current instanceof Canvas ? (Canvas) current : lastActiveCanvas;
-		com.j2me.lixin.hud.HudTrace.log(this, "key " + (action == 0 ? "down" : "up")
-				+ " code=" + code + " resolved=" + key
-				+ " current=" + (current == null ? "null" : current.getClass().getSimpleName())
-				+ "@" + (current == null ? 0 : System.identityHashCode(current))
-				+ " last=" + (lastActiveCanvas == null ? "null" : System.identityHashCode(lastActiveCanvas))
-				+ " use=" + (canvas == null ? 0 : System.identityHashCode(canvas)));
 		if (canvas == null) {
-			Log.e("HUDKEY", "no canvas for key=" + key);
 			return;
-		}
-		Log.e("HUDKEY", "action=" + (action == 0 ? "down" : "up")
-				+ " raw=" + code + " key=" + HudKeyBridge.label(key));
-		if (action == 0) {
-			showHudKeyDebug("\u25BC " + HudKeyBridge.label(key) + "  (" + key + ")");
 		}
 		if (action == 0) {
 			hudKeyDownAt.put(key, android.os.SystemClock.uptimeMillis());

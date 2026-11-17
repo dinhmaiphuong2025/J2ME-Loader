@@ -1896,24 +1896,16 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        android.util.Log.e("HUDSTATE", "attached " + getWidth() + "x" + getHeight());
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        android.util.Log.e("HUDSTATE", "layout " + (r - l) + "x" + (b - t)
-                + " children=" + getChildCount() + " edit=" + mIsEditMode);
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         int action = event.getActionMasked();
-        HudTrace.log(getContext(), "touch action=" + action + " x=" + (int) event.getX()
-                + " y=" + (int) event.getY() + " edit=" + mIsEditMode + " hidden=" + mHudHidden);
-        android.util.Log.e("HUDTOUCH", "action=" + action + " x=" + (int) event.getX()
-                + " y=" + (int) event.getY() + " edit=" + mIsEditMode
-                + " hidden=" + mHudHidden + " child=" + getChildCount());
         if (action == MotionEvent.ACTION_DOWN) {
             mQuickActionTouch = quickActionStrip(mQuickActionRect)
                     && mQuickActionRect.contains(event.getX(), event.getY());
@@ -1996,7 +1988,7 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
                     if (mResizeMode != 0 && mSelectedButton != null && mSelectedView != null) {
                         float dx = (x - mResizeStartX) / density;
                         float dy = (y - mResizeStartY) / density;
-                        int minSize = 25;
+                        int minSize = 40;
                         int maxSize = 400;
 
                         if (mResizeMode == 2) { // Bottom-Right

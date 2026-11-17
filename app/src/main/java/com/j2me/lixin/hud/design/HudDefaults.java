@@ -27,7 +27,7 @@ public final class HudDefaults {
     public static final int CONTAINER_PAD_DP = 4;
 
     /** Minimum touch target, in dp. */
-    public static final int MIN_TOUCH_DP = 24;
+    public static final int MIN_TOUCH_DP = 40;
 
     /** Default hold-to-repeat delay, in milliseconds. */
     public static final int LONG_PRESS_MS = 1000;
