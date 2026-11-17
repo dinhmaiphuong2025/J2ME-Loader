@@ -662,7 +662,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/show_key_mappings"
+                app:layout_constraintTop_toBottomOf="@+id/input_mode_row"
                 tools:visibility="visible" />
 
             <!-- Input mode: one choice governs both the classic keypad and the HUD -->
@@ -708,7 +708,7 @@
                 app:layout_constrainedWidth="true"
                 app:layout_constraintEnd_toStartOf="@+id/input_config_barrier"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/show_virtual_keyboard_toggle"
+                app:layout_constraintTop_toBottomOf="@+id/input_mode_row"
                 app:layout_constraintWidth_min="wrap" />
 
             <Spinner
@@ -722,7 +722,7 @@
                 android:textSize="15sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/input_config_barrier"
-                app:layout_constraintTop_toBottomOf="@+id/show_virtual_keyboard_toggle" />
+                app:layout_constraintTop_toBottomOf="@+id/input_mode_row" />
             <!-- End key shape type -->
 
             <!-- Keys vibration feedback -->
