@@ -142,6 +142,36 @@ final class HudPrefsMigration {
      * Converts PC (evdev) key codes saved by Anland's picker into J2ME key codes.
      * Without this, most buttons carry scancodes the emulator can never deliver.
      */
+    /** Repairs layouts saved by the build that stored '*' as evdev 55. */
+    static void repairStarKey(SharedPreferences prefs) {
+        if (prefs.getBoolean("code_space_midp_v3", false)) {
+            return;
+        }
+        prefs.edit().putBoolean("code_space_midp_v3", true).apply();
+        String json = prefs.getString(PREF_PROFILE, null);
+        if (json == null || json.isEmpty()) {
+            return;
+        }
+        try {
+            JSONObject root = new JSONObject(json);
+            boolean changed = false;
+            for (String key : new String[]{"portrait_layout", "landscape_layout",
+                    "keyboard_portrait_layout", "keyboard_landscape_layout"}) {
+                changed |= walk(root.optJSONObject(key));
+            }
+            for (String key : new String[]{"layout_2", "layout_3", "layout_4"}) {
+                JSONObject extra = root.optJSONObject(key);
+                if (extra == null) continue;
+                changed |= walk(extra.optJSONObject("portrait"));
+                changed |= walk(extra.optJSONObject("landscape"));
+            }
+            if (changed) {
+                prefs.edit().putString(PREF_PROFILE, root.toString()).apply();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     static void normalizeKeyCodes(SharedPreferences prefs) {
         if (prefs.getBoolean("code_space_midp_v2", false)) {
             return;
@@ -185,6 +215,14 @@ final class HudPrefsMigration {
     private static boolean walkButton(JSONObject b) {
         if (b == null) return false;
         boolean changed = false;
+        // Label drives the repair: a key labelled '*' or '#' must send star/pound, even
+        // if an older build stored a code that the MIDP range interprets as a digit.
+        String label = b.optString("label", "").trim();
+        if ("*".equals(label)) {
+            changed |= forceKey(b.optJSONObject("action"), 42);
+        } else if ("#".equals(label)) {
+            changed |= forceKey(b.optJSONObject("action"), 35);
+        }
         changed |= fixAction(b.optJSONObject("action"));
         changed |= fixAction(b.optJSONObject("long_press_action"));
         changed |= fixAction(b.optJSONObject("popup_action"));
@@ -201,6 +239,18 @@ final class HudPrefsMigration {
         return changed;
     }
 
+    private static boolean forceKey(JSONObject a, int midp) {
+        if (a == null || !"key".equals(a.optString("type"))) return false;
+        if (a.optInt("code", 0) == midp && "midp".equals(a.optString("space"))) return false;
+        try {
+            a.put("code", midp);
+            a.put("space", "midp");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static boolean fixAction(JSONObject a) {
         if (a == null) return false;
         String type = a.optString("type");
@@ -210,7 +260,13 @@ final class HudPrefsMigration {
                 int code = a.optInt("code", 0);
                 if (code == 0) return false;
                 try {
-                    if (HudKeyBridge.isJ2meKey(code)) {
+                    if (code == 55 || code == 227) {
+                        // Star was stored as the evdev scancode; 55 happens to sit inside
+                        // the MIDP digit range, so it played as the character '7'.
+                        a.put("code", 42);
+                        a.put("space", "midp");
+                        changed = true;
+                    } else if (HudKeyBridge.isJ2meKey(code)) {
                         // Already a J2ME key (digits 48..57, negatives, * and #).
                         // Older builds also stored PC letters in that range, but J2ME
                         // has no letter keys, so keeping the digit reading is the

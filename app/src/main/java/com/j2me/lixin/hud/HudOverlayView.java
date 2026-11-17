@@ -358,6 +358,7 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
         HudPrefsMigration.migrateExtraSlotToMain(mPrefs);
         HudPrefsMigration.repairOpacity(mPrefs);
         HudPrefsMigration.normalizeKeyCodes(mPrefs);
+        HudPrefsMigration.repairStarKey(mPrefs);
         // First run for a game: seed a keypad-shaped HUD instead of Anland's desktop layout.
         J2meHudPreset.ensureDefaults(mPrefs);
         // A reload replaces every model instance; snapshots from the previous
@@ -1507,13 +1508,15 @@ public final class HudOverlayView extends FrameLayout implements IModifierProvid
                 b.posXPercent = 0.5f;
                 b.posYPercent = 0.5f; // Centered on screen
 
-                // Keypad cluster: 1-9, then * 0 # on the last row
-                int[] numCodes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 55, 11, 83};
+                // Keypad cluster: 1-9, then * 0 # on the last row.
+                // Codes are MIDP keys, not evdev: evdev 55 for '*' falls inside the digit
+                // range 48..57 and was delivered as the character '7'.
+                int[] numCodes = {49, 50, 51, 52, 53, 54, 55, 56, 57, 42, 48, 35};
                 String[] numLabels = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
                 for (int i = 0; i < numCodes.length; i++) {
                     HudButton child = new HudButton();
                     child.widgetType = HudButton.WIDGET_STANDARD;
-                    child.action = HudAction.key(numCodes[i]);
+                    child.action = HudAction.j2meKey(numCodes[i]);
                     child.label = numLabels[i];
                     // Square 1:1 aspect ratio by default (34x34dp)
                     child.widthDp = 34;
