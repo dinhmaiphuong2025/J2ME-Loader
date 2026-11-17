@@ -78,10 +78,25 @@ public final class HudFreeformButtonView extends View {
             mLongPressFired = true;
             mPress.cancel();
             stopRepeat();
+            releaseHeldKey();
             if (isHapticEnabled()) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             if (mListener != null) mListener.onButtonLongPress(mModel);
         }
     };
+
+    private boolean mHoldingKey;
+
+    /** A J2ME key is a held state: the game reads key states every frame. */
+    private boolean isKeyAction() {
+        return mModel != null && HudAction.TYPE_KEY.equals(mModel.action.type);
+    }
+
+    private void releaseHeldKey() {
+        if (mHoldingKey) {
+            mHoldingKey = false;
+            if (mListener != null) mListener.onButtonPress(mModel, false);
+        }
+    }
 
     private boolean hasLongPress() {
         return mModel != null && mModel.longPressAction != null;
@@ -290,6 +305,11 @@ public final class HudFreeformButtonView extends View {
                     // A mouse button is a held state, not a tap: press now, release on lift.
                     mHoldingMouse = true;
                     if (mListener != null) mListener.onButtonPress(mModel, true);
+                } else if (isKeyAction()) {
+                    // Same for keys: holding a direction or FIRE must stay down until the
+                    // finger lifts, otherwise charge/move/accelerate never work.
+                    mHoldingKey = true;
+                    if (mListener != null) mListener.onButtonPress(mModel, true);
                 } else {
                     mPress.down(mModel.sendOnRelease, this::sendPrimaryTap);
                     startRepeat();
@@ -307,6 +327,7 @@ public final class HudFreeformButtonView extends View {
                     dropLongPress();
                     mPress.cancel();
                     releaseMouseIfHeld();
+                    releaseHeldKey();
                     if (isHapticEnabled()) performHapticFeedback(HapticFeedbackConstants.CONFIRM);
                     invalidate();
                     if (mListener != null) {
@@ -324,6 +345,10 @@ public final class HudFreeformButtonView extends View {
                 invalidate();
                 if (mHoldingMouse) {
                     releaseMouseIfHeld();
+                    return true;
+                }
+                if (mHoldingKey) {
+                    releaseHeldKey();
                     return true;
                 }
                 if (mLongPressFired) {
