@@ -162,6 +162,13 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 				}
 			});
 			itemView.setOnCreateContextMenuListener(contextMenuListener);
+			itemView.setOnLongClickListener(v -> {
+				if (v.getTag() instanceof AppItem && contextMenuListener instanceof LongPressHandler) {
+					((LongPressHandler) contextMenuListener).onItemLongPress(v);
+					return true;
+				}
+				return false;
+			});
 		}
 
 		void onBind(AppItem item) {
@@ -193,6 +200,11 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			author.setText(item.getAuthor());
 			version.setText(item.getVersion());
 		}
+	}
+
+	/** Implemented by the fragment so a long press can open a styled popup. */
+	interface LongPressHandler {
+		void onItemLongPress(View anchor);
 	}
 
 	class AppFilter extends Filter {

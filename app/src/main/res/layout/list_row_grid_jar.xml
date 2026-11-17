@@ -26,8 +26,14 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:textAppearance"
         android:gravity="center"
-        android:textSize="15sp"
+        android:textSize="14sp"
         android:textStyle="bold"
+        android:textColor="?attr/colorOnSurface"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:paddingHorizontal="6dp"
+        android:paddingBottom="8dp"
+        android:lineSpacingExtra="1dp"
         tools:text="Example MIDlet Name" />
 
 </com.j2me.lixin.applist.AppItemLayout>

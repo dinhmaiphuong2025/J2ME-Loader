@@ -97,7 +97,7 @@ import com.j2me.lixin.util.LogUtils;
 import ru.woesss.j2me.installer.BatchInstallerDialog;
 import ru.woesss.j2me.installer.InstallerDialog;
 
-public class AppsListFragment extends Fragment implements MenuProvider {
+public class AppsListFragment extends Fragment implements MenuProvider, AppsListAdapter.LongPressHandler {
 	private static final String TAG = AppsListFragment.class.getSimpleName();
 
 	private final ActivityResultLauncher<String> openFileLauncher = registerForActivityResult(
@@ -265,6 +265,45 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		if (!new File(appItem.getPathExt() + Config.MIDLET_RES_FILE).exists()) {
 			menu.findItem(R.id.action_context_reinstall).setVisible(false);
 		}
+	}
+
+	@Override
+	public void onItemLongPress(View anchor) {
+		Object tag = anchor.getTag();
+		if (!(tag instanceof AppItem)) {
+			return;
+		}
+		AppItem appItem = (AppItem) tag;
+		// A PopupMenu instead of the platform context menu: the system menu cannot be
+		// themed on this SDK, so it always looked like a stock square panel.
+		androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(
+				new android.view.ContextThemeWrapper(requireContext(), R.style.AnlandPopupWindow), anchor);
+		requireActivity().getMenuInflater().inflate(R.menu.context_main, popup.getMenu());
+		if (!ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
+			popup.getMenu().findItem(R.id.action_context_shortcut).setVisible(false);
+		}
+		if (!new File(appItem.getPathExt() + Config.MIDLET_RES_FILE).exists()) {
+			popup.getMenu().findItem(R.id.action_context_reinstall).setVisible(false);
+		}
+		popup.setOnMenuItemClickListener(item -> handleContextAction(item.getItemId(), appItem));
+		popup.show();
+	}
+
+	private boolean handleContextAction(int itemId, AppItem appItem) {
+		if (itemId == R.id.action_context_shortcut) {
+			requestAddShortcut(appItem);
+		} else if (itemId == R.id.action_context_rename) {
+			alertRename(appItem);
+		} else if (itemId == R.id.action_context_settings) {
+			Config.startApp(requireActivity(), appItem.getTitle(), appItem.getPathExt(), true);
+		} else if (itemId == R.id.action_context_reinstall) {
+			InstallerDialog.newInstance(appItem.getId()).show(getParentFragmentManager(), "installer");
+		} else if (itemId == R.id.action_context_delete) {
+			alertDelete(appItem);
+		} else {
+			return false;
+		}
+		return true;
 	}
 
 	@Override
